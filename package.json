@@ -1,0 +1,32 @@
+{
+  "name": "web-research-agent",
+  "version": "1.0.0",
+  "description": "A sophisticated web research agent using LangGraph and Tavily with React frontend",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:api": "playwright test tests/api-integration.spec.ts",
+    "test:ui-only": "playwright test tests/research-agent.spec.ts",
+    "test:report": "playwright show-report",
+    "test:install": "playwright install",
+    "start:backend": "./scripts/start_backend.sh",
+    "start:frontend": "./scripts/start_frontend.sh"
+  },
+  "keywords": [
+    "langgraph",
+    "tavily",
+    "research-agent",
+    "react",
+    "typescript",
+    "fastapi",
+    "playwright"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.55.1"
+  }
+}

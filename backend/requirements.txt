@@ -1,0 +1,11 @@
+langchain
+langgraph
+tavily-python
+python-dotenv
+langchain-openai
+langchain-anthropic
+fastapi
+uvicorn
+pydantic
+asyncio
+typing-extensions

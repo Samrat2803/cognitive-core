@@ -1,0 +1,1278 @@
+{
+  "config": {
+    "configFile": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/playwright-headed.config.ts",
+    "rootDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.1",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "api-integration.spec.ts",
+      "file": "api-integration.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "API Integration Tests",
+          "file": "api-integration.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should test backend API endpoints directly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7816,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:6:40",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:6:40"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:14.678Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-8587d3400338a55c836d",
+              "file": "api-integration.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should test health check endpoint",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 7813,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:15:42",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:15:42"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:14.685Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-1a7e74ad2b8e6e955c27",
+              "file": "api-integration.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "should test config endpoint",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 7838,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:24:42",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/config\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:24:42"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:14.669Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-98c3a43b1539ed45e8aa",
+              "file": "api-integration.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "should test research endpoint with valid query",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 7816,
+                      "error": {
+                        "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 44\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 44\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:35:44",
+                        "location": {
+                          "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 44\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:35:44"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:14.683Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-4d63887edee977c84055",
+              "file": "api-integration.spec.ts",
+              "line": 34,
+              "column": 7
+            },
+            {
+              "title": "should handle empty query in API",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 7894,
+                      "error": {
+                        "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 12\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 12\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:57:36",
+                        "location": {
+                          "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 12\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:57:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:23.374Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-2cb6b314f87182bbd769",
+              "file": "api-integration.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "should handle query that is too long in API",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 7881,
+                      "error": {
+                        "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 513\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 513\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:72:36",
+                        "location": {
+                          "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 513\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:72:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:23.384Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-e3d7eeae393c8bad8799",
+              "file": "api-integration.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "should test CORS headers",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7828,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Origin: http://localhost:3000\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Origin: http://localhost:3000\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:85:36",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Origin: http://localhost:3000\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:85:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:23.405Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-f36d7cba8e02b1a81029",
+              "file": "api-integration.spec.ts",
+              "line": 84,
+              "column": 7
+            },
+            {
+              "title": "should test research with different LLM providers",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 7918,
+                      "error": {
+                        "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 37\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 37\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:100:43",
+                        "location": {
+                          "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 37\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:100:43"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:23.412Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-32d3aa007fb4e4a2bcf5",
+              "file": "api-integration.spec.ts",
+              "line": 98,
+              "column": 7
+            },
+            {
+              "title": "should handle concurrent research requests",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 7919,
+                      "error": {
+                        "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 34\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 34\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at map (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:134:15)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:133:30",
+                        "location": {
+                          "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 34\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at map (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:134:15)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:133:30"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:32.240Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-8122f6e5f2cc984a5dce",
+              "file": "api-integration.spec.ts",
+              "line": 125,
+              "column": 7
+            },
+            {
+              "title": "should validate response structure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7912,
+                      "error": {
+                        "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 54\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 54\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:157:36",
+                        "location": {
+                          "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.post: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → POST http://localhost:8000/research\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.186 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 54\u001b[22m\n\n    at apiRequestContext.post: connect ECONNREFUSED ::1:8000\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/api-integration.spec.ts:157:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:32.254Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.post: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-a9571b5cb8d1755a06e4",
+              "file": "api-integration.spec.ts",
+              "line": 156,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "research-agent.spec.ts",
+      "file": "research-agent.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Web Research Agent UI Tests",
+          "file": "research-agent.spec.ts",
+          "line": 46,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display the main page elements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 5234,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:32.309Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-1327076493b4c2e21e75",
+              "file": "research-agent.spec.ts",
+              "line": 56,
+              "column": 7
+            },
+            {
+              "title": "should handle valid research queries",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14929,
+                      "error": {
+                        "message": "Error: page.waitForSelector: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n",
+                        "stack": "Error: page.waitForSelector: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n\n    at waitForResearchComplete (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:21:14)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:87:7",
+                        "location": {
+                          "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "  19 |   \n  20 |   // Wait for results to appear\n> 21 |   await page.waitForSelector('.research-results', { timeout: 10000 });\n     |              ^\n  22 | }\n  23 |\n  24 | // Helper function to check if results are valid"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "Error: page.waitForSelector: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n\n\n  19 |   \n  20 |   // Wait for results to appear\n> 21 |   await page.waitForSelector('.research-results', { timeout: 10000 });\n     |              ^\n  22 | }\n  23 |\n  24 | // Helper function to check if results are valid\n    at waitForResearchComplete (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:21:14)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:87:7"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:32.325Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-a848d-ndle-valid-research-queries-chromium/video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-97e4bc15ee0a4d81ffce",
+              "file": "research-agent.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "should handle empty query submission",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3602,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:49:16",
+                        "location": {
+                          "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                          "column": 16,
+                          "line": 49
+                        },
+                        "snippet": "  47 |   test.beforeEach(async ({ page }) => {\n  48 |     // Navigate to the app\n> 49 |     await page.goto('/');\n     |                ^\n  50 |     \n  51 |     // Wait for the page to load\n  52 |     await expect(page.locator('.header')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                            "column": 16,
+                            "line": 49
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n\n  47 |   test.beforeEach(async ({ page }) => {\n  48 |     // Navigate to the app\n> 49 |     await page.goto('/');\n     |                ^\n  50 |     \n  51 |     // Wait for the page to load\n  52 |     await expect(page.locator('.header')).toBeVisible();\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:49:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:42.334Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                        "column": 16,
+                        "line": 49
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-8cb3591aa987dbc47ed1",
+              "file": "research-agent.spec.ts",
+              "line": 103,
+              "column": 7
+            },
+            {
+              "title": "should handle query that is too long",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 5273,
+                      "error": {
+                        "message": "Error: page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:49:16",
+                        "location": {
+                          "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                          "column": 16,
+                          "line": 49
+                        },
+                        "snippet": "  47 |   test.beforeEach(async ({ page }) => {\n  48 |     // Navigate to the app\n> 49 |     await page.goto('/');\n     |                ^\n  50 |     \n  51 |     // Wait for the page to load\n  52 |     await expect(page.locator('.header')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                            "column": 16,
+                            "line": 49
+                          },
+                          "message": "Error: page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n\n  47 |   test.beforeEach(async ({ page }) => {\n  48 |     // Navigate to the app\n> 49 |     await page.goto('/');\n     |                ^\n  50 |     \n  51 |     // Wait for the page to load\n  52 |     await expect(page.locator('.header')).toBeVisible();\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:49:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:42.339Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-dee16-ndle-query-that-is-too-long-chromium/video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                        "column": 16,
+                        "line": 49
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-bdd6d5dcb6c409da9e08",
+              "file": "research-agent.spec.ts",
+              "line": 111,
+              "column": 7
+            },
+            {
+              "title": "should display loading state correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 5149,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:41.896Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-742c8717f3929703d4f0",
+              "file": "research-agent.spec.ts",
+              "line": 133,
+              "column": 7
+            },
+            {
+              "title": "should handle API errors gracefully",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 894,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_ABORTED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_ABORTED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:49:16",
+                        "location": {
+                          "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                          "column": 16,
+                          "line": 49
+                        },
+                        "snippet": "  47 |   test.beforeEach(async ({ page }) => {\n  48 |     // Navigate to the app\n> 49 |     await page.goto('/');\n     |                ^\n  50 |     \n  51 |     // Wait for the page to load\n  52 |     await expect(page.locator('.header')).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                            "column": 16,
+                            "line": 49
+                          },
+                          "message": "Error: page.goto: net::ERR_ABORTED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"load\"\u001b[22m\n\n\n  47 |   test.beforeEach(async ({ page }) => {\n  48 |     // Navigate to the app\n> 49 |     await page.goto('/');\n     |                ^\n  50 |     \n  51 |     // Wait for the page to load\n  52 |     await expect(page.locator('.header')).toBeVisible();\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:49:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:47.183Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-77b39-andle-API-errors-gracefully-chromium/video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                        "column": 16,
+                        "line": 49
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-64e87db60eaf36985732",
+              "file": "research-agent.spec.ts",
+              "line": 151,
+              "column": 7
+            },
+            {
+              "title": "should be responsive on mobile devices",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 22994,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n\n    at waitForResearchComplete (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:21:14)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:193:5",
+                        "location": {
+                          "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "  19 |   \n  20 |   // Wait for results to appear\n> 21 |   await page.waitForSelector('.research-results', { timeout: 10000 });\n     |              ^\n  22 | }\n  23 |\n  24 | // Helper function to check if results are valid"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n\n\n  19 |   \n  20 |   // Wait for results to appear\n> 21 |   await page.waitForSelector('.research-results', { timeout: 10000 });\n     |              ^\n  22 | }\n  23 |\n  24 | // Helper function to check if results are valid\n    at waitForResearchComplete (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:21:14)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:193:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:50.846Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-4d207-esponsive-on-mobile-devices-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-4d207-esponsive-on-mobile-devices-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-4d207-esponsive-on-mobile-devices-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-d0952a7478709f34409a",
+              "file": "research-agent.spec.ts",
+              "line": 176,
+              "column": 7
+            },
+            {
+              "title": "should allow multiple research queries in sequence",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 22623,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n\n    at waitForResearchComplete (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:21:14)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:211:7",
+                        "location": {
+                          "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "  19 |   \n  20 |   // Wait for results to appear\n> 21 |   await page.waitForSelector('.research-results', { timeout: 10000 });\n     |              ^\n  22 | }\n  23 |\n  24 | // Helper function to check if results are valid"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.research-results') to be visible\u001b[22m\n\n\n  19 |   \n  20 |   // Wait for results to appear\n> 21 |   await page.waitForSelector('.research-results', { timeout: 10000 });\n     |              ^\n  22 | }\n  23 |\n  24 | // Helper function to check if results are valid\n    at waitForResearchComplete (/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:21:14)\n    at /Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts:211:7"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:50.866Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-72515-esearch-queries-in-sequence-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-72515-esearch-queries-in-sequence-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/test-results/research-agent-Web-Researc-72515-esearch-queries-in-sequence-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/samrat.sah/Desktop/code/prototypes/untitled folder/test_agents/tests/research-agent.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-e4d85ed20e67a3814f6c",
+              "file": "research-agent.spec.ts",
+              "line": 200,
+              "column": 7
+            },
+            {
+              "title": "should display proper styling and colors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 4835,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:51.412Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-a6178803b75f61fff95e",
+              "file": "research-agent.spec.ts",
+              "line": 221,
+              "column": 7
+            },
+            {
+              "title": "should handle network timeout gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7290,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-25T11:18:56.212Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f2d02868fe9ba1306988-d3fb743d844423653392",
+              "file": "research-agent.spec.ts",
+              "line": 237,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-09-25T11:18:13.916Z",
+    "duration": 61792.174,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 16,
+    "flaky": 0
+  }
+}
