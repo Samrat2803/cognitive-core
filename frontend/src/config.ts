@@ -3,8 +3,8 @@
  */
 
 export const API_CONFIG = {
-  // Backend API settings - Production API as default
-  baseURL: process.env.REACT_APP_API_URL || 'https://d1vembbjd54t86.cloudfront.net',
+  // Backend API settings - env-driven
+  baseURL: process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'http://cognitive-core-fresh.eba-c4n432jt.us-east-1.elasticbeanstalk.com'),
   timeout: 120000, // 2 minutes for research queries
   
   // Environment settings
@@ -19,12 +19,12 @@ export const API_CONFIG = {
 };
 
 export const UI_CONFIG = {
-  // Aistra color palette from user requirements
+  // Modern professional palette (Linear/GitHub-inspired)
   colors: {
-    primary: '#d9f378',      // Main accent color
-    secondary: '#5d535c',    // Secondary gray
-    dark: '#333333',         // Dark text/backgrounds
-    darkest: '#1c1e20',      // Darkest backgrounds
+    primary: '#2563eb',
+    secondary: '#6b7280',
+    dark: '#111827',
+    darkest: '#0f1419',
     white: '#ffffff',
     error: '#ef4444',
     success: '#10b981',
