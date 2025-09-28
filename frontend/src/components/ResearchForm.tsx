@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Search, Loader2 } from 'lucide-react';
 
 interface ResearchFormProps {
   onResearch: (query: string) => void;
@@ -16,12 +15,15 @@ const ResearchForm: React.FC<ResearchFormProps> = ({ onResearch, isLoading }) =>
     }
   };
 
+  const handleClear = () => {
+    setQuery('');
+  };
+
   return (
     <form className="research-form" onSubmit={handleSubmit}>
       <div className="form-group">
         <label htmlFor="query">
-          <Search size={20} style={{ display: 'inline', marginRight: '8px' }} />
-          Research Query
+          🔍 Research Query
         </label>
         <textarea
           id="query"
@@ -31,28 +33,31 @@ const ResearchForm: React.FC<ResearchFormProps> = ({ onResearch, isLoading }) =>
           disabled={isLoading}
           maxLength={500}
         />
-        <small style={{ color: '#666', fontSize: '0.85rem' }}>
+        <small style={{ color: '#999', fontSize: '0.85rem' }}>
           {query.length}/500 characters
         </small>
       </div>
       
-      <button 
-        type="submit" 
-        className="submit-button"
-        disabled={!query.trim() || isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="loading-spinner" />
-            Researching...
-          </>
-        ) : (
-          <>
-            <Search size={20} />
-            Start Research
-          </>
+      <div className="form-actions">
+        <button 
+          type="submit" 
+          className="submit-button"
+          disabled={!query.trim() || isLoading}
+        >
+          {isLoading ? '⏳ Researching...' : '🚀 Start Research'}
+        </button>
+        
+        {query && (
+          <button 
+            type="button"
+            className="reset-button"
+            onClick={handleClear}
+            disabled={isLoading}
+          >
+            🧹 Clear
+          </button>
         )}
-      </button>
+      </div>
     </form>
   );
 };

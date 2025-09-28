@@ -4,7 +4,9 @@ This directory contains comprehensive Playwright tests for the Web Research Agen
 
 ## Test Files
 
-### `research-agent.spec.ts`
+### **Frontend & UI Tests**
+
+#### `research-agent.spec.ts`
 UI tests for the React frontend application:
 - Page load and element visibility
 - Form validation and submission
@@ -14,7 +16,15 @@ UI tests for the React frontend application:
 - Multiple query handling
 - Styling and color palette validation
 
-### `api-integration.spec.ts`
+#### `basic-ui.spec.ts`
+Basic UI functionality tests:
+- Component rendering
+- Navigation and interactions
+- Responsive design validation
+
+### **API Integration Tests**
+
+#### `api-integration.spec.ts`
 API integration tests for the FastAPI backend:
 - Endpoint availability and responses
 - Request/response validation
@@ -22,6 +32,57 @@ API integration tests for the FastAPI backend:
 - CORS configuration
 - Concurrent request handling
 - Data structure validation
+
+### **Database Tests (Team B)** ✨
+
+#### `database-integration.spec.ts`
+Complete database integration testing:
+- Frontend → Backend → MongoDB pipeline
+- Query creation and status tracking
+- Database error handling and resilience
+- Analytics and metadata collection
+- Performance with multiple operations
+- Data consistency across operations
+
+#### `data-logging-verification.spec.ts`
+Data logging and persistence verification:
+- Query data properly logged and stored
+- Error cases properly logged
+- Session and user data logging
+- Research metadata comprehensively logged
+- Performance metrics logging
+- Analytics data accumulation
+- Concurrent logging integrity
+
+#### `end-to-end-database.spec.ts`
+End-to-end database workflow testing:
+- Full research workflow with database persistence
+- Multiple queries with database tracking
+- Export functionality includes database data
+- Error handling throughout complete pipeline
+- Real-time updates and progress tracking
+- Mobile responsiveness with database operations
+- Analytics data collection end-to-end
+- Complete user session tracking
+
+#### `database-performance.py`
+Database performance and load testing:
+- Individual operation performance benchmarks
+- Concurrent operations under load
+- Query retrieval performance optimization
+- Analytics operations performance
+- Stress testing conditions
+- API performance with database integration
+
+### **Backend Tests**
+
+#### `test-backend.py`
+Simple backend connectivity and functionality tests:
+- Server connectivity
+- Health check endpoint
+- Config endpoint
+- Basic research endpoint
+- CORS headers validation
 
 ## Running Tests
 
@@ -42,7 +103,7 @@ API integration tests for the FastAPI backend:
 
 ### Test Commands
 
-#### Using the test runner script:
+#### Using the main test runner script:
 ```bash
 ./run-tests.sh all         # Run all tests
 ./run-tests.sh ui          # Run UI tests only
@@ -51,6 +112,17 @@ API integration tests for the FastAPI backend:
 ./run-tests.sh ui-mode     # Run with Playwright UI
 ./run-tests.sh debug       # Run in debug mode
 ./run-tests.sh report      # Show test report
+```
+
+#### Using the database test runner (Team B):
+```bash
+./run-database-tests.sh                # Run all database tests
+./run-database-tests.sh db             # Database unit tests only
+./run-database-tests.sh integration    # Database integration tests
+./run-database-tests.sh performance    # Performance tests only
+./run-database-tests.sh e2e           # End-to-end database tests
+./run-database-tests.sh --headed      # Run with visible browser
+./run-database-tests.sh --ui          # Run with Playwright UI mode
 ```
 
 #### Using npm scripts:

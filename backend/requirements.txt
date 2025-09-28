@@ -1,11 +1,27 @@
-langchain
-langgraph
-tavily-python
+# Core FastAPI Application Dependencies
+fastapi
+uvicorn[standard]
 python-dotenv
+
+# LangGraph and LangChain for Multi-Agent System
+langgraph
 langchain-openai
 langchain-anthropic
-fastapi
-uvicorn
-pydantic
-asyncio
-typing-extensions
+langchain-core
+
+# Tavily API for Web Search
+tavily-python
+
+# Database dependencies for Team B - PyMongo provides its own BSON
+motor==3.7.1
+pymongo==4.15.1
+pydantic>=2.0.0
+dnspython>=1.16.0
+# NO standalone bson package - PyMongo provides its own BSON implementation
+
+# Testing dependencies
+pytest
+pytest-asyncio
+
+# Production dependencies
+gunicorn

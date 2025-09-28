@@ -4,6 +4,7 @@ import ResearchForm from './components/ResearchForm';
 import ResearchResults from './components/ResearchResults';
 import Header from './components/Header';
 import { ResearchResponse } from './types';
+import { API_CONFIG } from './config';
 
 function App() {
   const [results, setResults] = useState<ResearchResponse | null>(null);
@@ -16,7 +17,7 @@ function App() {
     setResults(null);
 
     try {
-      const response = await fetch('http://localhost:8000/research', {
+      const response = await fetch(`${API_CONFIG.baseURL}/research`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,6 +38,11 @@ function App() {
     }
   };
 
+  const handleNewSearch = () => {
+    setResults(null);
+    setError(null);
+  };
+
   return (
     <div className="App">
       <Header />
@@ -50,11 +56,46 @@ function App() {
           {error && (
             <div className="error-message">
               <p>❌ {error}</p>
+              <button onClick={handleNewSearch} style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}>
+                Try Again
+              </button>
             </div>
           )}
           
           {results && (
-            <ResearchResults results={results} />
+            <div style={{ marginTop: '2rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem'
+              }}>
+                <h2 style={{ color: 'var(--primary-green)' }}>Research Results</h2>
+                <button 
+                  onClick={handleNewSearch}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: 'var(--primary-green)',
+                    color: 'var(--dark-bg)',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  🔍 New Search
+                </button>
+              </div>
+              <ResearchResults results={results} />
+            </div>
           )}
         </div>
       </main>
