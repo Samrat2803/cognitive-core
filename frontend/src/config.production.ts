@@ -1,6 +1,6 @@
 // Production Configuration for AWS Deployment
 export const PRODUCTION_CONFIG = {
-  apiUrl: process.env.REACT_APP_API_URL || 'https://api.tavily-research.amazonaws.com',
+  apiUrl: process.env.REACT_APP_API_URL || 'https://d1vembbjd54t86.cloudfront.net',
   environment: 'production',
   enableAnalytics: true,
   enableSourceMaps: false,

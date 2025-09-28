@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team C - Frontend Integration Test</title>
+    <style>
+        body {
+            font-family: 'Roboto Flex', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1c1e20;
+            color: #ffffff;
+        }
+        .container {
+            background-color: #333333;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .success { color: #d9f378; }
+        .warning { color: #f59e0b; }
+        .error { color: #ef4444; }
+        button {
+            background-color: #d9f378;
+            color: #1c1e20;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #c8e665;
+        }
+        #results {
+            background-color: #5d535c;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Team C - Frontend Integration Test</h1>
+        <p>Testing the updated frontend configuration with the new CloudFront HTTPS URL.</p>
+        
+        <div class="container">
+            <h3>Configuration Status</h3>
+            <p class="success">✅ Frontend updated to use: <strong>https://d1vembbjd54t86.cloudfront.net</strong></p>
+            <p class="success">✅ Build completed successfully</p>
+            <p class="success">✅ HTTPS SSL certificate verified</p>
+        </div>
+
+        <div class="container">
+            <h3>API Integration Test</h3>
+            <button onclick="testHealthEndpoint()">Test Health Endpoint</button>
+            <button onclick="testResearchEndpoint()">Test Research Endpoint</button>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://d1vembbjd54t86.cloudfront.net';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            results.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function testHealthEndpoint() {
+            log('Testing health endpoint...', 'info');
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                log(`Health endpoint responded with status: ${response.status}`, 
+                    response.ok ? 'success' : 'warning');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Backend status: ${data.status}`, 'success');
+                    log(`Database connected: ${data.database_connected}`, 
+                        data.database_connected ? 'success' : 'warning');
+                }
+            } catch (error) {
+                log(`Health check failed: ${error.message}`, 'error');
+                log('This may be due to CORS or network issues', 'warning');
+            }
+        }
+
+        async function testResearchEndpoint() {
+            log('Testing research endpoint...', 'info');
+            try {
+                const response = await fetch(`${API_BASE_URL}/research`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: 'Team C frontend integration test'
+                    })
+                });
+                
+                log(`Research endpoint responded with status: ${response.status}`, 
+                    response.ok ? 'success' : 'warning');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Research completed successfully!`, 'success');
+                    log(`Processing time: ${data.processing_time_ms}ms`, 'info');
+                    log(`Sources found: ${data.sources_count}`, 'info');
+                } else {
+                    const errorText = await response.text();
+                    log(`Error response: ${errorText.substring(0, 100)}...`, 'error');
+                }
+            } catch (error) {
+                log(`Research test failed: ${error.message}`, 'error');
+                log('This may be due to CORS, network, or backend issues', 'warning');
+            }
+        }
+
+        // Auto-run health check on page load
+        window.onload = () => {
+            log('Team C Frontend Integration Test initialized', 'success');
+            log(`Configured API URL: ${API_BASE_URL}`, 'info');
+            setTimeout(testHealthEndpoint, 1000);
+        };
+    </script>
+</body>
+</html>

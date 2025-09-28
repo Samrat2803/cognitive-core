@@ -94,10 +94,25 @@ pids/
 .stylelintcache
 
 # Environment variables (keep .env.example)
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# AWS and deployment secrets
+.aws/
+deployment-info.txt
+*.pem
+*.key
+
+# Elastic Beanstalk
+.elasticbeanstalk/logs/
+.elasticbeanstalk/deployments/
+
+# MongoDB connection strings and API keys
+**/config.json
+**/secrets.json
 
 # Temporary files
 *.tmp
@@ -113,6 +128,15 @@ temp/
 reports/volatility_results/
 reports/test-results/
 reports/playwright-report/
+test-failure.png
+test-production.js
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+*.png
+*.mp4
+*.webm
 
 # Jupyter Notebook
 .ipynb_checkpoints

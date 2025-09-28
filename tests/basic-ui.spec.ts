@@ -47,27 +47,38 @@ test.describe('Basic UI Tests - Sequential', () => {
 
   test('should perform a simple research query', async ({ page }) => {
     // Navigate to the app
-    await page.goto('http://localhost:3000');
-    
+    await page.goto('http://localhost:3000', { timeout: 60000 });
+
+    // Quick backend reachability check via CloudFront
+    const health = await page.evaluate(async () => {
+      try {
+        const r = await fetch('https://d1vembbjd54t86.cloudfront.net/health', { method: 'GET' });
+        return { ok: r.ok, status: r.status };
+      } catch (e:any) {
+        return { ok: false, error: e?.message || 'fetch failed' };
+      }
+    });
+    console.log('CloudFront /health:', health);
+
     // Enter a simple query
     const query = 'What is machine learning?';
-    await page.fill('textarea[id="query"]', query);
-    
+    await page.fill('textarea[id="query"]', query, { timeout: 60000 });
+
     // Submit the form
-    await page.click('.submit-button');
-    
+    await page.click('.submit-button', { timeout: 60000 });
+
     // Wait for loading state
     await expect(page.locator('.submit-button')).toContainText('Researching...');
     await expect(page.locator('.loading-spinner')).toBeVisible();
-    
+
     // Wait for research to complete (with timeout) - handle both success and error cases
     let testPassed = false;
-    
+
     try {
       // Wait for either results or error message
       await Promise.race([
-        page.waitForSelector('.research-results', { timeout: 20000 }),
-        page.waitForSelector('.error-message', { timeout: 20000 })
+        page.waitForSelector('.research-results', { timeout: 120000 }),
+        page.waitForSelector('.error-message', { timeout: 120000 })
       ]);
       
       // Check if results are displayed

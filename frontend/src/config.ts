@@ -4,7 +4,7 @@
 
 export const API_CONFIG = {
   // Backend API settings - Production API as default
-  baseURL: process.env.REACT_APP_API_URL || 'http://cognitive-core-fresh.eba-c4n432jt.us-east-1.elasticbeanstalk.com',
+  baseURL: process.env.REACT_APP_API_URL || 'https://d1vembbjd54t86.cloudfront.net',
   timeout: 120000, // 2 minutes for research queries
   
   // Environment settings
