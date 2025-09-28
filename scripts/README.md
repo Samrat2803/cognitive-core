@@ -34,9 +34,36 @@ Shows current environment status and costs.
 - ⏱️ Takes 3-5 minutes
 - 🔗 Same URL restored
 
+### **4. Set Environment Variables (Interactive)**
+```bash
+./scripts/eb-set-env-vars.sh
+```
+- 🔐 Securely prompts for API keys and secrets
+- ⚡ Uses AWS CLI instead of web console
+- 🔒 Input is hidden while typing
+
+### **5. Set Environment Variables (From File)**
+```bash
+./scripts/eb-set-env-from-file.sh [env-file]
+```
+- 📁 Reads secrets from secure .env file
+- 🤖 Good for automation and CI/CD
+- 🛡️ Validates all required variables
+
 ---
 
 ## **🚀 Quick Start:**
+
+### **First Time Setup:**
+```bash
+cd /Users/kiransah/Desktop/code/tavily_assignment/exp_2
+
+# 1. Create environment
+./scripts/eb-recreate.sh
+
+# 2. Set API keys and secrets
+./scripts/eb-set-env-vars.sh
+```
 
 ### **Save Money (Stop):**
 ```bash
@@ -48,6 +75,7 @@ cd /Users/kiransah/Desktop/code/tavily_assignment/exp_2
 ```bash
 cd /Users/kiransah/Desktop/code/tavily_assignment/exp_2  
 ./scripts/eb-recreate.sh
+# Note: Environment variables persist and don't need to be set again
 ```
 
 ### **Check Status:**
@@ -104,6 +132,29 @@ cd /Users/kiransah/Desktop/code/tavily_assignment/exp_2
 
 # If terminated, recreate
 ./scripts/eb-recreate.sh
+```
+
+### **Environment Variables Setup:**
+
+**Interactive (Recommended for first-time setup):**
+```bash
+./scripts/eb-set-env-vars.sh
+# Will prompt for:
+# - TAVILY_API_KEY
+# - OPENAI_API_KEY  
+# - MONGODB_CONNECTION_STRING
+```
+
+**From File (For automation):**
+```bash
+# Create secure env file
+./scripts/eb-set-env-from-file.sh
+# This creates: ~/.aws/eb-secrets-cognitive-core-fresh.env
+# Edit the file with your real credentials, then run:
+./scripts/eb-set-env-from-file.sh
+
+# Or use custom file:
+./scripts/eb-set-env-from-file.sh /path/to/my-secrets.env
 ```
 
 ---
