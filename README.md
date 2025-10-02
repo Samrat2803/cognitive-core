@@ -45,6 +45,7 @@ The Political Analyst Workbench is a sophisticated AI-powered research platform 
 
 ### 🚀 Recent Updates (October 2025)
 
+- ✅ **Repository Cleanup:** Removed V1 codebase, 144 files deleted (53K lines)
 - ✅ **Agent Expansion Project:** 3/9 specialized sub-agents completed (33%)
 - ✅ **Sentiment Analyzer:** Multi-country sentiment analysis with bias detection
 - ✅ **Live Political Monitor:** Real-time event tracking with explosiveness scoring
@@ -207,7 +208,7 @@ Each sub-agent operates independently with its own LangGraph workflow:
 
 ### Local Development
 
-#### Backend V2 Setup
+#### Backend Setup
 ```bash
 cd backend_v2
 
@@ -228,7 +229,7 @@ python app.py
 
 Backend will be available at: `http://localhost:8000`
 
-#### Frontend V2 Setup
+#### Frontend Setup
 ```bash
 cd Frontend_v2
 
@@ -290,7 +291,7 @@ For detailed deployment instructions, see [documentation/deployment/](documentat
 
 ```
 political-analyst-workbench/
-├── backend_v2/                 # V2 Backend (LangGraph Master Agent)
+├── backend_v2/                 # Backend (LangGraph Master Agent + FastAPI)
 │   ├── langgraph_master_agent/ # Master Agent implementation
 │   │   ├── nodes/              # 7 core master agent nodes
 │   │   ├── sub_agents/         # 9 specialized sub-agents
@@ -315,7 +316,7 @@ political-analyst-workbench/
 │   ├── app.py                  # FastAPI application
 │   └── requirements.txt        # Python dependencies
 │
-├── Frontend_v2/                # V2 Frontend (Vite + React)
+├── Frontend_v2/                # Frontend (Vite + React + TypeScript)
 │   ├── src/
 │   │   ├── components/         # UI components (80+)
 │   │   ├── services/           # API and WebSocket
@@ -330,7 +331,10 @@ political-analyst-workbench/
 │   └── troubleshooting/        # Issue resolution
 │
 ├── scripts/                    # Utility scripts
-└── config/                     # Configuration files
+├── config/                     # Playwright configurations
+├── README.md                   # This file
+├── START_HERE_DEPLOYMENT.md    # Quick deployment guide
+└── DEPLOYMENT_GUIDE.md         # Detailed deployment guide
 ```
 
 ---
