@@ -30,5 +30,20 @@
       "~/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/components/ui/GradientCard.tsx",
+    "src/components/ui/IconButton.tsx",
+    "src/components/ui/Markdown.tsx",
+    "src/components/ui/PanelHeaderButton.tsx",
+    "src/components/ui/Popover.tsx",
+    "src/components/ui/RepositoryStats.tsx",
+    "src/components/ui/ScrollArea.tsx",
+    "src/components/ui/Slider.tsx",
+    "src/components/ui/TabsWithSlider.tsx",
+    "src/components/ui/ThemeSwitch.tsx",
+    "src/components/ui/ColorSchemeDialog.tsx",
+    "src/components/ui/Dialog.tsx",
+    "src/components/ui/SettingsButton.tsx"
+  ]
 }
