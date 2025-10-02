@@ -26,6 +26,9 @@ from services.mongo_service import MongoService
 # Load environment variables (for local development)
 load_dotenv()
 
+# Base URL for artifact links (use CloudFront in production, localhost in dev)
+BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Political Analyst Workbench API",
@@ -113,8 +116,8 @@ The visualization below shows the year-over-year GDP growth trajectory, highligh
             "title": "India's GDP Growth Rate (2020-2024)",
             "description": "Year-over-year GDP growth showing V-shaped recovery post-pandemic",
             "status": "ready",
-            "html_url": "http://localhost:8000/api/artifacts/india_gdp_cached_2024.html",
-            "png_url": "http://localhost:8000/api/artifacts/india_gdp_cached_2024.png",
+            "html_url": f"{BASE_URL}/api/artifacts/india_gdp_cached_2024.html",
+            "png_url": f"{BASE_URL}/api/artifacts/india_gdp_cached_2024.png",
             "created_at": "2024-10-01T12:00:00",
             "metadata": {
                 "data_points": 5,
@@ -197,8 +200,8 @@ The visualization below shows Pakistan's GDP growth trajectory, highlighting the
             "title": "Pakistan's GDP Growth Rate (2020-2024)",
             "description": "Year-over-year GDP growth showing recovery and challenges",
             "status": "ready",
-            "html_url": "http://localhost:8000/api/artifacts/pakistan_gdp_cached_2024.html",
-            "png_url": "http://localhost:8000/api/artifacts/pakistan_gdp_cached_2024.png",
+            "html_url": f"{BASE_URL}/api/artifacts/pakistan_gdp_cached_2024.html",
+            "png_url": f"{BASE_URL}/api/artifacts/pakistan_gdp_cached_2024.png",
             "created_at": "2024-10-01T12:00:00",
             "metadata": {
                 "data_points": 5,
@@ -876,7 +879,7 @@ async def list_recent_artifacts():
             "filename": filename,
             "size": os.path.getsize(file_path),
             "modified": datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat(),
-            "url": f"http://localhost:8000/api/artifacts/{filename}"
+            "url": f"{BASE_URL}/api/artifacts/{filename}"
         })
     
     return {"artifacts": artifacts, "count": len(artifacts)}
@@ -1111,7 +1114,7 @@ async def websocket_analyze(websocket: WebSocket):
                         # Handle both S3 and local storage URLs
                         html_url = (artifact_data.get("s3_html_url") or 
                                    artifact_data.get("html_url") or
-                                   f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.html")
+                                   f"{BASE_URL}/api/artifacts/{artifact_data.get('artifact_id')}.html")
                         
                         # Only include png_url if it exists in artifact_data
                         artifact_message = {
@@ -1186,7 +1189,7 @@ async def websocket_analyze(websocket: WebSocket):
                                     # Handle both S3 and local storage URLs
                                     html_url = (artifact_data.get("s3_html_url") or 
                                                artifact_data.get("html_url") or
-                                               f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.html")
+                                               f"{BASE_URL}/api/artifacts/{artifact_data.get('artifact_id')}.html")
                                     
                                     # Only include png_url if it exists in artifact_data
                                     artifact_message = {
