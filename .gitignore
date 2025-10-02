@@ -115,9 +115,20 @@ backend-deployment-info.txt
 .elasticbeanstalk/deployments/
 
 # Generated Artifacts
-artifacts/*.html
-artifacts/*.png
+artifacts/
+**/artifacts/*.html
+**/artifacts/*.png
+**/artifacts/*.json
 !artifacts/.gitkeep
+
+# Examples and test outputs
+examples/
+**/examples/*.json
+**/examples/*.html
+
+# POC and test files
+**/poc_*.py
+**/test_output_*.json
 
 # MongoDB connection strings and API keys
 **/config.json

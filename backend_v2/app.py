@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from langgraph_master_agent.main import MasterPoliticalAnalyst
 from config_server import Config
 from datetime import datetime
+from services.mongo_service import MongoService
 
 # Load environment variables (for local development)
 load_dotenv()
@@ -47,7 +48,7 @@ app.add_middleware(
 
 # Global instances
 agent: Optional[MasterPoliticalAnalyst] = None
-mongo_service = None
+mongo_service = MongoService() if os.getenv("MONGODB_CONNECTION_STRING") else None
 
 # ============================================================================
 # QUERY CACHE (For Testing)
@@ -272,6 +273,7 @@ class AnalysisResponse(BaseModel):
     iterations: int
     execution_log: list[Dict[str, Any]]
     artifact: Optional[Dict[str, Any]] = None
+    sub_agent_artifacts: Optional[Dict[str, list[Dict[str, Any]]]] = None  # NEW: artifacts from sub-agents
     processing_time_ms: Optional[int] = None
     errors: Optional[list[str]] = None
 
@@ -484,6 +486,51 @@ async def analyze_query(request: AnalysisRequest):
         # Sanitize result to remove MongoDB ObjectIds
         result = _sanitize_for_json(result)
         
+        # DEBUG: Artifact extraction
+        print("\n" + "=" * 70)
+        print("🔍 HTTP ARTIFACT EXTRACTION DEBUG")
+        print("=" * 70)
+        print(f"result.keys(): {list(result.keys())}")
+        
+        # Extract sub-agent artifacts (e.g., from sentiment analyzer)
+        sub_agent_artifacts = {}
+        sub_agent_results = result.get("sub_agent_results", {})
+        
+        print(f"sub_agent_results present: {bool(sub_agent_results)}")
+        
+        if sub_agent_results:
+            print(f"Sub-agents in result: {list(sub_agent_results.keys())}")
+            
+            # Extract artifacts from sentiment analyzer
+            if "sentiment_analysis" in sub_agent_results:
+                print("✅ Found sentiment_analysis in sub_agent_results")
+                sentiment_result = sub_agent_results["sentiment_analysis"]
+                print(f"   Success: {sentiment_result.get('success')}")
+                print(f"   Has data: {bool(sentiment_result.get('data'))}")
+                
+                if sentiment_result.get("success") and sentiment_result.get("data", {}).get("artifacts"):
+                    artifacts_list = sentiment_result["data"]["artifacts"]
+                    print(f"   ✅ Artifacts found: {len(artifacts_list)}")
+                    for i, art in enumerate(artifacts_list, 1):
+                        print(f"      {i}. {art.get('type')}: {art.get('artifact_id')}")
+                    sub_agent_artifacts["sentiment_analysis"] = artifacts_list
+                else:
+                    print("   ❌ No artifacts in sentiment_analysis data")
+            else:
+                print("❌ sentiment_analysis NOT in sub_agent_results")
+            
+            # Add more sub-agents here as they're implemented
+            # if "fact_checker" in sub_agent_results: ...
+            # if "media_bias_detector" in sub_agent_results: ...
+        else:
+            print("❌ No sub_agent_results at all")
+        
+        print(f"\nFinal sub_agent_artifacts dict: {bool(sub_agent_artifacts)}")
+        if sub_agent_artifacts:
+            for agent, arts in sub_agent_artifacts.items():
+                print(f"  {agent}: {len(arts)} artifacts")
+        print("=" * 70 + "\n")
+        
         return AnalysisResponse(
             success=True,
             session_id=agent_session_id,
@@ -495,6 +542,7 @@ async def analyze_query(request: AnalysisRequest):
             iterations=result.get("iterations", 0),
             execution_log=result.get("execution_log", []),
             artifact=result.get("artifact"),
+            sub_agent_artifacts=sub_agent_artifacts or None,  # Will be populated when master agent returns sub_agent_results
             processing_time_ms=processing_time,
             errors=result.get("errors", [])
         )
@@ -516,16 +564,28 @@ async def analyze_query(request: AnalysisRequest):
 @app.get("/api/artifacts/{artifact_id}.html")
 async def get_artifact_html(artifact_id: str):
     """Retrieve artifact HTML file"""
+    print(f"📊 Artifact HTML requested: {artifact_id}")
+    
     # Artifacts are stored in artifacts/ directory relative to backend_server/
     file_path = f"artifacts/{artifact_id}.html"
     
+    # Also check sentiment analyzer artifacts folder
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Artifact not found")
+        alt_path = f"langgraph_master_agent/sub_agents/sentiment_analyzer/artifacts/{artifact_id}.html"
+        if os.path.exists(alt_path):
+            print(f"✅ Found artifact in sentiment analyzer folder: {alt_path}")
+            file_path = alt_path
+        else:
+            print(f"❌ Artifact not found: {artifact_id}")
+            raise HTTPException(status_code=404, detail="Artifact not found")
     
+    print(f"✅ Serving artifact from: {file_path}")
     return FileResponse(
         file_path,
         media_type="text/html",
-        filename=f"{artifact_id}.html"
+        headers={
+            "Content-Disposition": "inline"  # Display in browser, not download
+        }
     )
 
 
@@ -542,6 +602,34 @@ async def get_artifact_png(artifact_id: str):
         file_path,
         media_type="image/png",
         filename=f"{artifact_id}.png"
+    )
+
+
+@app.get("/api/artifacts/{artifact_id}.json")
+async def get_artifact_json(artifact_id: str):
+    """Retrieve artifact JSON file (data exports)"""
+    print(f"📊 Artifact JSON requested: {artifact_id}")
+    
+    # Check main artifacts directory
+    file_path = f"artifacts/{artifact_id}.json"
+    
+    # Also check sentiment analyzer artifacts folder
+    if not os.path.exists(file_path):
+        alt_path = f"langgraph_master_agent/sub_agents/sentiment_analyzer/artifacts/{artifact_id}.json"
+        if os.path.exists(alt_path):
+            print(f"✅ Found JSON artifact in sentiment analyzer folder: {alt_path}")
+            file_path = alt_path
+        else:
+            print(f"❌ JSON artifact not found: {artifact_id}")
+            raise HTTPException(status_code=404, detail="JSON artifact not found")
+    
+    print(f"✅ Serving JSON artifact from: {file_path}")
+    return FileResponse(
+        file_path,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f"attachment; filename={artifact_id}.json"  # Force download for JSON
+        }
     )
 
 
@@ -704,6 +792,97 @@ async def get_mermaid_diagram():
 
 
 # ============================================================================
+# Debug/Test Endpoints
+# ============================================================================
+
+@app.get("/api/test-sentiment-artifacts")
+async def test_sentiment_artifacts():
+    """Test endpoint to verify sentiment analyzer creates artifacts"""
+    from langgraph_master_agent.tools.sub_agent_caller import SubAgentCaller
+    
+    print("\n" + "=" * 70)
+    print("🧪 TEST ENDPOINT: Testing Sentiment Analyzer Artifacts")
+    print("=" * 70)
+    
+    try:
+        caller = SubAgentCaller()
+        result = await caller.call_sentiment_analyzer(
+            query="test nuclear policy",
+            countries=["US", "UK"]
+        )
+        
+        print(f"Sub-agent success: {result.get('success')}")
+        
+        if result.get("success"):
+            data = result.get("data", {})
+            artifacts = data.get("artifacts", [])
+            
+            print(f"Artifacts returned: {len(artifacts)}")
+            for i, art in enumerate(artifacts, 1):
+                print(f"  {i}. {art.get('type')}: {art.get('artifact_id')}")
+            
+            print("=" * 70 + "\n")
+            
+            return {
+                "success": True,
+                "artifacts_count": len(artifacts),
+                "artifacts": [
+                    {
+                        "artifact_id": a.get("artifact_id"),
+                        "type": a.get("type"),
+                        "title": a.get("title"),
+                        "html_path": a.get("html_path")
+                    }
+                    for a in artifacts
+                ]
+            }
+        else:
+            print(f"❌ Sub-agent failed: {result.get('error')}")
+            print("=" * 70 + "\n")
+            return {"success": False, "error": result.get("error")}
+    
+    except Exception as e:
+        print(f"❌ Test failed with exception: {e}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 70 + "\n")
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/artifacts/list")
+async def list_recent_artifacts():
+    """Debug endpoint to list recently generated artifacts"""
+    import glob
+    
+    artifact_dir = "langgraph_master_agent/sub_agents/sentiment_analyzer/artifacts"
+    
+    if not os.path.exists(artifact_dir):
+        return {"artifacts": [], "error": "Artifact directory not found"}
+    
+    # Get all HTML and JSON files
+    html_files = glob.glob(f"{artifact_dir}/*.html")
+    json_files = glob.glob(f"{artifact_dir}/*.json")
+    
+    all_files = html_files + json_files
+    all_files.sort(key=os.path.getmtime, reverse=True)
+    
+    artifacts = []
+    for file_path in all_files[:20]:  # Last 20 artifacts
+        filename = os.path.basename(file_path)
+        artifact_id = os.path.splitext(filename)[0]
+        
+        artifacts.append({
+            "artifact_id": artifact_id,
+            "filename": filename,
+            "size": os.path.getsize(file_path),
+            "modified": datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat(),
+            "url": f"http://localhost:8000/api/artifacts/{filename}"
+        })
+    
+    return {"artifacts": artifacts, "count": len(artifacts)}
+
+
+# ============================================================================
 # WebSocket Endpoint for Streaming
 # ============================================================================
 
@@ -729,6 +908,8 @@ async def websocket_analyze(websocket: WebSocket):
     - {"type": "complete", "data": {...}, "timestamp": "..."}
     - {"type": "error", "data": {...}, "timestamp": "..."}
     """
+    global agent, mongo_service
+    
     await websocket.accept()
     
     # Helper function to send formatted messages
@@ -950,6 +1131,88 @@ async def websocket_analyze(websocket: WebSocket):
                             current_message_id
                         ))
                     
+                    # DEBUG: Check what we got from master agent
+                    print("\n" + "=" * 70)
+                    print("🔍 WEBSOCKET ARTIFACT DEBUG CHECKPOINT")
+                    print("=" * 70)
+                    print(f"result.keys(): {list(result.keys())}")
+                    print(f"result.get('artifact'): {bool(result.get('artifact'))}")
+                    print(f"result.get('sub_agent_results') exists: {'sub_agent_results' in result}")
+                    
+                    # Extract sub-agent artifacts (same logic as HTTP endpoint - Oct 2, 2025)
+                    sub_agent_artifacts = {}
+                    sub_agent_results = result.get("sub_agent_results", {})
+                    
+                    if sub_agent_results:
+                        # Extract artifacts from sentiment analyzer
+                        if "sentiment_analysis" in sub_agent_results:
+                            sentiment_result = sub_agent_results["sentiment_analysis"]
+                            if sentiment_result.get("success") and sentiment_result.get("data", {}).get("artifacts"):
+                                sub_agent_artifacts["sentiment_analysis"] = sentiment_result["data"]["artifacts"]
+                                print(f"✅ Extracted {len(sentiment_result['data']['artifacts'])} artifacts from sentiment_analysis")
+                        
+                        # Add other sub-agents here as they're developed
+                        # if "other_agent" in sub_agent_results: ...
+                    
+                    print(f"Total sub_agent_artifacts extracted: {sum(len(v) if isinstance(v, list) else 0 for v in sub_agent_artifacts.values())}")
+                    print(f"sub_agent_artifacts after extraction: {bool(sub_agent_artifacts)}")
+                    
+                    if sub_agent_artifacts:
+                        print(f"✅ Found sub_agent_artifacts with {len(sub_agent_artifacts)} agent(s)")
+                        for agent_name in sub_agent_artifacts.keys():
+                            artifacts_list = sub_agent_artifacts[agent_name]
+                            artifact_count = len(artifacts_list) if isinstance(artifacts_list, list) else 0
+                            print(f"   Agent '{agent_name}': {artifact_count} artifacts")
+                    else:
+                        print("❌ sub_agent_artifacts is EMPTY or missing!")
+                        print("   Checking if sub_agent_results exists in result...")
+                        if 'sub_agent_results' in result:
+                            print(f"   ✓ sub_agent_results found: {list(result['sub_agent_results'].keys())}")
+                        else:
+                            print("   ✗ sub_agent_results NOT in result")
+                    print("=" * 70 + "\n")
+                    if sub_agent_artifacts:
+                        for agent_name, artifacts_list in sub_agent_artifacts.items():
+                            if isinstance(artifacts_list, list):
+                                for artifact_data in artifacts_list:
+                                    # Safety check: skip malformed artifacts
+                                    if not artifact_data or not artifact_data.get("artifact_id"):
+                                        print(f"⚠️  Skipping malformed artifact from {agent_name}")
+                                        continue
+                                    
+                                    # Handle both S3 and local storage URLs
+                                    html_url = (artifact_data.get("s3_html_url") or 
+                                               artifact_data.get("html_url") or
+                                               f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.html")
+                                    
+                                    png_url = (artifact_data.get("s3_png_url") or 
+                                              artifact_data.get("png_url") or
+                                              f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.png")
+                                    
+                                    await websocket.send_json(create_message(
+                                        "artifact",
+                                        {
+                                            "artifact_id": artifact_data.get("artifact_id"),
+                                            "type": artifact_data.get("type", "chart"),
+                                            "title": artifact_data.get("title", "Visualization"),
+                                            "html_url": html_url,
+                                            "png_url": png_url,
+                                            "storage": artifact_data.get("storage", "local"),
+                                            "metadata": artifact_data.get("metadata", {}),
+                                            "source": agent_name
+                                        },
+                                        current_message_id
+                                    ))
+                                    
+                                    print(f"📊 Sent artifact to frontend: {artifact_data.get('artifact_id')} ({artifact_data.get('type')})")
+                    
+                        # Debug: Log total artifacts sent
+                        artifact_count = 1 if result.get("artifact") else 0
+                        for agent_name, artifacts_list in sub_agent_artifacts.items():
+                            if isinstance(artifacts_list, list):
+                                artifact_count += len(artifacts_list)
+                        print(f"📊 Total artifacts sent to frontend: {artifact_count}")
+                    
                     # Send complete
                     await websocket.send_json(create_message(
                         "complete",
@@ -1024,6 +1287,149 @@ async def websocket_analyze(websocket: WebSocket):
             await websocket.close()
         except:
             pass
+
+
+# ============================================================================
+# Live Political Monitor API
+# ============================================================================
+
+class ExplosiveTopicsRequest(BaseModel):
+    """Request model for explosive topics detection"""
+    keywords: list[str]
+    cache_hours: Optional[int] = 3
+    force_refresh: Optional[bool] = False
+    max_results: Optional[int] = 10
+
+
+class ExplosiveTopicsResponse(BaseModel):
+    """Response model for explosive topics"""
+    success: bool
+    source: str  # 'cache' or 'fresh'
+    cached_at: str
+    cache_expires_in_minutes: int
+    keywords_used: list[str]
+    topics: list[Dict[str, Any]]
+    total_articles_analyzed: int
+    processing_time_seconds: float
+    errors: Optional[list[str]] = None
+
+
+@app.post("/api/live-monitor/explosive-topics", response_model=ExplosiveTopicsResponse)
+async def get_explosive_topics(request: ExplosiveTopicsRequest):
+    """
+    Get explosive/trending political topics based on user keywords
+    
+    Features:
+    - Keyword-based topic discovery
+    - 4-signal explosiveness scoring
+    - MongoDB caching (default: 3 hours)
+    - Force refresh option
+    
+    Args:
+        keywords: List of keywords to focus on (e.g., ["Bihar", "corruption"])
+        cache_hours: Cache duration (1-24 hours, default: 3)
+        force_refresh: Bypass cache and fetch fresh data
+        max_results: Maximum topics to return (default: 10)
+    
+    Returns:
+        Ranked list of explosive topics with scores
+    """
+    
+    try:
+        # Add agent path to sys.path
+        agent_path = os.path.join(os.path.dirname(__file__), 'langgraph_master_agent', 'sub_agents', 'live_political_monitor')
+        if agent_path not in sys.path:
+            sys.path.insert(0, agent_path)
+        
+        # Import agent components
+        from graph import create_live_monitor_graph
+        from state import LiveMonitorState
+        from tools.cache_manager import CacheManager
+        
+        # Initialize cache manager with global mongo_service
+        cache_manager = CacheManager(mongo_service=mongo_service)
+        
+        # Check cache (unless force refresh)
+        if not request.force_refresh:
+            cached_result = await cache_manager.get_cached_topics(
+                request.keywords, 
+                request.cache_hours
+            )
+            
+            if cached_result:
+                return ExplosiveTopicsResponse(
+                    success=True,
+                    source="cache",
+                    cached_at=cached_result['cached_at'],
+                    cache_expires_in_minutes=cached_result['cache_expires_in_minutes'],
+                    keywords_used=request.keywords,
+                    topics=cached_result['topics'],
+                    total_articles_analyzed=cached_result.get('total_articles_analyzed', 0),
+                    processing_time_seconds=cached_result.get('processing_time_seconds', 0)
+                )
+        
+        # Fetch fresh data
+        start_time = time.time()
+        
+        # Create graph
+        graph = create_live_monitor_graph()
+        
+        # Initialize state
+        initial_state: LiveMonitorState = {
+            "keywords": request.keywords,
+            "cache_hours": request.cache_hours,
+            "max_results": request.max_results,
+            "generated_queries": [],
+            "raw_articles": [],
+            "relevant_articles": [],
+            "irrelevant_articles": [],
+            "extracted_topics": [],
+            "scored_topics": [],
+            "explosive_topics": [],
+            "total_articles_analyzed": 0,
+            "processing_time_seconds": 0.0,
+            "execution_log": [],
+            "error_log": []
+        }
+        
+        # Run graph
+        result = await graph.ainvoke(initial_state)
+        
+        # Calculate processing time
+        processing_time = time.time() - start_time
+        
+        # Cache results
+        await cache_manager.cache_topics(
+            keywords=request.keywords,
+            topics=result['explosive_topics'],
+            cache_hours=request.cache_hours,
+            metadata={
+                "total_articles_analyzed": result['total_articles_analyzed'],
+                "processing_time_seconds": processing_time
+            }
+        )
+        
+        return ExplosiveTopicsResponse(
+            success=True,
+            source="fresh",
+            cached_at=datetime.now().isoformat(),
+            cache_expires_in_minutes=request.cache_hours * 60,
+            keywords_used=request.keywords,
+            topics=result['explosive_topics'],
+            total_articles_analyzed=result['total_articles_analyzed'],
+            processing_time_seconds=processing_time,
+            errors=result.get('error_log')
+        )
+        
+    except Exception as e:
+        print(f"Live Monitor error: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to detect explosive topics: {str(e)}"
+        )
 
 
 # ============================================================================
