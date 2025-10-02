@@ -14,8 +14,8 @@ from datetime import datetime
 # Add paths for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
 
-from graph import create_sentiment_analyzer_graph
-from state import SentimentAnalyzerState
+from sentiment_analyzer.graph import create_sentiment_analyzer_graph
+from sentiment_analyzer.state import SentimentAnalyzerState
 
 # Test queries
 TEST_QUERIES = [

@@ -1,7 +1,8 @@
 # 🚀 Deployment Summary - Execution Graph Feature
 
 **Deployment Date:** October 2, 2025  
-**Status:** ✅ **SUCCESSFULLY DEPLOYED**
+**Status:** ⚠️ **DEPLOYED WITH KNOWN ISSUE**  
+**Issue:** WebSocket disabled in production (HTTPS/WSS required)
 
 ---
 
@@ -19,6 +20,25 @@
 - **Environment:** political-analyst-backend-v3
 - **Instance Type:** t3.small (single instance)
 - **Platform:** Python 3.11 on Amazon Linux 2023
+
+---
+
+## ⚠️ **Known Issue: WebSocket Disabled in Production**
+
+### Problem:
+Browser blocks `ws://` (insecure WebSocket) connections from HTTPS pages.  
+**Error:** `SecurityError: An insecure WebSocket connection may not be initiated from a page loaded over HTTPS.`
+
+### Impact:
+- ❌ **Real-time streaming** disabled in production
+- ❌ **Progress updates** not shown during queries
+- ✅ **REST API** still fully functional
+- ✅ **Execution graphs** work perfectly
+- ✅ **Local development** unaffected
+
+### Solution:
+Set up SSL certificate with Application Load Balancer to enable `wss://` (secure WebSocket).  
+**See:** `WEBSOCKET_SSL_SETUP.md` for complete guide (~30 min setup).
 
 ---
 
