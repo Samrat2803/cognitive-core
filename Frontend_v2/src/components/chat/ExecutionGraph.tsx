@@ -11,6 +11,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './ExecutionGraph.css';
+import { config } from '../../config';
 
 interface ExecutionGraphProps {
   sessionId: string;
@@ -80,7 +81,7 @@ export function ExecutionGraph({ sessionId }: ExecutionGraphProps) {
     const fetchGraph = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8001/api/graph/execution/${sessionId}`);
+        const response = await fetch(`${config.apiUrl}/api/graph/execution/${sessionId}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch graph: ${response.statusText}`);

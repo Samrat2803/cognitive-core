@@ -3,6 +3,8 @@
  * Handles real-time communication with the backend
  */
 
+import { config } from '../config';
+
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export type MessageType = 
@@ -44,10 +46,9 @@ export class WebSocketService {
   private status: ConnectionStatus = 'disconnected';
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(url: string = import.meta.env.VITE_WS_URL || 'ws://localhost:8001/ws/analyze') {
+  constructor(url: string = config.wsUrl) {
     this.url = url;
     console.log('🔌 WebSocket URL:', this.url);
-    console.log('📝 VITE_WS_URL env:', import.meta.env.VITE_WS_URL);
   }
 
   /**

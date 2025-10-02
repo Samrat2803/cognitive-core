@@ -1,0 +1,47 @@
+# Elastic Beanstalk Ignore File
+# Exclude files/directories that shouldn't be deployed
+
+# Virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+
+# Artifacts (stored in S3, not needed in deployment)
+artifacts/
+
+# Test and debug files
+test_*.py
+*_test.py
+visualize_*.py
+AGENT_DEBUG_*.md
+CHANGES_SUMMARY.md
+DETAILED_EXECUTION_GRAPH.md
+EXECUTION_FLOW_LOG.md
+GRAPH_*.md
+graph_structure.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Elastic Beanstalk files
+.elasticbeanstalk/
+
+# Environment files (will be set via EB environment variables)
+.env.bak
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+nohup.out
+
