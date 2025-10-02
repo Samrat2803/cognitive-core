@@ -15,7 +15,7 @@ from typing import Optional, Dict, Any, List
 backend_v2_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../..'))
 sys.path.insert(0, backend_v2_path)
 
-from backend_v2.services.mongo_service import MongoService
+from services.mongo_service import MongoService
 from config import CACHE_COLLECTION, DEFAULT_CACHE_HOURS
 
 
