@@ -20,7 +20,7 @@ class Config:
     TEMPERATURE = 0  # Always use 0 for consistency
     
     # Server Settings
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8501")
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3001,http://127.0.0.1:3001,http://localhost:5173")
     MAX_QUERY_LENGTH = 2000
     
     # Artifact Settings
