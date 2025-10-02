@@ -43,3 +43,15 @@ httpx
 # Data manipulation and Excel export
 pandas
 openpyxl
+
+# Template Rendering (for SitRep HTML generation)
+jinja2
+
+# PDF Generation (for SitRep PDF reports)
+pdfkit
+
+# Social Media Content Tools (Infographic, Reel, Deck generators)
+Pillow
+moviepy
+imageio-ffmpeg
+python-pptx

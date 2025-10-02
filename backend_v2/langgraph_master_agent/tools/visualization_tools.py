@@ -7,18 +7,21 @@ Features:
 - Bar Charts: Categorical comparisons
 - Line Charts: Trend analysis
 - Mind Maps: Hierarchical concepts (Graphviz/Plotly)
+- Map Charts: Geographic/choropleth maps
 - Auto-detection: Smart chart selection
 
 Quick Start:
-    >>> from langgraph_master_agent.tools.visualization_tools import create_bar_chart
+    >>> from langgraph_master_agent.tools.visualization_tools import create_bar_chart, create_map_chart
     >>> 
     >>> artifact = create_bar_chart(
     ...     data={"categories": ["US", "EU", "China"], "values": [85, 72, 45]},
     ...     title="Global Sentiment"
     ... )
     >>> 
-    >>> print(artifact['html_path'])  # artifacts/bar_xxx.html
-    >>> print(artifact['png_path'])   # artifacts/bar_xxx.png
+    >>> map_artifact = create_map_chart(
+    ...     data={"countries": ["US", "Israel"], "values": [-0.4, -0.7]},
+    ...     title="Sentiment Map"
+    ... )
 
 See README_VISUALIZATIONS.md for complete documentation.
 """
@@ -485,6 +488,231 @@ class MindMapTool:
             }
 
 
+class MapChartTool:
+    """
+    Choropleth Map for Geographic Data
+    Visualize sentiment/data across countries
+    
+    Data format:
+        {
+            "countries": ["US", "Israel", "UK"],
+            "values": [-0.4, -0.7, 0.3],
+            "labels": ["US: Negative", "Israel: Very Negative", "UK: Positive"]  # optional
+        }
+    """
+    
+    @staticmethod
+    def create(
+        data: Dict[str, Any],
+        title: str = "Geographic Analysis",
+        legend_title: str = "Score"
+    ) -> Dict[str, Any]:
+        """
+        Create choropleth map visualization
+        
+        Args:
+            data: Must contain "countries" and "values" keys
+            title: Chart title
+            legend_title: Legend title (e.g., "Sentiment Score")
+        
+        Returns:
+            Artifact metadata dict
+        """
+        # Import country code mapping from shared
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+        from shared.visualization_factory import get_country_code
+        
+        countries = data.get("countries", [])
+        values = data.get("values", [])
+        labels = data.get("labels", countries)
+        
+        if not countries or not values:
+            raise ValueError("Map data must include 'countries' and 'values' keys")
+        
+        if len(countries) != len(values):
+            raise ValueError(f"Mismatch: {len(countries)} countries but {len(values)} values")
+        
+        # Convert country names to ISO codes
+        iso_codes = []
+        mapped_values = []
+        mapped_labels = []
+        skipped = []
+        
+        for i, country in enumerate(countries):
+            iso_code = get_country_code(country)
+            if iso_code:
+                iso_codes.append(iso_code)
+                mapped_values.append(values[i])
+                mapped_labels.append(labels[i] if i < len(labels) else country)
+            else:
+                skipped.append(country)
+        
+        if not iso_codes:
+            raise ValueError(f"No valid country codes found. Skipped: {skipped}")
+        
+        # Calculate value range for better color scaling
+        min_val = min(mapped_values)
+        max_val = max(mapped_values)
+        val_range = max_val - min_val
+        
+        # Ensure color scale has good range (at least 0.5 range for visibility)
+        if val_range < 0.5:
+            # Expand range symmetrically around the values
+            center = (min_val + max_val) / 2
+            min_val = center - 0.5
+            max_val = center + 0.5
+        
+        # Country center coordinates for text labels (approximate)
+        COUNTRY_CENTERS = {
+            'USA': {'lat': 37.0902, 'lon': -95.7129},
+            'GBR': {'lat': 55.3781, 'lon': -3.4360},
+            'FRA': {'lat': 46.2276, 'lon': 2.2137},
+            'DEU': {'lat': 51.1657, 'lon': 10.4515},
+            'ITA': {'lat': 41.8719, 'lon': 12.5674},
+            'ESP': {'lat': 40.4637, 'lon': -3.7492},
+            'CHN': {'lat': 35.8617, 'lon': 104.1954},
+            'JPN': {'lat': 36.2048, 'lon': 138.2529},
+            'IND': {'lat': 20.5937, 'lon': 78.9629},
+            'BRA': {'lat': -14.2350, 'lon': -51.9253},
+            'RUS': {'lat': 61.5240, 'lon': 105.3188},
+            'CAN': {'lat': 56.1304, 'lon': -106.3468},
+            'AUS': {'lat': -25.2744, 'lon': 133.7751},
+            'ISR': {'lat': 31.0461, 'lon': 34.8516},
+            'ARE': {'lat': 23.4241, 'lon': 53.8478},
+            'SAU': {'lat': 23.8859, 'lon': 45.0792},
+            'EGY': {'lat': 26.8206, 'lon': 30.8025},
+            'ZAF': {'lat': -30.5595, 'lon': 22.9375},
+            'MEX': {'lat': 23.6345, 'lon': -102.5528},
+            'ARG': {'lat': -38.4161, 'lon': -63.6167},
+        }
+        
+        # Create choropleth map with improved settings
+        fig = go.Figure(data=go.Choropleth(
+            locations=iso_codes,
+            z=mapped_values,
+            text=mapped_labels,
+            locationmode='ISO-3',
+            colorscale='RdYlGn',  # Red-Yellow-Green
+            reversescale=False,
+            zmid=0,  # Center at 0 for sentiment
+            zmin=min_val,
+            zmax=max_val,
+            marker_line_color='darkgray',
+            marker_line_width=1.5,  # Thicker borders for visibility
+            colorbar=dict(
+                title=legend_title,
+                thickness=15,
+                len=0.7,
+                tickformat='.2f'
+            ),
+            hovertemplate='<b>%{text}</b><br>Value: %{z:.2f}<extra></extra>',
+            showscale=True,
+            name=''
+        ))
+        
+        # Add text labels on countries showing the actual values
+        text_lats = []
+        text_lons = []
+        text_labels = []
+        text_colors = []
+        
+        for i, code in enumerate(iso_codes):
+            if code in COUNTRY_CENTERS:
+                text_lats.append(COUNTRY_CENTERS[code]['lat'])
+                text_lons.append(COUNTRY_CENTERS[code]['lon'])
+                # Format: "Country: Value"
+                country_name = countries[i]
+                value = mapped_values[i]
+                text_labels.append(f"<b>{country_name}</b><br>{value:+.2f}")
+                # Use contrasting color (white for dark backgrounds, black for light)
+                text_colors.append('white' if value < -0.2 else 'black')
+        
+        # Add scatter trace for text annotations
+        if text_lats:
+            fig.add_trace(go.Scattergeo(
+                lon=text_lons,
+                lat=text_lats,
+                text=text_labels,
+                mode='text',
+                textfont=dict(
+                    size=14,
+                    family=VisualizationTemplates.THEME["font_family"],
+                    color='white'
+                ),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        
+        # Determine best projection based on countries
+        # If only small region, zoom in
+        if len(iso_codes) <= 3:
+            # For small number of countries, use a projection that shows detail
+            projection = 'natural earth'
+            # Try to detect if it's Middle East region
+            if any(code in ['ISR', 'PSE', 'LBN', 'SYR', 'JOR', 'IRQ'] for code in iso_codes):
+                projection = 'mercator'
+        else:
+            projection = 'natural earth'
+        
+        fig.update_layout(
+            title=dict(
+                text=title,
+                font=dict(
+                    size=VisualizationTemplates.THEME["title_font_size"],
+                    family=VisualizationTemplates.THEME["font_family"]
+                ),
+                x=0.5,
+                xanchor='center'
+            ),
+            geo=dict(
+                showframe=False,
+                showcoastlines=True,
+                showcountries=True,
+                coastlinecolor='lightgray',
+                countrycolor='lightgray',
+                projection_type=projection,
+                resolution=50,  # Higher resolution for better detail
+                showlakes=True,
+                lakecolor='rgb(255, 255, 255)'
+            ),
+            paper_bgcolor=VisualizationTemplates.THEME["background_color"],
+            font=dict(family=VisualizationTemplates.THEME["font_family"]),
+            height=600,
+            margin=dict(t=60, b=20, l=20, r=20)
+        )
+        
+        # Save files
+        artifact_id = f"map_{uuid.uuid4().hex[:12]}"
+        output_dir = os.path.join(os.path.dirname(__file__), '..', 'artifacts')
+        os.makedirs(output_dir, exist_ok=True)
+        
+        html_path = os.path.join(output_dir, f"{artifact_id}.html")
+        fig.write_html(html_path)
+        
+        # PNG export (note: requires kaleido)
+        png_path = os.path.join(output_dir, f"{artifact_id}.png")
+        try:
+            fig.write_image(png_path, width=1200, height=600)
+        except Exception:
+            png_path = None  # Fallback if kaleido not available
+        
+        return {
+            "artifact_id": artifact_id,
+            "type": "map_chart",
+            "title": title,
+            "html_path": html_path,
+            "png_path": png_path,
+            "data": {
+                "countries": countries,
+                "mapped_countries": iso_codes,
+                "skipped_countries": skipped,
+                "values": values
+            },
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+
 class VisualizationFactory:
     """
     Auto-detect and create appropriate visualization
@@ -590,6 +818,27 @@ def create_mind_map(data: Dict, title: str = "Mind Map") -> Dict:
         ... )
     """
     return MindMapTool.create(data, title)
+
+def create_map_chart(data: Dict, title: str = "Geographic Map", legend_title: str = "Score") -> Dict:
+    """
+    Quick map chart creation for geographic data.
+    
+    Args:
+        data: {"countries": [...], "values": [...], "labels": [...] (optional)}
+        title: Chart title
+        legend_title: Legend title (e.g., "Sentiment Score")
+    
+    Returns:
+        Artifact dictionary with file paths
+    
+    Example:
+        >>> artifact = create_map_chart(
+        ...     {"countries": ["US", "Israel"], "values": [-0.4, -0.7]},
+        ...     title="Sentiment Map",
+        ...     legend_title="Sentiment Score"
+        ... )
+    """
+    return MapChartTool.create(data, title, legend_title)
 
 def auto_visualize(data: Dict, context: str = "", title: str = None) -> Dict:
     """

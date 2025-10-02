@@ -1,4 +1,4 @@
-import { Brain, History, Settings } from 'lucide-react';
+import { Brain, History, Settings, Info } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ConnectionStatus from '../ui/ConnectionStatus';
 import { AgentTooltip, EnhancedTooltip, FeatureBadge } from '../ui/EnhancedTooltip';
@@ -41,6 +41,19 @@ export function Header() {
       </AgentTooltip>
       <div className="header-right">
         <ConnectionStatus />
+        <EnhancedTooltip
+          content="Project information and demo presentation"
+          icon="feature"
+          position="bottom"
+        >
+          <button 
+            className="header-button" 
+            aria-label="Info"
+            onClick={() => navigate('/info')}
+          >
+            <Info size={20} />
+          </button>
+        </EnhancedTooltip>
         <EnhancedTooltip
           content="View conversation history and past analyses"
           icon="feature"

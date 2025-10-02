@@ -168,6 +168,35 @@ async def tool_executor(state: dict) -> dict:
                     "output": sentiment_summary
                 })
             
+            elif tool_name == "media_bias_detector_agent":
+                sources = state.get("sources", None)
+                time_range = state.get("time_range_days", 7)
+                exec_log_start["input"] += f"\nSources: {sources or 'Auto-select'}\nTime Range: {time_range} days"
+                state["execution_log"].append(exec_log_start)
+                
+                result = await sub_agent_caller.call_media_bias_detector(
+                    query=current_message,
+                    sources=sources,
+                    time_range_days=time_range
+                )
+                state["sub_agent_results"]["media_bias_detection"] = result
+                
+                # Log media bias detection results
+                bias_summary = f"Media Bias Detection completed\n"
+                if result and isinstance(result, dict) and result.get("success"):
+                    data = result.get("data", {})
+                    bias_summary += f"Sources analyzed: {len(data.get('sources_analyzed', []))}\n"
+                    bias_summary += f"Articles: {data.get('total_articles', 0)}\n"
+                    bias_summary += f"Confidence: {data.get('confidence', 0.0):.2f}"
+                
+                state["execution_log"].append({
+                    "step": "tool_executor",
+                    "action": f"Completed {tool_name}",
+                    "timestamp": datetime.now().isoformat(),
+                    "input": f"Query: {current_message}\nSources: {sources}\nTime Range: {time_range} days",
+                    "output": bias_summary
+                })
+            
             elif tool_name == "create_plotly_chart":
                 # Chart creation is handled by artifact_creator node
                 state["execution_log"].append({

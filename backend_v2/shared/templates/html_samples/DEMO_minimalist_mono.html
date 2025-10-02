@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Monochrome - DEMO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .container {
+            width: 1080px;
+            height: 1080px;
+            background: white;
+            padding: 80px;
+            position: relative;
+        }
+        
+        .accent-line {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 8px;
+            height: 100%;
+            background: black;
+        }
+        
+        .header {
+            margin-bottom: 80px;
+        }
+        
+        h1 {
+            font-size: 68px;
+            font-weight: 900;
+            color: #000;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+        
+        .subtitle {
+            font-size: 24px;
+            color: #666;
+            font-weight: 300;
+            max-width: 600px;
+        }
+        
+        .stats-container {
+            margin-top: 60px;
+        }
+        
+        .stat-row {
+            display: flex;
+            align-items: center;
+            padding: 40px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-number {
+            font-size: 96px;
+            font-weight: 900;
+            color: #000;
+            min-width: 280px;
+            letter-spacing: -3px;
+        }
+        
+        .stat-info {
+            flex: 1;
+        }
+        
+        .stat-label {
+            font-size: 28px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-desc {
+            font-size: 18px;
+            color: #888;
+            font-weight: 300;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 80px;
+            left: 80px;
+            right: 80px;
+            padding-top: 30px;
+            border-top: 2px solid #000;
+            font-size: 16px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="accent-line"></div>
+        
+        <div class="header">
+            <h1>Media Bias Analysis Report</h1>
+            <p class="subtitle">Comprehensive evaluation of source credibility and editorial slant across major outlets</p>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-row">
+                <div class="stat-number">342</div>
+                <div class="stat-info">
+                    <div class="stat-label">Sources Analyzed</div>
+                    <div class="stat-desc">Mainstream & Alternative Media</div>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-number">68%</div>
+                <div class="stat-info">
+                    <div class="stat-label">Balanced Coverage</div>
+                    <div class="stat-desc">Meeting Objectivity Standards</div>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-number">2.4M</div>
+                <div class="stat-info">
+                    <div class="stat-label">Articles Reviewed</div>
+                    <div class="stat-desc">Last 30 Days</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Analysis Period: Sept 1-30, 2025 • Methodology: NLP + Human Review
+        </div>
+    </div>
+</body>
+</html>
+

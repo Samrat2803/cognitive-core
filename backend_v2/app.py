@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from langgraph_master_agent.main import MasterPoliticalAnalyst
 from config_server import Config
-from datetime import datetime
+from datetime import datetime, timezone
 from services.mongo_service import MongoService
 
 # Load environment variables (for local development)
@@ -377,7 +377,7 @@ async def root():
         status="healthy",
         version="1.0.0",
         agent_status="ready" if agent else "not_initialized",
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat()
     )
 
 
@@ -389,7 +389,7 @@ async def health_check():
         status="healthy",
         version="1.0.0",
         agent_status="ready" if agent else "not_initialized",
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat()
     )
 
 
@@ -434,7 +434,7 @@ async def analyze_query(request: AnalysisRequest):
                     query=request.query,
                     user_session=request.user_session,
                     status="completed",
-                    completed_at=datetime.utcnow(),
+                    completed_at=datetime.now(timezone.utc),
                     processing_time_ms=processing_time,
                     response=result.get("response", ""),
                     confidence=result.get("confidence", 0.0),
@@ -684,7 +684,7 @@ async def get_artifact_presigned_urls(artifact_id: str, expiration: int = 3600):
             "html_url": html_url,
             "png_url": png_url,
             "expires_in_seconds": expiration,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
         
     except HTTPException:
@@ -917,7 +917,7 @@ async def websocket_analyze(websocket: WebSocket):
         msg = {
             "type": msg_type,
             "data": data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         if message_id:
             msg["message_id"] = message_id
@@ -1113,21 +1113,24 @@ async def websocket_analyze(websocket: WebSocket):
                                    artifact_data.get("html_url") or
                                    f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.html")
                         
-                        png_url = (artifact_data.get("s3_png_url") or 
-                                  artifact_data.get("png_url") or
-                                  f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.png")
+                        # Only include png_url if it exists in artifact_data
+                        artifact_message = {
+                            "artifact_id": artifact_data.get("artifact_id"),
+                            "type": artifact_data.get("type", "chart"),
+                            "title": artifact_data.get("title", "Analysis Result"),
+                            "html_url": html_url,
+                            "storage": artifact_data.get("storage", "local"),
+                            "metadata": artifact_data.get("metadata", {})
+                        }
+                        
+                        # Add png_url only if it actually exists
+                        if artifact_data.get("s3_png_url") or artifact_data.get("png_url"):
+                            artifact_message["png_url"] = (artifact_data.get("s3_png_url") or 
+                                                          artifact_data.get("png_url"))
                         
                         await websocket.send_json(create_message(
                             "artifact",
-                            {
-                                "artifact_id": artifact_data.get("artifact_id"),
-                                "type": artifact_data.get("type", "chart"),
-                                "title": artifact_data.get("title", "Analysis Result"),
-                                "html_url": html_url,
-                                "png_url": png_url,
-                                "storage": artifact_data.get("storage", "local"),
-                                "metadata": artifact_data.get("metadata", {})
-                            },
+                            artifact_message,
                             current_message_id
                         ))
                     
@@ -1185,22 +1188,25 @@ async def websocket_analyze(websocket: WebSocket):
                                                artifact_data.get("html_url") or
                                                f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.html")
                                     
-                                    png_url = (artifact_data.get("s3_png_url") or 
-                                              artifact_data.get("png_url") or
-                                              f"http://localhost:8000/api/artifacts/{artifact_data.get('artifact_id')}.png")
+                                    # Only include png_url if it exists in artifact_data
+                                    artifact_message = {
+                                        "artifact_id": artifact_data.get("artifact_id"),
+                                        "type": artifact_data.get("type", "chart"),
+                                        "title": artifact_data.get("title", "Visualization"),
+                                        "html_url": html_url,
+                                        "storage": artifact_data.get("storage", "local"),
+                                        "metadata": artifact_data.get("metadata", {}),
+                                        "source": agent_name
+                                    }
+                                    
+                                    # Add png_url only if it actually exists
+                                    if artifact_data.get("s3_png_url") or artifact_data.get("png_url"):
+                                        artifact_message["png_url"] = (artifact_data.get("s3_png_url") or 
+                                                                      artifact_data.get("png_url"))
                                     
                                     await websocket.send_json(create_message(
                                         "artifact",
-                                        {
-                                            "artifact_id": artifact_data.get("artifact_id"),
-                                            "type": artifact_data.get("type", "chart"),
-                                            "title": artifact_data.get("title", "Visualization"),
-                                            "html_url": html_url,
-                                            "png_url": png_url,
-                                            "storage": artifact_data.get("storage", "local"),
-                                            "metadata": artifact_data.get("metadata", {}),
-                                            "source": agent_name
-                                        },
+                                        artifact_message,
                                         current_message_id
                                     ))
                                     
@@ -1230,12 +1236,12 @@ async def websocket_analyze(websocket: WebSocket):
                     conversation_history.append({
                         "role": "user",
                         "content": query,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.now(timezone.utc).isoformat()
                     })
                     conversation_history.append({
                         "role": "assistant",
                         "content": response_text,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.now(timezone.utc).isoformat()
                     })
                     
                     # Keep only last 10 messages (5 turns)

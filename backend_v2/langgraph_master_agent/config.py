@@ -64,6 +64,28 @@ class MasterAgentConfig:
             - "Give me unbiased analysis of [political event]"
             """,
             "use_for": ["sentiment analysis", "bias detection", "multi-country analysis", "credibility assessment"]
+        },
+        "media_bias_detector_agent": {
+            "description": """
+            Multi-source media bias analysis comparing how different news outlets cover the same topic.
+            Features:
+            - Political lean classification (-1.0 far left to +1.0 far right)
+            - Loaded language detection (8 categories: emotionally_charged, sensationalist, fear_based, etc.)
+            - Framing analysis (conflict, human interest, economic, morality, responsibility, etc.)
+            - Bias technique identification (spin, selective quoting, labeling, omission, etc.)
+            - Comparison matrix across sources
+            - Consensus vs divergence analysis
+            - Interactive visualizations (bias spectrum, heatmap, framing chart)
+            
+            Use for:
+            - "Compare media bias on [topic]"
+            - "How do different news sources cover [event]"
+            - "Analyze CNN vs Fox News coverage of [issue]"
+            - "Show me bias spectrum for [topic]"
+            - "What's the media framing of [event]"
+            - "Detect loaded language in [topic] reporting"
+            """,
+            "use_for": ["media bias", "source comparison", "framing analysis", "loaded language", "political lean", "news coverage"]
         }
     }
     

@@ -13,9 +13,12 @@ from langgraph_master_agent.tools.visualization_tools import (
     BarChartTool,
     LineChartTool,
     MindMapTool,
+    MapChartTool,
     auto_visualize
 )
 from shared.observability import ObservabilityManager
+from shared.html_infographic_renderer import HTMLInfographicRenderer
+from shared.infographic_schemas import INFOGRAPHIC_SCHEMAS
 
 observe = ObservabilityManager.get_observe_decorator()
 
@@ -59,12 +62,16 @@ async def artifact_creator(state: dict) -> dict:
             data_to_use = artifact_data if artifact_data else _extract_bar_data(state)
         elif artifact_type == "line_chart":
             data_to_use = artifact_data if artifact_data else _extract_line_data(state)
+        elif artifact_type == "map_chart":
+            data_to_use = artifact_data if artifact_data else _extract_map_data(state)
         elif artifact_type == "mind_map":
             data_to_use = artifact_data if artifact_data else _extract_mindmap_data(state)
+        elif artifact_type == "infographic":
+            data_to_use = artifact_data  # Infographic data already structured
         else:
             data_to_use = artifact_data if artifact_data else _extract_bar_data(state)
         
-        print(f"   Data to use: {data_to_use}")
+        print(f"   Data to use: {str(data_to_use)[:200]}...")  # Truncate to avoid format issues
         print(f"   Current working directory: {os.getcwd()}")
         
         # Get title from state or generate default
@@ -87,11 +94,55 @@ async def artifact_creator(state: dict) -> dict:
                 y_label=data_to_use.get("y_label", "Value")
             )
         
+        elif artifact_type == "map_chart":
+            artifact = MapChartTool.create(
+                data=data_to_use,
+                title=title,
+                legend_title=data_to_use.get("legend_title", "Score")
+            )
+        
         elif artifact_type == "mind_map":
             artifact = MindMapTool.create(
                 data=data_to_use,
                 title=title
             )
+        
+        elif artifact_type == "infographic":
+            # Extract infographic type and schema data
+            infographic_type = data_to_use.get("infographic_type", "key_metrics")
+            schema_data_dict = data_to_use.get("schema_data", {})
+            
+            print(f"   Creating infographic: {infographic_type}")
+            print(f"   Schema data keys: {list(schema_data_dict.keys())}")
+            
+            # Validate and create schema instance
+            schema_class = INFOGRAPHIC_SCHEMAS.get(infographic_type)
+            if not schema_class:
+                raise ValueError(f"Unknown infographic type: {infographic_type}")
+            
+            schema_instance = schema_class(**schema_data_dict)
+            
+            # Render infographic
+            renderer = HTMLInfographicRenderer()
+            artifact_info = renderer.render(
+                schema_data=schema_instance,
+                visual_template="template_3",  # Default to template 3 (modern card-based)
+                output_dir="langgraph_master_agent/artifacts/infographics"
+            )
+            
+            # Convert to standard artifact format
+            artifact = {
+                "artifact_id": artifact_info["artifact_id"],
+                "type": "infographic",
+                "html_path": artifact_info["path"],
+                "png_path": artifact_info["path"].replace('.html', '.png'),  # Will be generated
+                "title": title,
+                "metadata": {
+                    "infographic_type": infographic_type,
+                    "schema_type": artifact_info["schema_type"],
+                    "visual_template": artifact_info["visual_template"]
+                }
+            }
         
         else:
             # Auto-detect
@@ -225,6 +276,41 @@ def _extract_mindmap_data(state: dict) -> Dict[str, Any]:
             {"name": "Sources", "value": 8},
             {"name": "Insights", "value": 12}
         ]
+    }
+
+
+def _extract_map_data(state: dict) -> Dict[str, Any]:
+    """Extract data for map chart from conversation history or state"""
+    
+    # Try to extract from sub-agent results first
+    sub_agent_results = state.get("sub_agent_results", {})
+    for agent_name, agent_result in sub_agent_results.items():
+        if isinstance(agent_result, dict):
+            agent_data = agent_result.get("data", {})
+            sentiment_scores = agent_data.get("sentiment_scores", {})
+            
+            if sentiment_scores:
+                # Extract countries and sentiment scores
+                countries = list(sentiment_scores.keys())
+                values = [scores.get("score", 0) for scores in sentiment_scores.values()]
+                labels = [
+                    f"{country}: {scores.get('sentiment', 'unknown')} ({scores.get('score', 0):+.2f})"
+                    for country, scores in sentiment_scores.items()
+                ]
+                
+                return {
+                    "countries": countries,
+                    "values": values,
+                    "labels": labels,
+                    "legend_title": "Sentiment Score"
+                }
+    
+    # Default sample data if no sentiment data found
+    return {
+        "countries": ["US", "UK"],
+        "values": [0.5, -0.3],
+        "labels": ["US: Positive", "UK: Negative"],
+        "legend_title": "Score"
     }
 
 

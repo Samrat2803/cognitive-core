@@ -350,6 +350,127 @@ class VisualizationFactory:
 
 
 # ============================================================================
+# Country Code Mapping Utility
+# ============================================================================
+
+# Common country name variations → ISO 3-letter code
+COUNTRY_CODE_MAP = {
+    # North America
+    "US": "USA", "USA": "USA", "United States": "USA", "United States of America": "USA",
+    "America": "USA", "U.S.": "USA", "U.S.A.": "USA",
+    "Canada": "CAN", "CA": "CAN",
+    "Mexico": "MEX", "MX": "MEX",
+    
+    # Europe
+    "UK": "GBR", "United Kingdom": "GBR", "Britain": "GBR", "Great Britain": "GBR", "GB": "GBR",
+    "England": "GBR", "Scotland": "GBR", "Wales": "GBR",
+    "France": "FRA", "FR": "FRA",
+    "Germany": "DEU", "DE": "DEU", "Deutschland": "DEU",
+    "Italy": "ITA", "IT": "ITA", "Italia": "ITA",
+    "Spain": "ESP", "ES": "ESP", "España": "ESP",
+    "Netherlands": "NLD", "Holland": "NLD", "NL": "NLD",
+    "Belgium": "BEL", "BE": "BEL",
+    "Switzerland": "CHE", "CH": "CHE",
+    "Austria": "AUT", "AT": "AUT",
+    "Poland": "POL", "PL": "POL",
+    "Sweden": "SWE", "SE": "SWE",
+    "Norway": "NOR", "NO": "NOR",
+    "Denmark": "DNK", "DK": "DNK",
+    "Finland": "FIN", "FI": "FIN",
+    "Ireland": "IRL", "IE": "IRL",
+    "Portugal": "PRT", "PT": "PRT",
+    "Greece": "GRC", "GR": "GRC",
+    "Czech Republic": "CZE", "Czechia": "CZE", "CZ": "CZE",
+    
+    # Middle East
+    "Israel": "ISR", "IL": "ISR",
+    "Iran": "IRN", "IR": "IRN",
+    "Saudi Arabia": "SAU", "SA": "SAU",
+    "UAE": "ARE", "United Arab Emirates": "ARE",
+    "Turkey": "TUR", "TR": "TUR", "Türkiye": "TUR",
+    "Egypt": "EGY", "EG": "EGY",
+    "Iraq": "IRQ", "IQ": "IRQ",
+    "Syria": "SYR", "SY": "SYR",
+    "Jordan": "JOR", "JO": "JOR",
+    "Lebanon": "LBN", "LB": "LBN",
+    "Palestine": "PSE", "PS": "PSE",
+    
+    # Asia
+    "China": "CHN", "CN": "CHN", "PRC": "CHN",
+    "Japan": "JPN", "JP": "JPN",
+    "South Korea": "KOR", "Korea": "KOR", "KR": "KOR",
+    "North Korea": "PRK", "KP": "PRK", "DPRK": "PRK",
+    "India": "IND", "IN": "IND",
+    "Pakistan": "PAK", "PK": "PAK",
+    "Bangladesh": "BGD", "BD": "BGD",
+    "Indonesia": "IDN", "ID": "IDN",
+    "Thailand": "THA", "TH": "THA",
+    "Vietnam": "VNM", "VN": "VNM",
+    "Philippines": "PHL", "PH": "PHL",
+    "Malaysia": "MYS", "MY": "MYS",
+    "Singapore": "SGP", "SG": "SGP",
+    "Taiwan": "TWN", "TW": "TWN",
+    
+    # Oceania
+    "Australia": "AUS", "AU": "AUS",
+    "New Zealand": "NZL", "NZ": "NZL",
+    
+    # South America
+    "Brazil": "BRA", "BR": "BRA",
+    "Argentina": "ARG", "AR": "ARG",
+    "Chile": "CHL", "CL": "CHL",
+    "Colombia": "COL", "CO": "COL",
+    "Peru": "PER", "PE": "PER",
+    "Venezuela": "VEN", "VE": "VEN",
+    
+    # Africa
+    "South Africa": "ZAF", "ZA": "ZAF",
+    "Nigeria": "NGA", "NG": "NGA",
+    "Kenya": "KEN", "KE": "KEN",
+    "Ethiopia": "ETH", "ET": "ETH",
+    "Ghana": "GHA", "GH": "GHA",
+    "Morocco": "MAR", "MA": "MAR",
+    "Algeria": "DZA", "DZ": "DZA",
+    
+    # Russia & Former USSR
+    "Russia": "RUS", "RU": "RUS", "Russian Federation": "RUS",
+    "Ukraine": "UKR", "UA": "UKR",
+    "Belarus": "BLR", "BY": "BLR",
+}
+
+
+def get_country_code(country_name: str) -> Optional[str]:
+    """
+    Convert country name to ISO 3-letter code
+    
+    Args:
+        country_name: Country name (various formats accepted)
+    
+    Returns:
+        ISO 3-letter code (e.g., 'USA', 'GBR') or None if not found
+    
+    Examples:
+        >>> get_country_code("US")
+        'USA'
+        >>> get_country_code("United Kingdom")
+        'GBR'
+        >>> get_country_code("Israel")
+        'ISR'
+    """
+    # Try exact match first
+    if country_name in COUNTRY_CODE_MAP:
+        return COUNTRY_CODE_MAP[country_name]
+    
+    # Try case-insensitive match
+    for key, value in COUNTRY_CODE_MAP.items():
+        if key.lower() == country_name.lower():
+            return value
+    
+    # Return None if not found (caller should handle)
+    return None
+
+
+# ============================================================================
 # Helper Functions for Common Patterns
 # ============================================================================
 
@@ -605,4 +726,79 @@ def create_sentiment_table(
         artifact_metadata["excel_path"] = excel_path
     
     return artifact_metadata
+
+
+def create_sentiment_map(
+    country_scores: Dict[str, Dict[str, float]],
+    query: str,
+    output_dir: str
+) -> Dict[str, Any]:
+    """
+    Convenience function: Create sentiment choropleth map
+    
+    Args:
+        country_scores: {country: {'score': 0.8, 'sentiment': 'positive'}}
+        query: Original query
+        output_dir: Where to save artifact
+    
+    Returns:
+        Artifact metadata
+    
+    Note: Countries without ISO codes will be skipped with a warning
+    """
+    # Convert country names to ISO codes
+    country_data = {}
+    skipped = []
+    
+    for country, score_dict in country_scores.items():
+        iso_code = get_country_code(country)
+        if iso_code:
+            country_data[iso_code] = score_dict.get('score', 0)
+        else:
+            skipped.append(country)
+            print(f"   ⚠️ No ISO code found for '{country}', skipping from map")
+    
+    if not country_data:
+        print(f"   ❌ No valid countries for map (all skipped: {skipped})")
+        return {
+            "artifact_id": f"sentiment_map_error_{uuid.uuid4().hex[:12]}",
+            "type": "sentiment_map",
+            "title": "Sentiment Map (Error)",
+            "error": "No countries could be mapped to ISO codes",
+            "created_at": datetime.now().isoformat()
+        }
+    
+    if skipped:
+        print(f"   ℹ️  Showing {len(country_data)} countries on map ({len(skipped)} skipped)")
+    
+    # Create map
+    fig = VisualizationFactory.create_choropleth_map(
+        country_data=country_data,
+        title=f"Sentiment Analysis Map: {query}",
+        color_scale="RdYlGn",
+        color_range=(-1, 1)
+    )
+    
+    # Add annotations for country names
+    annotations_text = []
+    for country in country_scores.keys():
+        iso_code = get_country_code(country)
+        if iso_code and iso_code in country_data:
+            score = country_data[iso_code]
+            sentiment = country_scores[country].get('sentiment', 'neutral')
+            annotations_text.append(f"{country}: {score:.2f} ({sentiment})")
+    
+    return VisualizationFactory.save_artifact(
+        fig=fig,
+        output_dir=output_dir,
+        artifact_type="sentiment_map",
+        title="Sentiment Analysis Map",
+        data={
+            "query": query,
+            "scores": country_scores,
+            "mapped_countries": list(country_data.keys()),
+            "skipped_countries": skipped,
+            "annotations": annotations_text
+        }
+    )
 

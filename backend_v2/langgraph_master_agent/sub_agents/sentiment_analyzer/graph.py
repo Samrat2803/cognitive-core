@@ -23,10 +23,17 @@ from nodes import (
     synthesizer,
     visualizer
 )
+from nodes.quality_checker import quality_checker
+
+
+def should_continue_iteration(state: SentimentAnalyzerState) -> str:
+    """Decide whether to continue iterating or stop"""
+    should_iterate = state.get("should_iterate", False)
+    return "continue" if should_iterate else "stop"
 
 
 def create_sentiment_analyzer_graph():
-    """Create sentiment analyzer LangGraph workflow"""
+    """Create sentiment analyzer LangGraph workflow with iteration loop"""
     
     workflow = StateGraph(SentimentAnalyzerState)
     
@@ -35,15 +42,27 @@ def create_sentiment_analyzer_graph():
     workflow.add_node("search", search_executor)
     workflow.add_node("scorer", sentiment_scorer)
     workflow.add_node("bias_detector", bias_detector)
+    workflow.add_node("quality_check", quality_checker)  # NEW: Quality checker
     workflow.add_node("synthesizer", synthesizer)
     workflow.add_node("visualizer", visualizer)
     
-    # Define flow
+    # Define flow with iteration loop
     workflow.set_entry_point("analyzer")
     workflow.add_edge("analyzer", "search")
     workflow.add_edge("search", "scorer")
     workflow.add_edge("scorer", "bias_detector")
-    workflow.add_edge("bias_detector", "synthesizer")
+    workflow.add_edge("bias_detector", "quality_check")  # NEW: Check quality after bias detection
+    
+    # NEW: Conditional edge - loop back or continue
+    workflow.add_conditional_edges(
+        "quality_check",
+        should_continue_iteration,
+        {
+            "continue": "search",     # Loop back to search with new params
+            "stop": "synthesizer"     # Continue to synthesis
+        }
+    )
+    
     workflow.add_edge("synthesizer", "visualizer")
     workflow.add_edge("visualizer", END)
     
@@ -54,5 +73,12 @@ if __name__ == "__main__":
     print("🎯 Creating Sentiment Analyzer Graph...")
     graph = create_sentiment_analyzer_graph()
     print("✅ Graph created successfully!")
-    print("\nWorkflow: analyzer → search → scorer → bias_detector → synthesizer → visualizer → END")
+    print("\nWorkflow with Iteration Loop:")
+    print("  analyzer → search → scorer → bias_detector → quality_check")
+    print("                ↑                                    ↓")
+    print("                └────────── (continue) ─────────────┘")
+    print("                                                     ↓")
+    print("                                                  (stop)")
+    print("                                                     ↓")
+    print("                                    synthesizer → visualizer → END")
 

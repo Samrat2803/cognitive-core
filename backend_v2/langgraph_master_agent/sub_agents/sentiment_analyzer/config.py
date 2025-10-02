@@ -12,7 +12,7 @@ TEMPERATURE = 0  # Always 0 for consistency
 DEFAULT_COUNTRIES = ["US", "UK", "China", "India", "Russia"]  # More diverse geopolitical coverage
 MAX_COUNTRIES = 10
 DEFAULT_TIME_RANGE_DAYS = 7
-SEARCH_DEPTH = "basic"
+SEARCH_DEPTH = "advanced"  # Use advanced for better quality and domain filtering support
 MAX_RESULTS_PER_COUNTRY = 5
 
 # Sentiment Scoring

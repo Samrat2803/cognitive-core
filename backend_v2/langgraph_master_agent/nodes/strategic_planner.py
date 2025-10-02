@@ -68,10 +68,22 @@ CURRENT USER MESSAGE:
 YOUR TASK:
 Analyze the user's request and create an action plan.
 
+CRITICAL RULES:
+1. **Visualization-Only Requests**: If user asks to "create a map", "visualize", "show a chart" of EXISTING data from conversation history:
+   - Set "can_answer_directly": true
+   - Set "tools_to_use": [] (empty - no tools needed!)
+   - The artifact_decision node will handle extracting data from history and creating the visualization
+   - DO NOT run sentiment_analysis_agent or any other tool again!
+
+2. **New Analysis Requests**: If user asks for NEW sentiment analysis or search:
+   - Use appropriate tools (sentiment_analysis_agent, tavily_search, etc.)
+
+3. **Check History**: If conversation history contains relevant data, DON'T re-run analysis tools!
+
 Determine:
-1. Can you answer this directly without tools? (simple factual questions)
-2. Which tools should be used? (tavily_search, tavily_extract, sentiment_analysis_agent, etc.)
-3. What's the execution strategy? (single tool, multiple tools, sequential vs parallel)
+1. Can you answer this directly without tools? (simple questions OR visualization of existing data)
+2. Which tools should be used? (only if NEW data is needed)
+3. What's the execution strategy?
 
 OUTPUT FORMAT (JSON):
 {{
@@ -80,6 +92,10 @@ OUTPUT FORMAT (JSON):
     "tools_to_use": ["tool1", "tool2"],
     "execution_strategy": "Description of how to execute"
 }}
+
+EXAMPLES:
+- "create a map of this data" → {{"can_answer_directly": true, "tools_to_use": []}}
+- "sentiment on Hamas in US" → {{"can_answer_directly": false, "tools_to_use": ["sentiment_analysis_agent"]}}
 
 Be concise and strategic.
 """

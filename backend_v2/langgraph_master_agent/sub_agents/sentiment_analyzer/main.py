@@ -68,6 +68,13 @@ async def run_standalone_test(query_config: dict):
         "key_findings": [],
         "confidence": 0.0,
         "artifacts": [],
+        # NEW: Iteration control
+        "iteration": 0,
+        "should_iterate": False,
+        "iteration_reason": "",
+        "quality_metrics": {},
+        "search_params": {},
+        # Metadata
         "execution_log": [],
         "error_log": []
     }

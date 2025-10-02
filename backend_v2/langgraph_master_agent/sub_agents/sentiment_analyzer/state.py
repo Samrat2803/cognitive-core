@@ -26,7 +26,14 @@ class SentimentAnalyzerState(TypedDict):
     confidence: float                       # 0-1 confidence score
     
     # Artifacts
-    artifacts: List[Dict[str, Any]]         # Generated artifacts
+    artifacts: List[Dict[str, Any]]         # Generated artifacts (table + bar chart by default)
+    
+    # Iteration Control (NEW - from POC)
+    iteration: int                          # Current iteration number (0-indexed)
+    should_iterate: bool                    # Whether to continue iterating
+    iteration_reason: str                   # Reason for continuing/stopping
+    quality_metrics: Dict[str, Any]         # Quality metrics from bias analysis
+    search_params: Dict[str, Any]           # Dynamic search parameters for next iteration
     
     # Metadata
     execution_log: List[Dict[str, str]]     # Step-by-step log

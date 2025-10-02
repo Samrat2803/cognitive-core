@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playful Rounded Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Nunito', 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .container {
+            width: 1080px;
+            height: 1080px;
+            background: #fff5eb;
+            border-radius: 60px;
+            padding: 70px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .blob-decoration {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        
+        .blob1 {
+            width: 300px;
+            height: 300px;
+            background: #ff6b6b;
+            top: -100px;
+            right: -100px;
+        }
+        
+        .blob2 {
+            width: 250px;
+            height: 250px;
+            background: #4ecdc4;
+            bottom: -80px;
+            left: -80px;
+        }
+        
+        .blob3 {
+            width: 200px;
+            height: 200px;
+            background: #ffe66d;
+            top: 50%;
+            right: -50px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 64px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+        
+        .subtitle {
+            font-size: 24px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .bubble-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 50px;
+            position: relative;
+        }
+        
+        .bubble {
+            background: white;
+            border-radius: 50%;
+            padding: 50px;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+        }
+        
+        .bubble:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .bubble:nth-child(1) { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bubble:nth-child(2) { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .bubble:nth-child(3) { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .bubble:nth-child(4) { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .bubble:nth-child(5) { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .bubble:nth-child(6) { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+        
+        .bubble-value {
+            font-size: 52px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 12px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .bubble-label {
+            font-size: 16px;
+            color: rgba(255,255,255,0.95);
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        .fun-box {
+            background: white;
+            padding: 35px;
+            border-radius: 40px;
+            margin-top: 45px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .fun-box p {
+            font-size: 24px;
+            color: #333;
+            text-align: center;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 16px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="blob-decoration blob1"></div>
+        <div class="blob-decoration blob2"></div>
+        <div class="blob-decoration blob3"></div>
+        
+        <div class="header">
+            <h1>{{TITLE}}</h1>
+            <p class="subtitle">{{SUBTITLE}}</p>
+        </div>
+        
+        <div class="bubble-grid">
+            <div class="bubble">
+                <div class="bubble-value">{{STAT1_VALUE}}</div>
+                <div class="bubble-label">{{STAT1_LABEL}}</div>
+            </div>
+            <div class="bubble">
+                <div class="bubble-value">{{STAT2_VALUE}}</div>
+                <div class="bubble-label">{{STAT2_LABEL}}</div>
+            </div>
+            <div class="bubble">
+                <div class="bubble-value">{{STAT3_VALUE}}</div>
+                <div class="bubble-label">{{STAT3_LABEL}}</div>
+            </div>
+            <div class="bubble">
+                <div class="bubble-value">{{STAT4_VALUE}}</div>
+                <div class="bubble-label">{{STAT4_LABEL}}</div>
+            </div>
+            <div class="bubble">
+                <div class="bubble-value">{{STAT5_VALUE}}</div>
+                <div class="bubble-label">{{STAT5_LABEL}}</div>
+            </div>
+            <div class="bubble">
+                <div class="bubble-value">{{STAT6_VALUE}}</div>
+                <div class="bubble-label">{{STAT6_LABEL}}</div>
+            </div>
+        </div>
+        
+        <div class="fun-box">
+            <p>{{INSIGHT_TEXT}}</p>
+        </div>
+        
+        <div class="footer">{{FOOTER_TEXT}}</div>
+    </div>
+</body>
+</html>
+

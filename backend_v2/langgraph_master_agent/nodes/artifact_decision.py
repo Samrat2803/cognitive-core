@@ -61,7 +61,7 @@ async def artifact_decision(state: dict) -> dict:
     
     # Only proceed if user explicitly requests visualization
     message_lower = message.lower()
-    explicit_request = any(word in message_lower for word in ["chart", "graph", "visualiz", "plot", "show", "create"])
+    explicit_request = any(word in message_lower for word in ["chart", "graph", "visualiz", "plot", "show", "create", "map"])
     
     if not explicit_request or not response:
         state["execution_log"].append({
@@ -104,7 +104,9 @@ TASK 1: Decide if a data visualization is appropriate
 TASK 2: If YES, determine the best chart type:
 - "line_chart": For trends over time, temporal data, progression (years, months, quarters)
 - "bar_chart": For categorical comparisons, rankings
+- "map_chart": For geographic/country data, sentiment by location, choropleth maps
 - "mind_map": For conceptual hierarchies, relationships
+- "infographic": For rich data displays with multiple metrics (see infographic types below)
 
 TASK 3: Extract ALL the structured data from the response:
 For line_chart:
@@ -118,14 +120,27 @@ For bar_chart:
 - values: List of values
 - x_label and y_label
 
+For map_chart:
+- countries: List of country names (e.g., ["US", "Israel", "UK"])
+- values: List of numerical values (e.g., [-0.4, -0.7, 0.3])
+- labels: Optional list of labels (e.g., ["US: Negative", "Israel: Very Negative"])
+- legend_title: Title for the legend (e.g., "Sentiment Score")
+
+For infographic (user explicitly asks for "infographic" or "dashboard"):
+- infographic_type: One of "key_metrics", "comparison", "timeline", "ranking", "hero_stat", "category_breakdown"
+- schema_data: Structured data matching the infographic type (detailed structure provided in JSON example below)
+
 IMPORTANT:
 - Extract EVERY data point mentioned in the response
 - Keep numerical values precise (including decimals and negative numbers)
 - Match the exact number of x and y values
 - If the user says "create a chart for THIS" or refers to previous data, look in the CONVERSATION HISTORY above
 - Extract data from EITHER the current response OR the conversation history (whichever contains the data)
+- If user asks for "map" or "geographic" visualization and data contains countries, use "map_chart"
 
 Respond ONLY with valid JSON (no markdown):
+
+Example for line_chart:
 {{
     "should_create": true,
     "chart_type": "line_chart",
@@ -136,7 +151,51 @@ Respond ONLY with valid JSON (no markdown):
         "y_label": "GDP Growth Rate (%)"
     }},
     "title": "India GDP Growth Rate (2020-2025)"
-}}"""
+}}
+
+Example for map_chart:
+{{
+    "should_create": true,
+    "chart_type": "map_chart",
+    "data": {{
+        "countries": ["US", "Israel"],
+        "values": [-0.4, -0.7],
+        "labels": ["US: Negative (-0.4)", "Israel: Very Negative (-0.7)"],
+        "legend_title": "Sentiment Score"
+    }},
+    "title": "Sentiment Analysis by Country"
+}}
+
+Example for infographic (comparison):
+{{
+    "should_create": true,
+    "chart_type": "infographic",
+    "data": {{
+        "infographic_type": "comparison",
+        "schema_data": {{
+            "title": "US vs Iran Sentiment on Hamas",
+            "subtitle": "Comparative Analysis",
+            "left_side": {{
+                "title": "United States",
+                "metrics": [
+                    {{"value": "-0.80", "label": "Sentiment Score", "description": "Strongly Negative"}},
+                    {{"value": "245", "label": "Articles Analyzed"}}
+                ]
+            }},
+            "right_side": {{
+                "title": "Iran",
+                "metrics": [
+                    {{"value": "0.00", "label": "Sentiment Score", "description": "Neutral"}},
+                    {{"value": "189", "label": "Articles Analyzed"}}
+                ]
+            }},
+            "conclusion": "Significant divergence in sentiment between countries"
+        }}
+    }},
+    "title": "US vs Iran: Hamas Sentiment Comparison"
+}}
+
+NOTE: If user asks for "infographic", detect the best infographic_type based on the data (comparison for 2 entities, key_metrics for multiple KPIs, category_breakdown for multiple categories)."""
     
     try:
         llm_response = await llm.ainvoke([

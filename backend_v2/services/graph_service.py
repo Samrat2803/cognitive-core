@@ -321,7 +321,9 @@ class GraphVisualizationService:
         start_time = None
         end_time = None
         node_start_times = {}
+        node_end_times = {}
         
+        # First pass: collect all timestamps
         for i, log_entry in enumerate(execution_log):
             step = log_entry.get("step", "")
             timestamp = log_entry.get("timestamp", "")
@@ -330,13 +332,19 @@ class GraphVisualizationService:
             if step and step not in ["__start__", "__end__"]:
                 executed_nodes.add(step)
                 
-                if not node_timestamps.get(step):
-                    node_timestamps[step] = timestamp
-                    if timestamp:
-                        try:
-                            node_start_times[step] = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                        except:
-                            pass
+                if timestamp:
+                    try:
+                        ts = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                        
+                        # First occurrence = start time
+                        if step not in node_start_times:
+                            node_start_times[step] = ts
+                            node_timestamps[step] = timestamp
+                        
+                        # Always update end time (last occurrence)
+                        node_end_times[step] = ts
+                    except:
+                        pass
                 
                 # Track node status
                 if log_entry.get("error"):
@@ -356,14 +364,6 @@ class GraphVisualizationService:
                 edge_key = f"{prev_node}→{step}"
                 traversed_edges.add(edge_key)
                 edge_counts[edge_key] = edge_counts.get(edge_key, 0) + 1
-                
-                # Calculate duration
-                if prev_node in node_start_times and step in node_start_times:
-                    try:
-                        duration = (node_start_times[step] - node_start_times[prev_node]).total_seconds() * 1000
-                        node_durations[prev_node] = int(duration)
-                    except:
-                        pass
             
             prev_node = step
             
@@ -372,6 +372,18 @@ class GraphVisualizationService:
                 start_time = timestamp
             if i == len(execution_log) - 1 and timestamp:
                 end_time = timestamp
+        
+        # Second pass: calculate durations for each node
+        for node in executed_nodes:
+            if node in node_start_times and node in node_end_times:
+                try:
+                    duration = (node_end_times[node] - node_start_times[node]).total_seconds() * 1000
+                    # If duration is 0, it means single timestamp - estimate based on next node
+                    if duration < 10:  # Less than 10ms, likely same timestamp
+                        duration = 50  # Default 50ms for quick operations
+                    node_durations[node] = int(duration)
+                except:
+                    pass
         
         # Calculate total duration
         total_duration_ms = None

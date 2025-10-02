@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Corporate</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .container {
+            width: 1080px;
+            height: 1080px;
+            background: white;
+            padding: 70px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+        
+        .top-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+            margin: -70px -70px 60px -70px;
+        }
+        
+        .header {
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-size: 52px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: #64748b;
+            font-weight: 400;
+        }
+        
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-top: 50px;
+        }
+        
+        .metric-card {
+            background: #f8fafc;
+            padding: 35px 25px;
+            border-radius: 12px;
+            border-left: 4px solid #1e3c72;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            background: #f1f5f9;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .metric-value {
+            font-size: 46px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        
+        .chart-placeholder {
+            background: #f8fafc;
+            height: 320px;
+            margin-top: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .chart-placeholder p {
+            color: #94a3b8;
+            font-size: 18px;
+        }
+        
+        .insight-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+        }
+        
+        .insight-section p {
+            color: white;
+            font-size: 20px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar"></div>
+        
+        <div class="header">
+            <h1>{{TITLE}}</h1>
+            <p class="subtitle">{{SUBTITLE}}</p>
+        </div>
+        
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-value">{{STAT1_VALUE}}</div>
+                <div class="metric-label">{{STAT1_LABEL}}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{STAT2_VALUE}}</div>
+                <div class="metric-label">{{STAT2_LABEL}}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{STAT3_VALUE}}</div>
+                <div class="metric-label">{{STAT3_LABEL}}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{STAT4_VALUE}}</div>
+                <div class="metric-label">{{STAT4_LABEL}}</div>
+            </div>
+        </div>
+        
+        <div class="chart-placeholder">
+            <p>Chart Visualization Area</p>
+        </div>
+        
+        <div class="insight-section">
+            <p>{{INSIGHT_TEXT}}</p>
+        </div>
+        
+        <div class="footer">
+            <span>{{FOOTER_TEXT}}</span>
+            <span>Report Generated: {{DATE}}</span>
+        </div>
+    </div>
+</body>
+</html>
+

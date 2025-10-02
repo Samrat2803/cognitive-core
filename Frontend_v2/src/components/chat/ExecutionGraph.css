@@ -137,31 +137,20 @@
   letter-spacing: 0.3px;
 }
 
-.node-status-badge.skipped {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
-}
-
 .node-status-badge.error {
   background: rgba(239, 68, 68, 0.15);
   color: #dc2626;
 }
 
-/* Enhanced Legend */
+/* Simplified Legend */
 .execution-legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 32px;
-  padding: 14px 16px;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 16px;
   background: #f9fafb;
   border-top: 1px solid #e5e7eb;
-  font-size: 12px;
-}
-
-.legend-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  font-size: 13px;
 }
 
 .legend-item {
@@ -177,24 +166,6 @@
   border-radius: 4px;
   border: 2px solid;
   flex-shrink: 0;
-}
-
-.legend-indicator.executed {
-  background: #d1fae5;
-  border-color: #10b981;
-}
-
-.legend-indicator.not-executed {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-.legend-indicator.edge-traversed {
-  width: 40px;
-  height: 3px;
-  background: #10b981;
-  border: none;
-  border-radius: 0;
 }
 
 /* React Flow Overrides */

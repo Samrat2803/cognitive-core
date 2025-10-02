@@ -1,0 +1,68 @@
+{
+  "query": "Hamas",
+  "countries": [
+    "US",
+    "Israel"
+  ],
+  "sentiment_scores": {
+    "US": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "reasoning": "The sources indicate a divided public opinion regarding Hamas and Israel's actions, with a significant portion of Americans validating Israel's reasons for fighting Hamas, yet expressing concerns about Israel's conduct in the war. This ambivalence suggests a lack of strong sentiment in either direction.",
+      "positive_pct": 0.3,
+      "negative_pct": 0.3,
+      "neutral_pct": 0.4,
+      "key_points": [
+        "58% of Americans find Israel's reasons for fighting Hamas valid",
+        "Public opinion is divided on Israel's conduct of the war",
+        "Support for Israel has dramatically declined among some demographics"
+      ],
+      "source_type": "media",
+      "credibility_score": 0.8
+    },
+    "Israel": {
+      "sentiment": "negative",
+      "score": -0.7,
+      "reasoning": "The sources indicate a prevailing negative sentiment towards Hamas in Israel, particularly in light of the recent attacks and the ongoing conflict. Public opinion appears to be heavily influenced by the trauma and suffering caused by the October 7th attacks, leading to a strong desire for security and a negative view of Hamas's actions.",
+      "positive_pct": 0.1,
+      "negative_pct": 0.8,
+      "neutral_pct": 0.1,
+      "key_points": [
+        "Public opinion heavily influenced by the trauma of the October 7th attacks",
+        "Focus on security and dissatisfaction with Hamas's actions",
+        "Concerns about the humanitarian situation in Gaza complicate views"
+      ],
+      "source_type": "media",
+      "credibility_score": 0.8
+    }
+  },
+  "key_findings": [
+    "US: neutral (score: 0.00)",
+    "Israel: negative (score: -0.70)"
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "sentiment_table_3ff7fe7d5f3c",
+      "type": "sentiment_table",
+      "title": "Sentiment Data Table: Hamas",
+      "json_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_table_3ff7fe7d5f3c.json",
+      "html_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_table_3ff7fe7d5f3c.html",
+      "created_at": "2025-10-02T18:50:54.561625",
+      "row_counts": {
+        "summary": 2,
+        "bias": 6,
+        "articles": 10
+      },
+      "excel_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_table_3ff7fe7d5f3c.xlsx"
+    },
+    {
+      "artifact_id": "sentiment_bar_chart_d6f766e970d3",
+      "type": "sentiment_bar_chart",
+      "title": "Sentiment Score Comparison",
+      "html_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_bar_chart_d6f766e970d3.html",
+      "created_at": "2025-10-02T18:50:54.849603",
+      "json_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_bar_chart_d6f766e970d3_data.json"
+    }
+  ],
+  "duration_seconds": 54.29458
+}

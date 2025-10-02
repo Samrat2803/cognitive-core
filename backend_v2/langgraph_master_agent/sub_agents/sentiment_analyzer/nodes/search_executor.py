@@ -13,14 +13,16 @@ from state import SentimentAnalyzerState
 
 
 async def search_executor(state: SentimentAnalyzerState) -> Dict[str, Any]:
-    """Execute Tavily search for each country"""
+    """Execute Tavily search for each country with dynamic params"""
     
     client = TavilyClient()
     query = state["query"]
     countries = state["countries"]
     time_range = state.get("time_range_days", DEFAULT_TIME_RANGE_DAYS)
+    iteration = state.get("iteration", 0)
+    search_params = state.get("search_params", {})  # NEW: Dynamic params from quality checker
     
-    print(f"🔍 Search Executor: Searching {len(countries)} countries...")
+    print(f"🔍 Search Executor: Searching {len(countries)} countries (iteration {iteration + 1})...")
     
     search_results = {}
     
@@ -47,22 +49,36 @@ async def search_executor(state: SentimentAnalyzerState) -> Dict[str, Any]:
         # Create more specific query with full country name
         full_country_name = country_names.get(country, country)
         
-        # Enhanced query construction for better results
-        # Example: "nuclear policy" + "United States" -> "nuclear policy public opinion United States"
-        country_query = f"{query} public opinion {full_country_name}"
-        
-        print(f"   Searching: {country_query[:60]}...")
+        # NEW: Use dynamic search params if available (for iteration > 0)
+        if search_params and country in search_params:
+            country_config = search_params[country]
+            country_query = country_config.get("query", f"{query} public opinion {full_country_name}")
+            include_domains = country_config.get("include_domains", None)
+            print(f"   Searching with targeted params: {country_query[:60]}...")
+            if include_domains:
+                print(f"      Domains: {', '.join(include_domains[:3])}...")
+        else:
+            # Default query (iteration 0)
+            country_query = f"{query} public opinion {full_country_name}"
+            include_domains = None
+            print(f"   Searching: {country_query[:60]}...")
         
         try:
-            # Fixed: Removed incorrect 'country' parameter
-            # The 'country' parameter in Tavily is for domain filtering (.com, .co.uk), 
-            # not for filtering content about a country
-            result = await client.search(
-                query=country_query,
-                search_depth=SEARCH_DEPTH,
-                max_results=MAX_RESULTS_PER_COUNTRY,
-                include_answer=True
-            )
+            # Build search kwargs
+            search_kwargs = {
+                "query": country_query,
+                "search_depth": SEARCH_DEPTH,
+                "max_results": MAX_RESULTS_PER_COUNTRY,
+                "include_answer": True,
+                "country": full_country_name  # NEW: Use country parameter (helps with domain filtering)
+            }
+            
+            # NEW: Add domain filtering (use correct parameter name: 'domains')
+            if include_domains and len(include_domains) > 0:
+                search_kwargs["domains"] = include_domains  # ✅ Correct parameter name!
+                print(f"      Domain filter: {', '.join(include_domains[:3])}...")
+            
+            result = await client.search(**search_kwargs)
             
             if "results" in result:
                 search_results[country] = result["results"]
@@ -82,7 +98,7 @@ async def search_executor(state: SentimentAnalyzerState) -> Dict[str, Any]:
         "search_results": search_results,
         "execution_log": state.get("execution_log", []) + [{
             "step": "search_executor",
-            "action": f"Searched {len(countries)} countries, found {total_results} results"
+            "action": f"Iteration {iteration + 1}: Searched {len(countries)} countries, found {total_results} results"
         }]
     }
 
