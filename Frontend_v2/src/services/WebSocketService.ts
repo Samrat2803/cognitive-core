@@ -42,7 +42,7 @@ export class WebSocketService {
   private messageHandlers: Map<MessageType, MessageHandler[]> = new Map();
   private statusHandlers: StatusHandler[] = [];
   private status: ConnectionStatus = 'disconnected';
-  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(url: string = import.meta.env.VITE_WS_URL || 'ws://localhost:8001/ws/analyze') {
     this.url = url;

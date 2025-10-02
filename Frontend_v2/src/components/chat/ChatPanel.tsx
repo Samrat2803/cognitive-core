@@ -29,7 +29,7 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isConnected } = useWebSocket();
   const sendMessage = useWebSocketSend();
 
