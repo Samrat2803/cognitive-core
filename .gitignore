@@ -134,6 +134,10 @@ cached_pakistan_gdp_*.png
 # package-lock.json
 # yarn.lock
 
+# Cloned reference repositories (not part of our project)
+ui_exploration/bolt.diy/
+ui_exploration/open-webui/
+
 # Reports and analysis results
 reports/volatility_results/
 reports/test-results/
