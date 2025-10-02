@@ -1,0 +1,91 @@
+.message {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.user-message .message-icon {
+  background-color: #d9f378;
+  color: #1c1e20;
+}
+
+.assistant-message .message-icon {
+  background-color: #5d535c;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.message-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.message-role {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.message-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+  min-width: 0;
+}
+
+.user-text {
+  white-space: pre-wrap;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.user-message {
+  background-color: rgba(217, 243, 120, 0.05);
+}
+
+.assistant-message {
+  background-color: rgba(93, 83, 92, 0.05);
+}
+
+.assistant-message .message-text {
+  /* Markdown content already styled via Markdown.css */
+  overflow-x: auto;
+}
+
