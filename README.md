@@ -17,6 +17,27 @@
 
 ---
 
+## 🎯 For New Teams - DEPLOYMENT
+
+**Deploying this application? Start here:**
+
+1. **📖 Read First:** [`START_HERE_DEPLOYMENT.md`](START_HERE_DEPLOYMENT.md) (5 min overview)
+2. **📘 Detailed Guide:** [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) (complete step-by-step)
+3. **⏱ Time Required:** 45-60 minutes (first time), 15-20 minutes (updates)
+4. **💰 Cost:** ~$38-50/month
+
+**All issues solved:**
+- ✅ WebSocket SSL configuration (wss://)
+- ✅ Load balancer setup for auto-scaling
+- ✅ CloudFront with free SSL
+- ✅ Package size optimization (109MB → 22MB)
+- ✅ CORS configuration
+- ✅ Secrets management
+
+**Don't start deployment without reading the guides above!**
+
+---
+
 ## 🎯 Overview
 
 The Political Analyst Workbench is a sophisticated AI-powered research platform that combines **LangGraph's Master Agent architecture** with **Tavily's real-time web search** to deliver comprehensive political analysis with automatic chart and graph generation.
