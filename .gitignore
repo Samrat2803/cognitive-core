@@ -77,6 +77,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+dev.log
+**/dev.log
 
 # Runtime data
 pids/
@@ -119,6 +121,14 @@ deployment-info.txt
 *.temp
 temp/
 .tmp/
+test_connection.py
+**/test-connection.html
+
+# Cached test artifacts
+cached_india_gdp_*.html
+cached_india_gdp_*.png
+cached_pakistan_gdp_*.html
+cached_pakistan_gdp_*.png
 
 # Package lock files (uncomment if you want to ignore them)
 # package-lock.json

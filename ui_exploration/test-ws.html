@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <button id="connect">Connect</button>
+    <button id="send">Send Query</button>
+    <div id="status">Status: Disconnected</div>
+    <pre id="log"></pre>
+
+    <script>
+        let ws = null;
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message) {
+            log.textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
+            console.log(message);
+        }
+
+        document.getElementById('connect').addEventListener('click', () => {
+            addLog('🔌 Connecting to ws://localhost:8000/ws/analyze');
+            ws = new WebSocket('ws://localhost:8000/ws/analyze');
+
+            ws.onopen = () => {
+                addLog('✅ WebSocket connected!');
+                status.textContent = 'Status: Connected';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                addLog(`📩 Received: ${JSON.stringify(data, null, 2)}`);
+            };
+
+            ws.onerror = (error) => {
+                addLog(`❌ WebSocket error: ${error}`);
+            };
+
+            ws.onclose = () => {
+                addLog('🔌 WebSocket closed');
+                status.textContent = 'Status: Disconnected';
+            };
+        });
+
+        document.getElementById('send').addEventListener('click', () => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                addLog('❌ Not connected!');
+                return;
+            }
+
+            const message = {
+                type: 'query',
+                data: {
+                    query: 'give me a visualization of India\'s GDP growth since 2020',
+                    use_citations: true
+                },
+                message_id: `msg_${Date.now()}`
+            };
+
+            addLog(`📤 Sending: ${JSON.stringify(message)}`);
+            ws.send(JSON.stringify(message));
+        });
+    </script>
+</body>
+</html>
+

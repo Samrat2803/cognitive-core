@@ -1,0 +1,9 @@
+langgraph
+langchain_openai
+langchain_community
+tavily-python
+python-dotenv
+httpx
+streamlit
+langfuse
+boto3
