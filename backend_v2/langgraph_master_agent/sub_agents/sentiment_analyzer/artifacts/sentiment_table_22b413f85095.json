@@ -1,0 +1,34 @@
+{
+  "query": "renewable energy",
+  "timestamp": "2025-10-02T12:59:47.583878",
+  "countries": [
+    "Germany",
+    "Japan"
+  ],
+  "scores": {
+    "Germany": {
+      "sentiment": "positive",
+      "score": 0.8,
+      "positive_pct": 0.75,
+      "negative_pct": 0.1,
+      "neutral_pct": 0.15,
+      "key_points": [
+        "Germany has achieved a record share of 62.7% in renewable energy generation in 2024.",
+        "The country has successfully phased out nuclear power and is a leader in offshore wind and solar energy.",
+        "Significant legislative reforms have been implemented to support renewable energy planning."
+      ]
+    },
+    "Japan": {
+      "sentiment": "positive",
+      "score": 0.7,
+      "positive_pct": 0.75,
+      "negative_pct": 0.1,
+      "neutral_pct": 0.15,
+      "key_points": [
+        "Increasing share of renewable energy in Japan's electricity mix",
+        "Focus on offshore wind power and decarbonization efforts",
+        "Potential challenges highlighted by industry withdrawals, indicating need for reform"
+      ]
+    }
+  }
+}

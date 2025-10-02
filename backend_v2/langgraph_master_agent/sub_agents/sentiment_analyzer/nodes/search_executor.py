@@ -8,8 +8,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
 
 from typing import Dict, Any
 from shared.tavily_client import TavilyClient
-from ..config import SEARCH_DEPTH, MAX_RESULTS_PER_COUNTRY, DEFAULT_TIME_RANGE_DAYS
-from ..state import SentimentAnalyzerState
+from config import SEARCH_DEPTH, MAX_RESULTS_PER_COUNTRY, DEFAULT_TIME_RANGE_DAYS
+from state import SentimentAnalyzerState
 
 
 async def search_executor(state: SentimentAnalyzerState) -> Dict[str, Any]:
@@ -36,7 +36,7 @@ async def search_executor(state: SentimentAnalyzerState) -> Dict[str, Any]:
                 search_depth=SEARCH_DEPTH,
                 max_results=MAX_RESULTS_PER_COUNTRY,
                 include_answer=True,
-                days=time_range
+                country=country  # Use country parameter instead of days
             )
             
             if "results" in result:

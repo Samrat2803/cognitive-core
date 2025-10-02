@@ -11,11 +11,15 @@ import os
 import json
 from datetime import datetime
 
-# Add paths for imports
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+# Add parent directories to path for shared modules
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, '../../..'))
+sys.path.insert(0, parent_dir)
+sys.path.insert(0, current_dir)
 
-from sentiment_analyzer.graph import create_sentiment_analyzer_graph
-from sentiment_analyzer.state import SentimentAnalyzerState
+# Import from current directory (simple imports like POCs)
+from graph import create_sentiment_analyzer_graph
+from state import SentimentAnalyzerState
 
 # Test queries
 TEST_QUERIES = [

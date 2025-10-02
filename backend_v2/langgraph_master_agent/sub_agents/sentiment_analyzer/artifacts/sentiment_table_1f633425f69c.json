@@ -1,0 +1,43 @@
+{
+  "query": "climate policy",
+  "timestamp": "2025-10-02T12:58:08.808207",
+  "countries": [
+    "US",
+    "UK",
+    "France"
+  ],
+  "scores": {
+    "US": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "UK": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "France": {
+      "sentiment": "positive",
+      "score": 0.7,
+      "positive_pct": 0.75,
+      "negative_pct": 0.1,
+      "neutral_pct": 0.15,
+      "key_points": [
+        "France is actively pursuing ambitious climate policies with structured carbon budgets.",
+        "Public transport improvements are linked to increased support for climate initiatives.",
+        "Government investments in green industries and ecological transitions are significant."
+      ]
+    }
+  }
+}

@@ -8,9 +8,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
 
 from typing import Dict, Any
 from openai import AsyncOpenAI
-from ..config import MODEL, TEMPERATURE
-from ..state import SentimentAnalyzerState
+from config import MODEL, TEMPERATURE
+from state import SentimentAnalyzerState
 import json
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(os.path.join(os.path.dirname(__file__), '../../../../.env'))
 
 client = AsyncOpenAI()
 

@@ -1,0 +1,122 @@
+{
+  "query": "climate policy",
+  "countries": [
+    "US",
+    "UK",
+    "France"
+  ],
+  "sentiment_scores": {
+    "US": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "UK": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "France": {
+      "sentiment": "positive",
+      "score": 0.7,
+      "positive_pct": 0.75,
+      "negative_pct": 0.1,
+      "neutral_pct": 0.15,
+      "key_points": [
+        "France is actively pursuing ambitious climate policies with structured carbon budgets.",
+        "Public transport improvements are linked to increased support for climate initiatives.",
+        "Government investments in green industries and ecological transitions are significant."
+      ]
+    }
+  },
+  "bias_analysis": {
+    "US": {
+      "bias_types": [],
+      "overall_bias": "none",
+      "bias_score": 0.0,
+      "examples": []
+    },
+    "UK": {
+      "bias_types": [],
+      "overall_bias": "none",
+      "bias_score": 0.0,
+      "examples": []
+    },
+    "France": {
+      "bias_types": [
+        "source_bias",
+        "framing_bias"
+      ],
+      "overall_bias": "center",
+      "bias_score": 0.0,
+      "examples": [
+        "Comparing France's emissions with the carbon budget for the period in question is a key indicator for monitoring implementation of the SNBC.",
+        "France is the one where the provision of public transport would most increase support for climate policies."
+      ]
+    }
+  },
+  "key_findings": [
+    "US: neutral (score: 0.00)",
+    "UK: neutral (score: 0.00)",
+    "France: positive (score: 0.70)"
+  ],
+  "confidence": 1.0,
+  "artifacts": [
+    {
+      "artifact_id": "sentiment_bar_286228d81190",
+      "type": "bar_chart",
+      "title": "Sentiment Score Comparison",
+      "html_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_bar_286228d81190.html"
+    },
+    {
+      "artifact_id": "sentiment_radar_a5bcb604c71c",
+      "type": "radar_chart",
+      "title": "Sentiment Distribution Radar",
+      "html_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_radar_a5bcb604c71c.html"
+    },
+    {
+      "artifact_id": "sentiment_table_1f633425f69c",
+      "type": "data_table",
+      "title": "Sentiment Data Export",
+      "json_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_table_1f633425f69c.json"
+    }
+  ],
+  "execution_log": [
+    {
+      "step": "query_analyzer",
+      "action": "Identified 3 countries to analyze"
+    },
+    {
+      "step": "search_executor",
+      "action": "Searched 3 countries, found 5 results"
+    },
+    {
+      "step": "sentiment_scorer",
+      "action": "Scored sentiment for 3 countries"
+    },
+    {
+      "step": "bias_detector",
+      "action": "Detected bias for 3 countries"
+    },
+    {
+      "step": "synthesizer",
+      "action": "Generated final report"
+    },
+    {
+      "step": "visualizer",
+      "action": "Generated 3 artifacts"
+    }
+  ],
+  "error_log": [],
+  "duration_seconds": 31.236794
+}

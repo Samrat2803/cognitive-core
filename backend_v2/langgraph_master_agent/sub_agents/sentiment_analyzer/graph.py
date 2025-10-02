@@ -4,11 +4,14 @@ Sentiment Analyzer LangGraph Workflow
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+
+# Add parent to path for shared modules
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, parent_dir)
 
 from langgraph.graph import StateGraph, END
-from .state import SentimentAnalyzerState
-from .nodes import (
+from state import SentimentAnalyzerState
+from nodes import (
     query_analyzer,
     search_executor,
     sentiment_scorer,

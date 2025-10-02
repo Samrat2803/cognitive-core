@@ -1,0 +1,41 @@
+{
+  "query": "climate policy",
+  "timestamp": "2025-10-02T12:55:44.264108",
+  "countries": [
+    "US",
+    "UK",
+    "France"
+  ],
+  "scores": {
+    "US": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "UK": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "France": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    }
+  }
+}

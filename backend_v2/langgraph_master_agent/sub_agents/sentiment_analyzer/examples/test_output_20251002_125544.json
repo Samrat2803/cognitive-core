@@ -1,0 +1,114 @@
+{
+  "query": "climate policy",
+  "countries": [
+    "US",
+    "UK",
+    "France"
+  ],
+  "sentiment_scores": {
+    "US": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "UK": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    },
+    "France": {
+      "sentiment": "neutral",
+      "score": 0.0,
+      "positive_pct": 0.33,
+      "negative_pct": 0.33,
+      "neutral_pct": 0.34,
+      "key_points": [
+        "No data available"
+      ]
+    }
+  },
+  "bias_analysis": {
+    "US": {
+      "bias_types": [],
+      "overall_bias": "none",
+      "bias_score": 0.0,
+      "examples": []
+    },
+    "UK": {
+      "bias_types": [],
+      "overall_bias": "none",
+      "bias_score": 0.0,
+      "examples": []
+    },
+    "France": {
+      "bias_types": [],
+      "overall_bias": "none",
+      "bias_score": 0.0,
+      "examples": []
+    }
+  },
+  "key_findings": [
+    "US: neutral (score: 0.00)",
+    "UK: neutral (score: 0.00)",
+    "France: neutral (score: 0.00)"
+  ],
+  "confidence": 1.0,
+  "artifacts": [
+    {
+      "artifact_id": "sentiment_bar_00f8521ff56b",
+      "type": "bar_chart",
+      "title": "Sentiment Score Comparison",
+      "html_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_bar_00f8521ff56b.html"
+    },
+    {
+      "artifact_id": "sentiment_radar_517914f012ed",
+      "type": "radar_chart",
+      "title": "Sentiment Distribution Radar",
+      "html_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_radar_517914f012ed.html"
+    },
+    {
+      "artifact_id": "sentiment_table_3557d6bb8767",
+      "type": "data_table",
+      "title": "Sentiment Data Export",
+      "json_path": "/Users/kiransah/Desktop/code/tavily_assignment/exp_2/backend_v2/langgraph_master_agent/sub_agents/sentiment_analyzer/nodes/../artifacts/sentiment_table_3557d6bb8767.json"
+    }
+  ],
+  "execution_log": [
+    {
+      "step": "query_analyzer",
+      "action": "Identified 3 countries to analyze"
+    },
+    {
+      "step": "search_executor",
+      "action": "Searched 3 countries, found 0 results"
+    },
+    {
+      "step": "sentiment_scorer",
+      "action": "Scored sentiment for 3 countries"
+    },
+    {
+      "step": "bias_detector",
+      "action": "Detected bias for 3 countries"
+    },
+    {
+      "step": "synthesizer",
+      "action": "Generated final report"
+    },
+    {
+      "step": "visualizer",
+      "action": "Generated 3 artifacts"
+    }
+  ],
+  "error_log": [],
+  "duration_seconds": 10.625019
+}

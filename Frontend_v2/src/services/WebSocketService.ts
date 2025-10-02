@@ -55,13 +55,6 @@ export class WebSocketService {
    * Connect to WebSocket server
    */
   connect(): void {
-    // Don't connect if URL is empty (production HTTPS/WSS not configured yet)
-    if (!this.url || this.url.trim() === '') {
-      console.warn('⚠️ WebSocket disabled: SSL certificate required for production');
-      this.updateStatus('disconnected');
-      return;
-    }
-    
     if (this.ws?.readyState === WebSocket.OPEN) {
       console.log('WebSocket already connected');
       return;

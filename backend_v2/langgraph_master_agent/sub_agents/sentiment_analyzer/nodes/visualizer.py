@@ -9,8 +9,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
 from typing import Dict, Any
 import plotly.graph_objects as go
 import plotly.express as px
-from ..config import ARTIFACT_DIR, MAP_COLOR_SCALE
-from ..state import SentimentAnalyzerState
+from config import ARTIFACT_DIR, MAP_COLOR_SCALE
+from state import SentimentAnalyzerState
 import uuid
 from datetime import datetime
 
