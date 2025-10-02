@@ -6,8 +6,9 @@ import asyncio
 import os
 import sys
 import time
+import json
 from typing import Dict, Any, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -41,9 +42,9 @@ except ImportError as e:
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Web Research Agent API",
-    description="A sophisticated web research agent using LangGraph and Tavily",
-    version="1.0.0"
+    title="Political Analyst Workbench API",
+    description="A sophisticated web research agent using LangGraph and Tavily with real-time WebSocket support",
+    version="2.0.0"
 )
 
 # Get CORS origins from environment or use defaults
@@ -118,6 +119,16 @@ async def startup_event():
             analytics_service = None
     else:
         print("🔄 Running without database integration")
+    
+    # Initialize global services for new endpoints
+    from services.analysis_service import analysis_service
+    from websocket_manager import websocket_manager
+    
+    # Initialize analysis service with database connection
+    if mongo_service:
+        analysis_service.mongo_service = mongo_service
+    
+    print("🚀 MVP endpoints initialized successfully!")
 
 @app.get("/")
 async def root():
@@ -261,6 +272,55 @@ async def get_config():
         "max_sources_display": Config.MAX_SOURCES_DISPLAY,
         "search_depth": Config.SEARCH_DEPTH
     }
+
+
+# Include MVP routers - must be after app creation but before WebSocket
+try:
+    from routers import chat_router, analysis_router
+    app.include_router(chat_router)
+    app.include_router(analysis_router)
+    print("🚀 MVP routers included successfully!")
+except Exception as e:
+    print(f"❌ Failed to include MVP routers: {e}")
+    import traceback
+    traceback.print_exc()
+
+
+# WebSocket endpoint for real-time communication
+@app.websocket("/ws/{session_id}")
+async def websocket_endpoint(websocket: WebSocket, session_id: str):
+    """
+    WebSocket endpoint for real-time analysis updates
+    Supports heartbeat ping/pong and progress messages
+    """
+    from websocket_manager import websocket_manager
+    
+    # Connect client
+    connected = await websocket_manager.connect(websocket, session_id)
+    if not connected:
+        return
+    
+    try:
+        while True:
+            try:
+                # Wait for client messages (e.g., pong responses)
+                data = await websocket.receive_text()
+                message = json.loads(data)
+                await websocket_manager.handle_client_message(session_id, message)
+                
+            except WebSocketDisconnect:
+                print(f"🔌 WebSocket client disconnected: {session_id}")
+                break
+            except json.JSONDecodeError:
+                print(f"⚠️ Invalid JSON from client: {session_id}")
+            except Exception as e:
+                print(f"❌ WebSocket error for {session_id}: {e}")
+                break
+                
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await websocket_manager.disconnect(session_id)
 
 if __name__ == "__main__":
     import uvicorn

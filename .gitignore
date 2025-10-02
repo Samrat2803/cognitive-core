@@ -105,12 +105,19 @@ pids/
 # AWS and deployment secrets
 .aws/
 deployment-info.txt
+*-deployment-info.txt
+backend-deployment-info.txt
 *.pem
 *.key
 
 # Elastic Beanstalk
 .elasticbeanstalk/logs/
 .elasticbeanstalk/deployments/
+
+# Generated Artifacts
+artifacts/*.html
+artifacts/*.png
+!artifacts/.gitkeep
 
 # MongoDB connection strings and API keys
 **/config.json

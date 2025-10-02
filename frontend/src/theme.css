@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,300;8..144,400;8..144,600&display=swap');
+
+:root {
+  --aistra-primary: #d9f378;
+  --aistra-secondary: #5d535c;
+  --aistra-dark: #333333;
+  --aistra-darker: #1c1e20;
+  --aistra-white: #ffffff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--aistra-darker);
+  color: var(--aistra-white);
+  font-family: 'Roboto Flex', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+}
+
+.button-primary {
+  background: var(--aistra-primary);
+  color: var(--aistra-darker);
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card {
+  background: var(--aistra-dark);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+

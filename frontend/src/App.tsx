@@ -1,105 +1,61 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import './App.css';
-import ResearchForm from './components/ResearchForm';
-import ResearchResults from './components/ResearchResults';
-import Header from './components/Header';
-import { ResearchResponse } from './types';
-import { API_CONFIG } from './config';
+import Home from './pages/Home';
+import Chat from './pages/Chat';
+import AnalysisResults from './pages/AnalysisResults';
+
+// Create custom MUI theme that uses CSS variables
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+    background: {
+      default: '#1c1e20',
+      paper: '#333333'
+    },
+    primary: {
+      main: '#d9f378'
+    },
+    secondary: {
+      main: '#5d535c'
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: 'rgba(255, 255, 255, 0.7)'
+    }
+  },
+  typography: {
+    fontFamily: 'Roboto Flex, system-ui, -apple-system, sans-serif'
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: 'var(--aistra-darker)',
+          color: 'var(--aistra-white)'
+        }
+      }
+    }
+  }
+});
 
 function App() {
-  const [results, setResults] = useState<ResearchResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleResearch = async (query: string) => {
-    setIsLoading(true);
-    setError(null);
-    setResults(null);
-
-    try {
-      const response = await fetch(`${API_CONFIG.baseURL}/research`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: ResearchResponse = await response.json();
-      setResults(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleNewSearch = () => {
-    setResults(null);
-    setError(null);
-  };
-
   return (
-    <div className="App">
-      <Header />
-      <main className="main-content">
-        <div className="container">
-          <ResearchForm 
-            onResearch={handleResearch} 
-            isLoading={isLoading}
-          />
-          
-          {error && (
-            <div className="error-message">
-              <p>❌ {error}</p>
-              <button onClick={handleNewSearch} style={{
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                background: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}>
-                Try Again
-              </button>
-            </div>
-          )}
-          
-          {results && (
-            <div style={{ marginTop: '2rem' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem'
-              }}>
-                <h2 style={{ color: 'var(--primary-green)' }}>Research Results</h2>
-                <button 
-                  onClick={handleNewSearch}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: 'var(--primary-green)',
-                    color: 'var(--dark-bg)',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                >
-                  🔍 New Search
-                </button>
-              </div>
-              <ResearchResults results={results} />
-            </div>
-          )}
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <div className="App" style={{ minHeight: '100vh', background: 'var(--aistra-darker)' }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/analysis" element={<AnalysisResults />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
-      </main>
-    </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 

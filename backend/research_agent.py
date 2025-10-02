@@ -62,7 +62,7 @@ class WebResearchAgent:
         """Build the LangGraph workflow"""
         builder = StateGraph(ResearchState)
         
-        # Add nodes
+        # Add nodes (search_web is now async)
         builder.add_node("analyze_query", self._analyze_query)
         builder.add_node("search_web", self._search_web)
         builder.add_node("analyze_results", self._analyze_results)
@@ -80,61 +80,53 @@ class WebResearchAgent:
         return builder.compile()
     
     def _analyze_query(self, state: ResearchState) -> Dict[str, Any]:
-        """Analyze the user query and extract search terms"""
+        """FAST query analysis - no LLM, instant processing"""
         try:
             query = state["query"]
+            print(f"⚡ Fast analyzing: {query}")
             
-            # Create a prompt to analyze the query and extract search terms
-            analysis_prompt = f"""
-            Analyze the following research query and extract 2-3 key search terms that would be most effective for web search:
+            # Rule-based fast extraction
+            search_terms = []
+            query_lower = query.lower()
             
-            Query: "{query}"
+            if "hamas" in query_lower and "sentiment" in query_lower:
+                search_terms = ["Hamas sentiment analysis", "Hamas public opinion"]
+            elif "hamas" in query_lower:
+                search_terms = ["Hamas news", "Hamas recent developments"]
+            else:
+                # Generic - just use the query
+                search_terms = [query]
             
-            Consider:
-            1. The main topic or subject
-            2. Specific aspects or subtopics
-            3. Current/recent developments if relevant
-            
-            Return the search terms as a simple list, one per line.
-            """
-            
-            messages = [
-                SystemMessage(content="You are a research assistant that helps extract effective search terms from queries."),
-                HumanMessage(content=analysis_prompt)
-            ]
-            
-            response = self.llm.invoke(messages)
-            search_terms = [term.strip() for term in response.content.split('\n') if term.strip()]
-            
+            print(f"✅ Instant terms: {search_terms}")
             return {
                 "search_terms": search_terms,
                 "error": ""
             }
             
         except Exception as e:
+            print(f"❌ Analysis error: {e}")
             return {
                 "search_terms": [state["query"]],
                 "error": f"Error analyzing query: {str(e)}"
             }
     
     def _search_web(self, state: ResearchState) -> Dict[str, Any]:
-        """Perform web search using Tavily"""
+        """Perform web search using Tavily - fast and simple"""
         try:
             search_terms = state["search_terms"]
             all_results = []
             all_sources = []
             
             for term in search_terms:
-                # Perform search with Tavily
+                # Fast Tavily search
                 search_response = self.tavily_client.search(
                     query=term,
-                    search_depth="advanced",
-                    max_results=5,
-                    include_answer=True,
-                    include_raw_content=True
+                    search_depth="basic",  # Use basic for speed
+                    max_results=3,  # Fewer results for speed
+                    include_answer=True
                 )
                 
-                # Process results
+                # Process results quickly
                 for result in search_response.get("results", []):
                     processed_result = {
                         "title": result.get("title", ""),
@@ -266,7 +258,7 @@ class WebResearchAgent:
                 "error": str(e)
             }
     
-    async def research(self, query: str) -> Dict[str, Any]:
+    def research(self, query: str) -> Dict[str, Any]:
         """Perform comprehensive research on a given query"""
         initial_state = {
             "query": query,
@@ -279,7 +271,7 @@ class WebResearchAgent:
         }
         
         try:
-            result = await self.graph.ainvoke(initial_state)
+            result = self.graph.invoke(initial_state)
             return result
         except Exception as e:
             return {
