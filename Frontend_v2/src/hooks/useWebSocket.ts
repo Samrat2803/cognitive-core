@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { wsService, type ConnectionStatus, type MessageType, type ServerMessage } from '../services/WebSocketService';
 
 /**
@@ -31,15 +31,29 @@ export function useWebSocket() {
 
 /**
  * Hook to listen for specific message types
+ * Uses useRef to avoid duplicate subscriptions when handler changes
  */
 export function useWebSocketMessage(
   messageType: MessageType,
   handler: (message: ServerMessage) => void
 ) {
+  // Store handler in ref to avoid re-subscription when it changes
+  const handlerRef = useRef(handler);
+  
+  // Update ref when handler changes
   useEffect(() => {
-    const unsubscribe = wsService.on(messageType, handler);
+    handlerRef.current = handler;
+  }, [handler]);
+  
+  // Subscribe once based on messageType only
+  useEffect(() => {
+    const wrappedHandler = (message: ServerMessage) => {
+      handlerRef.current(message);
+    };
+    
+    const unsubscribe = wsService.on(messageType, wrappedHandler);
     return unsubscribe;
-  }, [messageType, handler]);
+  }, [messageType]); // Only re-subscribe if messageType changes
 }
 
 /**

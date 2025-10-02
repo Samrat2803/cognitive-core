@@ -182,12 +182,6 @@ export class WebSocketService {
       if (handlers) {
         handlers.forEach(handler => handler(message));
       }
-
-      // Also call handlers registered for all messages
-      const allHandlers = this.messageHandlers.get('connected' as any);
-      if (allHandlers && message.type !== 'connected') {
-        // Don't double-call for connected messages
-      }
     } catch (error) {
       console.error('❌ Failed to parse message:', error);
     }

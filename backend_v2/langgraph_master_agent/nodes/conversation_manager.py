@@ -46,6 +46,21 @@ async def conversation_manager(state: dict) -> dict:
             "timestamp": datetime.now().isoformat()
         })
     
+    # Track artifacts from previous turn (if any)
+    # This happens when a new turn starts - we check if previous turn generated artifacts
+    if state.get("artifact_id"):
+        # If there's an artifact from previous turn, ensure it's tracked
+        # We'll add it to metadata for now (not conversation_history to avoid clutter)
+        if not state.get("artifacts_history"):
+            state["artifacts_history"] = []
+        
+        state["artifacts_history"].append({
+            "artifact_id": state["artifact_id"],
+            "artifact_type": state.get("artifact_type"),
+            "timestamp": datetime.now().isoformat(),
+            "query": state.get("current_message", "")
+        })
+    
     # Keep only last N messages (per config)
     max_history = 10
     if len(state["conversation_history"]) > max_history:

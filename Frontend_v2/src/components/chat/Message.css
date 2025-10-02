@@ -3,6 +3,9 @@
   gap: 12px;
   padding: 16px;
   animation: slideIn 0.3s ease-out;
+  /* Performance optimizations for smooth streaming */
+  contain: layout style;
+  will-change: contents;
 }
 
 @keyframes slideIn {
@@ -87,5 +90,61 @@
 .assistant-message .message-text {
   /* Markdown content already styled via Markdown.css */
   overflow-x: auto;
+}
+
+/* Execution Details */
+.execution-details {
+  margin-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+}
+
+.execution-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(93, 83, 92, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.execution-toggle:hover {
+  background: rgba(93, 83, 92, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.execution-toggle svg {
+  flex-shrink: 0;
+}
+
+.execution-badge {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 4px;
+}
+
+.execution-graph-wrapper {
+  margin-top: 12px;
+  animation: expandDown 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes expandDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 600px;
+  }
 }
 

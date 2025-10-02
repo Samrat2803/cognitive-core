@@ -1,6 +1,5 @@
 import { useState, useRef, type KeyboardEvent, type ChangeEvent } from 'react';
 import { Send, Square } from 'lucide-react';
-import { useWebSocketSend } from '../../hooks/useWebSocket';
 import './MessageInput.css';
 
 interface MessageInputProps {
@@ -13,7 +12,6 @@ interface MessageInputProps {
 export function MessageInput({ onSendMessage, disabled, isStreaming, onStop }: MessageInputProps) {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const sendMessage = useWebSocketSend();
 
   const handleSend = () => {
     const trimmedInput = input.trim();
@@ -22,13 +20,7 @@ export function MessageInput({ onSendMessage, disabled, isStreaming, onStop }: M
       return;
     }
 
-    // Send via WebSocket
-    sendMessage('query', {
-      query: trimmedInput,
-      use_citations: true,
-    });
-
-    // Call optional callback
+    // Call callback - parent (ChatPanel) will handle sending via WebSocket
     onSendMessage?.(trimmedInput);
 
     // Clear input

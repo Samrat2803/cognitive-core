@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWebSocket, useWebSocketMessage, useWebSocketSend } from '../../hooks/useWebSocket';
 import { Message, type MessageData } from './Message';
 import { MessageInput } from './MessageInput';
@@ -27,27 +27,51 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
   const [currentCitations, setCurrentCitations] = useState<Citation[]>([]);
   const [statusUpdates, setStatusUpdates] = useState<StatusUpdate[]>([]);
   const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { isConnected } = useWebSocket();
   const sendMessage = useWebSocketSend();
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom - throttled to reduce flickering during streaming
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, currentAssistantMessage]);
+    // Clear any pending scroll
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    // Use requestAnimationFrame for smooth rendering
+    scrollTimeoutRef.current = setTimeout(() => {
+      requestAnimationFrame(() => {
+        if (messagesEndRef.current) {
+          // Use 'auto' (instant) during streaming to avoid flicker, 'smooth' for new messages
+          const behavior = isStreaming ? 'auto' : 'smooth';
+          messagesEndRef.current.scrollIntoView({ behavior, block: 'nearest' });
+        }
+      });
+    }, 50); // Throttle to 50ms
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [messages, currentAssistantMessage, isStreaming]);
 
   // Handle session start
-  useWebSocketMessage('session_start', (message: ServerMessage) => {
+  useWebSocketMessage('session_start', useCallback((message: ServerMessage) => {
     console.log('Session started:', message.data);
+    const sessionId = message.data.session_id;
+    setCurrentSessionId(sessionId); // Capture session ID for execution graph
     setIsStreaming(true);
     setCurrentAssistantMessage('');
     setCurrentCitations([]);
     setStatusUpdates([]);
     setCurrentProgress(0);
-  });
+  }, []));
 
   // Handle status updates
-  useWebSocketMessage('status', (message: ServerMessage) => {
+  useWebSocketMessage('status', useCallback((message: ServerMessage) => {
     const { step, message: statusMessage, progress } = message.data;
     
     setStatusUpdates((prev) => [
@@ -63,16 +87,16 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
     if (progress !== undefined) {
       setCurrentProgress(progress);
     }
-  });
+  }, []));
 
   // Handle streaming content
-  useWebSocketMessage('content', (message: ServerMessage) => {
+  useWebSocketMessage('content', useCallback((message: ServerMessage) => {
     const content = message.data.content || '';
     setCurrentAssistantMessage((prev) => prev + content);
-  });
+  }, []));
 
   // Handle citations
-  useWebSocketMessage('citation', (message: ServerMessage) => {
+  useWebSocketMessage('citation', useCallback((message: ServerMessage) => {
     console.log('Citation received:', message.data);
     const citation: Citation = {
       title: message.data.title || 'Untitled',
@@ -82,10 +106,10 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
       score: message.data.score,
     };
     setCurrentCitations((prev) => [...prev, citation]);
-  });
+  }, []));
 
   // Handle artifacts
-  useWebSocketMessage('artifact', (message: ServerMessage) => {
+  useWebSocketMessage('artifact', useCallback((message: ServerMessage) => {
     console.log('Artifact received:', message.data);
     const artifact: Artifact = {
       artifact_id: message.data.artifact_id || '',
@@ -104,35 +128,43 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
     if (onArtifactReceived) {
       onArtifactReceived(artifact);
     }
-  });
+  }, [onArtifactReceived]));
 
   // Handle completion
-  useWebSocketMessage('complete', (message: ServerMessage) => {
-    console.log('Analysis complete:', message.data);
+  useWebSocketMessage('complete', useCallback((message: ServerMessage) => {
+    console.log('🎯 Analysis complete handler called:', message.data);
+    console.log('   Current assistant message:', currentAssistantMessage ? `${currentAssistantMessage.substring(0, 50)}...` : 'none');
     
-    // Add the completed assistant message with citations
+    // Add the completed assistant message with citations AND sessionId
     if (currentAssistantMessage) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant_${Date.now()}`,
-          role: 'assistant',
-          content: currentAssistantMessage,
-          timestamp: new Date(),
-          citations: currentCitations.length > 0 ? currentCitations : undefined,
-        },
-      ]);
+      setMessages((prev) => {
+        console.log(`   📝 Adding assistant message (prev count: ${prev.length})`);
+        return [
+          ...prev,
+          {
+            id: `assistant_${Date.now()}`,
+            role: 'assistant',
+            content: currentAssistantMessage,
+            timestamp: new Date(),
+            citations: currentCitations.length > 0 ? currentCitations : undefined,
+            sessionId: currentSessionId, // Include session ID for execution graph
+          },
+        ];
+      });
       setCurrentAssistantMessage('');
       setCurrentCitations([]);
+    } else {
+      console.log('   ⚠️  No currentAssistantMessage to add');
     }
     
     setIsStreaming(false);
     setStatusUpdates([]);
     setCurrentProgress(0);
-  });
+    setCurrentSessionId(undefined); // Reset for next message
+  }, [currentAssistantMessage, currentCitations, currentSessionId]));
 
   // Handle errors
-  useWebSocketMessage('error', (message: ServerMessage) => {
+  useWebSocketMessage('error', useCallback((message: ServerMessage) => {
     console.error('Error:', message.data);
     
     // Add error message
@@ -148,7 +180,7 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
     
     setIsStreaming(false);
     setCurrentAssistantMessage('');
-  });
+  }, []));
 
   const handleSendMessage = (query: string) => {
     if (!query.trim() || !isConnected) {
@@ -156,22 +188,29 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
       return;
     }
 
+    console.log('🚀 handleSendMessage called with query:', query);
+
     // Add user message to chat
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `user_${Date.now()}`,
-        role: 'user',
-        content: query,
-        timestamp: new Date(),
-      },
-    ]);
+    setMessages((prev) => {
+      console.log(`   📝 Adding user message (prev count: ${prev.length})`);
+      return [
+        ...prev,
+        {
+          id: `user_${Date.now()}`,
+          role: 'user',
+          content: query,
+          timestamp: new Date(),
+        },
+      ];
+    });
 
     // Send message to backend via WebSocket
-    sendMessage('query', {
+    console.log('   📤 Calling sendMessage to backend');
+    const messageId = sendMessage('query', {
       query: query,
       use_citations: true,
     });
+    console.log('   ✅ Message sent with ID:', messageId);
   };
 
   const handleStop = () => {

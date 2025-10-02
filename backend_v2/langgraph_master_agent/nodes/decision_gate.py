@@ -80,15 +80,38 @@ async def decision_gate(state: dict) -> dict:
         state["needs_clarification"] = False
         decision = "PROCEED_TO_SYNTHESIS"
     
-    # Log decision
+    # Log decision with detailed reasoning
+    input_details = f"Current State Assessment:\n"
+    input_details += f"- Iteration: {state['iteration_count']}/{max_iterations}\n"
+    input_details += f"- Has Results: {has_results}\n"
+    input_details += f"- Tool Results: {list(tool_results.keys()) if tool_results else 'None'}\n"
+    input_details += f"- Sub-Agent Results: {list(sub_agent_results.keys()) if sub_agent_results else 'None'}\n"
+    input_details += f"- At Iteration Limit: {at_iteration_limit}"
+    
+    output_details = f"Decision: {decision}\n\n"
+    output_details += f"Reasoning:\n"
+    if decision == "PROCEED_TO_SYNTHESIS":
+        if has_results:
+            result_count = len(tool_results) + len(sub_agent_results)
+            output_details += f"✓ Sufficient information gathered ({result_count} result source(s))\n"
+            output_details += f"✓ Ready to synthesize response"
+        elif at_iteration_limit:
+            output_details += f"⚠ Iteration limit reached ({max_iterations})\n"
+            output_details += f"→ Proceeding with available information"
+    elif decision == "RETRY_TOOLS":
+        output_details += f"✗ No results yet\n"
+        output_details += f"→ Will retry tool execution (attempt {state['iteration_count'] + 1}/{max_iterations})"
+    
+    output_details += f"\n\nNext Actions:\n"
+    output_details += f"- Needs More Tools: {state.get('needs_more_tools', False)}\n"
+    output_details += f"- Proceed to Synthesis: {state.get('has_sufficient_info', False)}"
+    
     state["execution_log"].append({
         "step": "decision_gate",
-        "action": f"Decision: {decision}",
-        "iteration": state["iteration_count"],
-        "has_results": has_results,
+        "action": decision,
         "timestamp": datetime.now().isoformat(),
-        "input": f"Iteration: {state['iteration_count']}, Has results: {has_results}",
-        "output": f"Decision: {decision}, Continue: {state.get('needs_more_tools', False)}"
+        "input": input_details,
+        "output": output_details
     })
     
     state["metadata"]["decision"] = decision

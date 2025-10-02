@@ -115,39 +115,53 @@ Be concise and strategic.
         except:
             pass  # Fall back to keyword matching if JSON parsing fails
         
-        # Fallback: use keyword matching if LLM didn't provide tools
+        # FALLBACK: Keyword matching (DISABLED for debugging - will be re-enabled later)
+        # Commenting out to force LLM-based tool selection for debugging core agent execution
+        # TODO: Re-enable this fallback after debugging is complete
+        
+        # if not tools_to_use:
+        #     query_lower = current_message.lower()
+        #     
+        #     # Check for visualization/chart creation requests
+        #     if any(word in query_lower for word in ["chart", "graph", "visuali", "plot", "trend"]):
+        #         # If there's conversation history with data, create visualization
+        #         if len(conversation_history) > 1:
+        #             tools_to_use.append("create_plotly_chart")
+        #         else:
+        #             # Need to search for data first
+        #             tools_to_use.append("tavily_search")
+        #             tools_to_use.append("create_plotly_chart")
+        #     elif any(word in query_lower for word in ["sentiment", "opinion", "view", "perspective"]):
+        #         tools_to_use.append("sentiment_analysis_agent")
+        #     elif any(word in query_lower for word in ["search", "find", "latest", "recent", "news", "what"]):
+        #         tools_to_use.append("tavily_search")
+        #     elif any(word in query_lower for word in ["extract", "read", "content from"]):
+        #         tools_to_use.append("tavily_extract")
+        #     else:
+        #         # Default to search for general queries
+        #         tools_to_use.append("tavily_search")
+        
+        # If LLM didn't provide tools and fallback is disabled, log warning
         if not tools_to_use:
-            query_lower = current_message.lower()
-            
-            # Check for visualization/chart creation requests
-            if any(word in query_lower for word in ["chart", "graph", "visuali", "plot", "trend"]):
-                # If there's conversation history with data, create visualization
-                if len(conversation_history) > 1:
-                    tools_to_use.append("create_plotly_chart")
-                else:
-                    # Need to search for data first
-                    tools_to_use.append("tavily_search")
-                    tools_to_use.append("create_plotly_chart")
-            elif any(word in query_lower for word in ["sentiment", "opinion", "view", "perspective"]):
-                tools_to_use.append("sentiment_analysis_agent")
-            elif any(word in query_lower for word in ["search", "find", "latest", "recent", "news", "what"]):
-                tools_to_use.append("tavily_search")
-            elif any(word in query_lower for word in ["extract", "read", "content from"]):
-                tools_to_use.append("tavily_extract")
-            else:
-                # Default to search for general queries
-                tools_to_use.append("tavily_search")
+            state["reasoning"] = "No tools selected by LLM, and keyword fallback is disabled"
         
         state["tools_to_use"] = tools_to_use
         
-        # Log execution
+        # Log execution with full details
+        input_details = f"User Query: {current_message}\n"
+        if history_context:
+            input_details += f"\nContext from history:\n{history_context[:300]}..."
+        
+        output_details = f"Selected Tools: {', '.join(tools_to_use)}\n\n"
+        output_details += f"Reasoning:\n{plan_text}\n\n"
+        output_details += f"Task Plan:\n{state.get('task_plan', 'N/A')}"
+        
         state["execution_log"].append({
             "step": "strategic_planner",
-            "action": f"Plan created - Tools: {', '.join(tools_to_use)}",
+            "action": f"Analysis complete - {len(tools_to_use)} tool(s) selected",
             "timestamp": datetime.now().isoformat(),
-            "details": plan_text[:200],
-            "input": f"Query: {current_message[:150]}...",
-            "output": f"Selected tools: {', '.join(tools_to_use)}"
+            "input": input_details,
+            "output": output_details
         })
         
     except Exception as e:

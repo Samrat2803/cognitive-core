@@ -33,13 +33,14 @@ app = FastAPI(
 )
 
 # Get CORS origins from environment or use defaults
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8501,http://localhost:5173,http://localhost:5174,http://localhost:5175").split(",")
+# For development: allow all origins
+cors_origins = os.getenv("CORS_ORIGINS", "*")
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in cors_origins],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=False,  # Must be False when using allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -238,6 +239,14 @@ try:
 except ImportError as e:
     print(f"⚠️  S3 service not available: {e}")
     s3_service = None
+
+# Import Graph Visualization service
+try:
+    from services.graph_service import graph_service
+    print("🗄️  Graph Visualization service imported")
+except ImportError as e:
+    print(f"⚠️  Graph Visualization service not available: {e}")
+    graph_service = None
 
 
 # ============================================================================
@@ -597,6 +606,104 @@ async def get_artifact_presigned_urls(artifact_id: str, expiration: int = 3600):
 
 
 # ============================================================================
+# Graph Visualization Endpoints
+# ============================================================================
+
+@app.get("/api/graph/structure")
+async def get_graph_structure():
+    """
+    Get static graph structure (nodes and edges) for visualization
+    
+    Returns JSON with:
+    - nodes: List of all graph nodes with metadata
+    - edges: List of all edges (connections between nodes)
+    - metadata: Graph-level information
+    
+    Frontend can use this with D3.js, Cytoscape.js, React Flow, etc.
+    """
+    if not graph_service:
+        raise HTTPException(status_code=503, detail="Graph service not available")
+    
+    try:
+        graph_data = graph_service.get_static_graph_structure()
+        return graph_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get graph structure: {str(e)}")
+
+
+@app.get("/api/graph/execution/{session_id}")
+async def get_execution_graph(session_id: str):
+    """
+    Get graph with execution state for a specific session
+    
+    Args:
+        session_id: Session identifier from conversation
+    
+    Returns JSON with:
+    - nodes: Nodes with execution state (executed, timestamp, status)
+    - edges: Edges with traversal information
+    - execution_metadata: Timing, iterations, etc.
+    
+    Use this to show which path was taken for a specific conversation
+    """
+    if not graph_service:
+        raise HTTPException(status_code=503, detail="Graph service not available")
+    
+    if not mongo_service:
+        raise HTTPException(status_code=503, detail="Database service not available")
+    
+    try:
+        # Get session from MongoDB to retrieve execution log
+        session = await mongo_service.get_session(session_id)
+        
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        
+        # Get execution log
+        execution_log_doc = await mongo_service.get_execution_log(session_id)
+        
+        if not execution_log_doc:
+            # Try to get from session itself
+            execution_log = []
+        else:
+            execution_log = execution_log_doc.get("steps", [])
+        
+        # Generate graph with execution state
+        graph_data = graph_service.get_execution_graph(session_id, execution_log)
+        
+        return graph_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get execution graph: {str(e)}")
+
+
+@app.get("/api/graph/mermaid")
+async def get_mermaid_diagram():
+    """
+    Get Mermaid diagram text representation
+    
+    Returns:
+        Text content that can be rendered with Mermaid.js
+    
+    Note: Use /api/graph/structure for interactive visualizations
+    """
+    if not graph_service:
+        raise HTTPException(status_code=503, detail="Graph service not available")
+    
+    try:
+        mermaid_text = graph_service.get_mermaid_diagram()
+        return {
+            "format": "mermaid",
+            "diagram": mermaid_text,
+            "viewer_url": "https://mermaid.live"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate Mermaid diagram: {str(e)}")
+
+
+# ============================================================================
 # WebSocket Endpoint for Streaming
 # ============================================================================
 
@@ -720,6 +827,37 @@ async def websocket_analyze(websocket: WebSocket):
                                 timeout=90.0
                             )
                             print(f"✅ Agent completed successfully")
+                            
+                            # Save to MongoDB (if available)
+                            if mongo_service:
+                                try:
+                                    from services.mongo_service import AnalysisSession
+                                    agent_session_id = result.get("session_id", session_id)
+                                    
+                                    session = AnalysisSession(
+                                        session_id=agent_session_id,
+                                        query=query,
+                                        user_session=current_message_id or "websocket",
+                                        response=result.get("response", ""),
+                                        confidence=result.get("confidence", 0.0),
+                                        processing_time_ms=0,  # WebSocket doesn't track this
+                                        tools_used=result.get("tools_used", []),
+                                        iterations=result.get("iterations", 0),
+                                        artifact_id=result.get("artifact", {}).get("artifact_id") if result.get("artifact") else None
+                                    )
+                                    
+                                    await mongo_service.db.analysis_sessions.insert_one(session.to_dict())
+                                    
+                                    # Save execution log
+                                    await mongo_service.save_execution_log(
+                                        session_id=agent_session_id,
+                                        execution_log=result.get("execution_log", [])
+                                    )
+                                    
+                                    print(f"✅ Session {agent_session_id} saved to MongoDB with {len(result.get('execution_log', []))} execution steps")
+                                except Exception as db_error:
+                                    print(f"⚠️  Failed to save to MongoDB: {db_error}")
+                        
                         except asyncio.TimeoutError:
                             print(f"❌ Agent timed out after 90s")
                             await websocket.send_json(create_message(
