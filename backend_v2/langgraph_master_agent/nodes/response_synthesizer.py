@@ -67,7 +67,59 @@ async def response_synthesizer(state: dict) -> dict:
     
     results_summary += "\n\nSUB-AGENT RESULTS:\n"
     for agent_name, result in sub_agent_results.items():
-        results_summary += f"\n{agent_name}:\n{str(result)[:300]}\n"
+        results_summary += f"\n{agent_name}:\n"
+        
+        # Special handling for sentiment analyzer
+        if agent_name == "sentiment_analysis" and result.get("success"):
+            data = result.get("data", {})
+            results_summary += f"Status: {result.get('status', 'COMPLETED')}\n"
+            results_summary += f"Query: {data.get('query', 'N/A')}\n"
+            results_summary += f"Countries: {', '.join(data.get('countries', []))}\n\n"
+            
+            # Add sentiment scores
+            sentiment_scores = data.get("sentiment_scores", {})
+            if sentiment_scores:
+                results_summary += "SENTIMENT SCORES:\n"
+                for country, scores in sentiment_scores.items():
+                    sentiment = scores.get('sentiment', 'unknown')
+                    score = scores.get('score', 0)
+                    pos_pct = scores.get('positive_pct', 0)
+                    neu_pct = scores.get('neutral_pct', 0)
+                    neg_pct = scores.get('negative_pct', 0)
+                    results_summary += f"  {country}:\n"
+                    results_summary += f"    Sentiment: {sentiment} (score: {score:.2f})\n"
+                    results_summary += f"    Distribution: {pos_pct*100:.1f}% positive, {neu_pct*100:.1f}% neutral, {neg_pct*100:.1f}% negative\n"
+            
+            # Add bias analysis
+            bias_analysis = data.get("bias_analysis", {})
+            if bias_analysis:
+                results_summary += "\nBIAS ANALYSIS:\n"
+                for country, bias_data in bias_analysis.items():
+                    bias_types = bias_data.get('bias_types', [])
+                    overall_bias = bias_data.get('overall_bias', 'unknown')
+                    results_summary += f"  {country}: {overall_bias} ({len(bias_types)} types detected)\n"
+            
+            # Add key findings
+            key_findings = data.get("key_findings", [])
+            if key_findings:
+                results_summary += "\nKEY FINDINGS:\n"
+                for i, finding in enumerate(key_findings[:5], 1):
+                    results_summary += f"  {i}. {finding}\n"
+            
+            # Add summary
+            summary = data.get("summary", "")
+            if summary:
+                results_summary += f"\nSUMMARY:\n{summary[:500]}...\n"
+            
+            # Add artifacts info
+            artifacts = data.get("artifacts", [])
+            if artifacts:
+                results_summary += f"\nARTIFACTS GENERATED: {len(artifacts)} visualizations\n"
+                for artifact in artifacts:
+                    results_summary += f"  - {artifact.get('type')}: {artifact.get('title')}\n"
+        else:
+            # Default handling for other sub-agents
+            results_summary += f"{str(result)[:500]}\n"
     
     synthesis_prompt = f"""
 You are a Political Analyst AI assistant synthesizing results for a user query.

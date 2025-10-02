@@ -35,10 +35,13 @@ async def sentiment_scorer(state: SentimentAnalyzerState) -> Dict[str, Any]:
             sentiment_scores[country] = {
                 "sentiment": "neutral",
                 "score": 0.0,
+                "reasoning": "No data available for analysis",
                 "positive_pct": 0.33,
                 "negative_pct": 0.33,
                 "neutral_pct": 0.34,
-                "key_points": ["No data available"]
+                "key_points": ["No data available"],
+                "source_type": "other",
+                "credibility_score": 0.0
             }
             print(f"   ⚠️ {country}: No results to analyze")
             continue
@@ -57,12 +60,15 @@ Sources:
 Return JSON with:
 - sentiment: "positive", "negative", or "neutral"
 - score: float from -1 (very negative) to +1 (very positive)
+- reasoning: string explaining WHY this sentiment score was assigned (2-3 sentences)
 - positive_pct: percentage positive (0-1)
 - negative_pct: percentage negative (0-1)
 - neutral_pct: percentage neutral (0-1)
 - key_points: list of 2-3 key findings
+- source_type: classify dominant source as "media", "govt", "political_party", "encyclopedia", or "other"
+- credibility_score: float 0-1 indicating source reliability (1=high, 0=low)
 
-Example: {{"sentiment": "positive", "score": 0.6, "positive_pct": 0.7, "negative_pct": 0.1, "neutral_pct": 0.2, "key_points": ["Strong government support", "Public opinion divided"]}}"""
+Example: {{"sentiment": "positive", "score": 0.6, "reasoning": "Sources show strong government support and positive policy initiatives, though public opinion remains divided.", "positive_pct": 0.7, "negative_pct": 0.1, "neutral_pct": 0.2, "key_points": ["Strong government support", "Public opinion divided"], "source_type": "media", "credibility_score": 0.8}}"""
         
         try:
             response = await client.chat.completions.create(
@@ -80,10 +86,13 @@ Example: {{"sentiment": "positive", "score": 0.6, "positive_pct": 0.7, "negative
             sentiment_scores[country] = {
                 "sentiment": "neutral",
                 "score": 0.0,
+                "reasoning": f"Analysis error: {str(e)[:100]}",
                 "positive_pct": 0.33,
                 "negative_pct": 0.33,
                 "neutral_pct": 0.34,
-                "key_points": [f"Error: {str(e)[:100]}"]
+                "key_points": [f"Error: {str(e)[:100]}"],
+                "source_type": "other",
+                "credibility_score": 0.0
             }
     
     return {

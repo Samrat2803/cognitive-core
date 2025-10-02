@@ -24,19 +24,44 @@ async def search_executor(state: SentimentAnalyzerState) -> Dict[str, Any]:
     
     search_results = {}
     
+    # Map country codes to full names for better search results
+    country_names = {
+        "US": "United States",
+        "UK": "United Kingdom",
+        "France": "France",
+        "Germany": "Germany",
+        "China": "China",
+        "Russia": "Russia",
+        "India": "India",
+        "Iran": "Iran",
+        "Israel": "Israel",
+        "Japan": "Japan",
+        "Canada": "Canada",
+        "Australia": "Australia",
+        "Brazil": "Brazil",
+        "Mexico": "Mexico",
+        "EU": "European Union"
+    }
+    
     for country in countries:
-        # Search with country filter
-        country_query = f"{query} {country}"
+        # Create more specific query with full country name
+        full_country_name = country_names.get(country, country)
         
-        print(f"   Searching: {country_query[:50]}...")
+        # Enhanced query construction for better results
+        # Example: "nuclear policy" + "United States" -> "nuclear policy public opinion United States"
+        country_query = f"{query} public opinion {full_country_name}"
+        
+        print(f"   Searching: {country_query[:60]}...")
         
         try:
+            # Fixed: Removed incorrect 'country' parameter
+            # The 'country' parameter in Tavily is for domain filtering (.com, .co.uk), 
+            # not for filtering content about a country
             result = await client.search(
                 query=country_query,
                 search_depth=SEARCH_DEPTH,
                 max_results=MAX_RESULTS_PER_COUNTRY,
-                include_answer=True,
-                country=country  # Use country parameter instead of days
+                include_answer=True
             )
             
             if "results" in result:

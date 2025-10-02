@@ -20,12 +20,13 @@
 ### Artifacts Created
 ```bash
 artifacts/
-├── sentiment_bar_286228d81190.html (3.5MB)
-├── sentiment_radar_a5bcb604c71c.html (3.5MB)
-└── sentiment_table_1f633425f69c.json (1KB)
+├── sentiment_bar_chart_286228d81190.html (3.5MB) ← Using shared tools
+├── sentiment_radar_chart_a5bcb604c71c.html (3.5MB) ← Using shared tools
+└── sentiment_data_table_1f633425f69c.json (1KB) ← Using shared tools
 ```
 
-**Status:** ✅ INTEGRATED & WORKING
+**Status:** ✅ INTEGRATED & WORKING  
+**Visualization:** ✅ USING SHARED TOOLS (visualization_factory.py)
 
 ### Integration Test Results ✅
 - **Integration Test:** PASSED ✅  
@@ -105,7 +106,128 @@ async def search(
 
 ---
 
-### 4. **File Structure That Works**
+### 4. **Shared Visualization Tools (RECOMMENDED) 🎨**
+
+**New:** Oct 2, 2025 - Implemented after Sentiment Analyzer
+
+**Why:** Avoid duplicating Plotly code across agents. Ensures consistency.
+
+**Location:** `backend_v2/shared/visualization_factory.py`
+
+**Available Tools:**
+```python
+from shared.visualization_factory import (
+    VisualizationFactory,
+    create_sentiment_bar_chart,
+    create_sentiment_radar_chart
+)
+
+# Bar Chart
+artifact = create_sentiment_bar_chart(
+    country_scores=sentiment_scores,
+    query=query,
+    output_dir=output_dir
+)
+
+# Radar Chart
+artifact = create_sentiment_radar_chart(
+    country_scores=sentiment_scores,
+    query=query,
+    output_dir=output_dir,
+    max_countries=5
+)
+
+# General factory methods
+fig = VisualizationFactory.create_bar_chart(
+    x_data=['US', 'UK'],
+    y_data=[0.8, -0.3],
+    title="Custom Chart",
+    color_scale="RdYlGn",
+    color_range=(-1, 1)
+)
+
+artifact = VisualizationFactory.save_artifact(
+    fig=fig,
+    output_dir=output_dir,
+    artifact_type="custom_chart",
+    title="My Chart"
+)
+
+# JSON export
+artifact = VisualizationFactory.save_json_export(
+    data={"results": [...]},
+    output_dir=output_dir,
+    artifact_type="data_table",
+    title="Data Export"
+)
+```
+
+**Benefits:**
+- ✅ Less code in agent nodes (3 lines vs 50 lines per chart)
+- ✅ Consistent styling across all agents
+- ✅ Automatic artifact metadata generation
+- ✅ Unique IDs and proper file naming
+- ✅ Easy to extend (add new chart types once, use everywhere)
+
+**Available Chart Types:**
+1. `create_bar_chart()` - Bar charts with color gradients
+2. `create_radar_chart()` - Multi-series radar charts
+3. `create_choropleth_map()` - World maps (country-level)
+4. `create_line_chart()` - Time series / trends
+5. `create_heatmap()` - 2D heatmaps
+6. `save_artifact()` - Generic Plotly figure saver
+7. `save_json_export()` - Structured data exports
+
+**Convenience Functions:**
+- `create_sentiment_bar_chart()` - Ready-made sentiment bars
+- `create_sentiment_radar_chart()` - Ready-made sentiment radar
+
+**When to Use:**
+- ✅ Use for ALL standard charts (bar, radar, line, map)
+- ✅ Use convenience functions when available
+- ✅ Add new convenience functions for repeated patterns
+- ❌ Only write custom Plotly code for truly unique visualizations
+
+**Example from Sentiment Analyzer:**
+
+**Before (50 lines):**
+```python
+# Old approach - direct Plotly code
+fig_bar = go.Figure(data=[
+    go.Bar(
+        x=countries_list,
+        y=scores_list,
+        marker=dict(
+            color=scores_list,
+            colorscale='RdYlGn',
+            cmin=-1,
+            cmax=1,
+            colorbar=dict(title="Sentiment")
+        )
+    )
+])
+fig_bar.update_layout(...)
+html_path = os.path.join(output_dir, f"{artifact_id}.html")
+fig_bar.write_html(html_path)
+artifacts.append({...})
+```
+
+**After (3 lines):**
+```python
+# New approach - shared tools
+artifact = create_sentiment_bar_chart(
+    country_scores=sentiment_scores,
+    query=query,
+    output_dir=output_dir
+)
+artifacts.append(artifact)
+```
+
+**Code Reduction:** 94% less code in visualizer nodes 🎉
+
+---
+
+### 5. **File Structure That Works**
 
 ```
 sentiment_analyzer/
@@ -127,7 +249,7 @@ sentiment_analyzer/
 
 ---
 
-### 5. **Testing Workflow**
+### 6. **Testing Workflow**
 
 **Step 1:** Test from agent's own directory
 ```bash

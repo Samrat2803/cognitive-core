@@ -34,11 +34,22 @@ async def query_analyzer(state: SentimentAnalyzerState) -> Dict[str, Any]:
     
     # If countries not provided, extract from query or use defaults
     if not countries:
-        prompt = f"""Extract countries mentioned in this query. If none mentioned, return empty list.
-        
+        prompt = f"""Extract ALL countries mentioned in this query. Return country names or common abbreviations (US, UK, etc.).
+
+IMPORTANT: 
+- "United States" or "US" or "USA" → "US"
+- "United Kingdom" or "UK" or "Britain" → "UK" 
+- "Israel" → "Israel"
+- "Iran" → "Iran"
+- If NO countries mentioned, return empty list []
+
 Query: {query}
 
-Return as JSON: {{"countries": ["US", "China", ...]}}"""
+Return as JSON: {{"countries": ["US", "Israel", ...]}}
+
+Examples:
+- Query: "sentiment on Hamas in US and Israel" → {{"countries": ["US", "Israel"]}}
+- Query: "nuclear energy policy" → {{"countries": []}}"""
         
         try:
             response = await client.chat.completions.create(

@@ -4,6 +4,7 @@
   height: 100%;
   background-color: #1c1e20;
   border-left: 1px solid rgba(217, 243, 120, 0.2);
+  border-bottom: 1px solid rgba(217, 243, 120, 0.2);
   overflow: hidden;
 }
 
@@ -94,16 +95,40 @@
   transition: all 0.2s ease;
 }
 
-.artifact-action-button:hover {
+.artifact-action-button:hover:not(:disabled) {
   background-color: rgba(217, 243, 120, 0.2);
   border-color: rgba(217, 243, 120, 0.4);
   color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+}
+
+.artifact-action-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.artifact-action-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .artifact-action-button svg {
   stroke: currentColor;
   fill: none;
   stroke-width: 2;
+}
+
+.artifact-zoom-level {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #d9f378;
+  background-color: rgba(217, 243, 120, 0.1);
+  border-radius: 4px;
+  min-width: 45px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Content */
@@ -184,6 +209,7 @@
   padding: 12px 20px;
   background-color: rgba(28, 30, 32, 0.6);
   border-top: 1px solid rgba(217, 243, 120, 0.1);
+  border-bottom: 1px solid rgba(217, 243, 120, 0.1);
   flex-shrink: 0;
 }
 
@@ -205,6 +231,130 @@
   border: none;
 }
 
+/* Artifact Tabs - Multiple artifact navigation */
+.artifact-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md) 0 var(--space-md);
+  background-color: var(--color-background-darkest);
+  border-bottom: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  flex-shrink: 0;
+}
+
+.artifact-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.artifact-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.artifact-tabs::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 2px;
+}
+
+.artifact-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+  position: relative;
+}
+
+.artifact-tab:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(217, 243, 120, 0.05);
+}
+
+.artifact-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background-color: rgba(217, 243, 120, 0.08);
+}
+
+.artifact-tab-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.artifact-tab-label {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Artifact count badge in header */
+.artifact-count {
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-normal);
+  opacity: 0.7;
+  margin-left: var(--space-xs);
+}
+
+/* Data Table Display */
+.artifact-data-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl);
+  text-align: center;
+  gap: var(--space-lg);
+}
+
+.artifact-data-icon {
+  font-size: 4rem;
+  opacity: 0.8;
+}
+
+.artifact-data-table h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.artifact-data-table p {
+  font-size: var(--font-size-base);
+  color: var(--color-text-tertiary);
+  max-width: 400px;
+  margin: 0;
+}
+
+.artifact-download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl);
+  background-color: var(--color-primary);
+  color: var(--color-background-darkest);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+.artifact-download-link:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 243, 120, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .artifact-header {
@@ -218,6 +368,19 @@
   .artifact-action-button {
     width: 32px;
     height: 32px;
+  }
+
+  .artifact-tabs {
+    padding: var(--space-xs) var(--space-sm) 0 var(--space-sm);
+  }
+
+  .artifact-tab {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+  }
+
+  .artifact-tab-label {
+    max-width: 100px;
   }
 }
 

@@ -107,8 +107,31 @@ class MasterPoliticalAnalyst:
                 "should_create_artifact": final_state.get("should_create_artifact", False),
                 "artifact_type": final_state.get("artifact_type"),
                 "artifact": final_state.get("artifact"),
-                "artifact_id": final_state.get("artifact_id")
+                "artifact_id": final_state.get("artifact_id"),
+                # Sub-agent results (NEW)
+                "sub_agent_results": final_state.get("sub_agent_results", {})
             }
+            
+            # DEBUG: Check sub-agent results
+            print("\n" + "=" * 70)
+            print("🔍 MASTER AGENT RESULT DEBUG")
+            print("=" * 70)
+            print(f"final_state has 'sub_agent_results': {'sub_agent_results' in final_state}")
+            if 'sub_agent_results' in final_state:
+                sub_agent_results = final_state['sub_agent_results']
+                print(f"Sub-agents that ran: {list(sub_agent_results.keys())}")
+                for agent_name, agent_result in sub_agent_results.items():
+                    if isinstance(agent_result, dict):
+                        print(f"  {agent_name}:")
+                        print(f"    success: {agent_result.get('success')}")
+                        if agent_result.get('data'):
+                            data = agent_result['data']
+                            if 'artifacts' in data:
+                                print(f"    artifacts: {len(data['artifacts'])} items")
+            else:
+                print("❌ No sub_agent_results in final_state")
+            print(f"\nResult dict includes sub_agent_results: {'sub_agent_results' in result}")
+            print("=" * 70 + "\n")
             
             # Call update callback if provided
             if self.update_callback:

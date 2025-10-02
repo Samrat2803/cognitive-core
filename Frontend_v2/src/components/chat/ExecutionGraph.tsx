@@ -90,10 +90,12 @@ export function ExecutionGraph({ sessionId }: ExecutionGraphProps) {
         const data: GraphData = await response.json();
         setGraphData(data);
 
-        // Transform to React Flow format
+        // Transform to React Flow format with enhanced display
         const flowNodes: Node[] = data.nodes.map((node, index) => {
           const executed = node.execution?.executed ?? false;
           const hasError = node.execution?.status === 'error';
+          const durationMs = node.execution?.duration_ms || 0;
+          const durationSec = durationMs > 0 ? (durationMs / 1000).toFixed(2) : null;
           
           return {
             id: node.id,
@@ -101,12 +103,20 @@ export function ExecutionGraph({ sessionId }: ExecutionGraphProps) {
             data: {
               label: (
                 <div className="node-content">
-                  <div className="node-label">{node.label}</div>
-                  {node.metadata.llm_used && (
-                    <div className="node-badge">LLM</div>
+                  <div className="node-label">
+                    {node.label}
+                    {node.metadata.llm_used && (
+                      <span className="node-badge llm-badge">🧠 LLM</span>
+                    )}
+                  </div>
+                  {executed && durationSec && (
+                    <div className="node-duration">{durationSec}s</div>
                   )}
-                  {executed && node.execution?.duration_ms && (
-                    <div className="node-duration">{node.execution.duration_ms}ms</div>
+                  {!executed && (
+                    <div className="node-status-badge skipped">Skipped</div>
+                  )}
+                  {hasError && (
+                    <div className="node-status-badge error">Error</div>
                   )}
                 </div>
               ),
@@ -114,20 +124,23 @@ export function ExecutionGraph({ sessionId }: ExecutionGraphProps) {
             },
             position: calculatePosition(node, index, data.nodes.length),
             style: {
-              background: executed
-                ? hasError
-                  ? '#fee2e2'
-                  : '#d1fae5'
-                : node.metadata.color,
-              border: hasError ? '2px solid #ef4444' : executed ? '2px solid #10b981' : '1px solid #ddd',
-              borderRadius: '8px',
-              padding: '12px 16px',
+              background: getNodeColor(node, executed, hasError),
+              border: getNodeBorderColor(node, executed, hasError),
+              borderRadius: '10px',
+              padding: '14px 18px',
               fontSize: '13px',
               fontWeight: executed ? '600' : '400',
-              opacity: executed ? 1 : 0.4,
-              minWidth: '150px',
+              opacity: executed ? 1 : 0.35,
+              minWidth: '180px',
+              maxWidth: '220px',
               color: executed ? '#1f2937' : '#6b7280',
               cursor: executed ? 'pointer' : 'default',
+              boxShadow: executed 
+                ? hasError 
+                  ? '0 2px 8px rgba(239, 68, 68, 0.15)'
+                  : '0 2px 12px rgba(0, 0, 0, 0.08)'
+                : 'none',
+              transition: 'all 0.2s ease',
             },
           };
         });
@@ -321,44 +334,94 @@ export function ExecutionGraph({ sessionId }: ExecutionGraphProps) {
         </div>
       )}
 
-      {/* Legend */}
+      {/* Enhanced Legend */}
       <div className="execution-legend">
-        <div className="legend-item">
-          <div className="legend-indicator executed" />
-          <span>Executed</span>
+        <div className="legend-section">
+          <strong style={{ fontSize: '12px', color: '#6b7280', marginRight: '16px' }}>Node Types:</strong>
+          <div className="legend-item">
+            <div className="legend-indicator" style={{ background: '#dbeafe', borderColor: '#3b82f6' }} />
+            <span>Conversation</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-indicator" style={{ background: '#f3e8ff', borderColor: '#a855f7' }} />
+            <span>🧠 AI Decision</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-indicator" style={{ background: '#d1fae5', borderColor: '#10b981' }} />
+            <span>Tool Execution</span>
+          </div>
+          <div className="legend-item">
+            <div className="legend-indicator" style={{ background: '#fef3c7', borderColor: '#eab308' }} />
+            <span>Gate/Check</span>
+          </div>
         </div>
-        <div className="legend-item">
-          <div className="legend-indicator not-executed" />
-          <span>Not Executed</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-indicator edge-traversed" />
-          <span>Path Taken</span>
+        <div className="legend-section">
+          <strong style={{ fontSize: '12px', color: '#6b7280', marginRight: '16px' }}>Status:</strong>
+          <div className="legend-item">
+            <div className="legend-indicator edge-traversed" />
+            <span>Executed Path</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Calculate node positions in a hierarchical layout
-function calculatePosition(node: GraphNode, index: number, total: number) {
-  const HORIZONTAL_SPACING = 220;
-  const VERTICAL_SPACING = 120;
+// Get color for node based on type and state
+function getNodeColor(node: GraphNode, executed: boolean, hasError: boolean): string {
+  if (hasError) return '#fef2f2'; // Red tint for errors
+  if (!executed) return '#f9fafb'; // Light gray for not executed
   
-  // Define layers for the master agent workflow
+  // Color by node type
+  const nodeId = node.id.toLowerCase();
+  if (nodeId.includes('conversation') || nodeId.includes('manager')) {
+    return '#dbeafe'; // Blue for conversation
+  } else if (nodeId.includes('planner') || nodeId.includes('decision') || nodeId.includes('artifact')) {
+    return '#f3e8ff'; // Purple for AI/LLM decisions
+  } else if (nodeId.includes('executor') || nodeId.includes('tool')) {
+    return '#d1fae5'; // Green for execution
+  } else if (nodeId.includes('synthesizer') || nodeId.includes('response')) {
+    return '#fae8ff'; // Pink for response generation
+  } else if (nodeId.includes('gate')) {
+    return '#fef3c7'; // Yellow for gates/checks
+  }
+  
+  return '#d1fae5'; // Default green
+}
+
+// Get border color for node
+function getNodeBorderColor(node: GraphNode, executed: boolean, hasError: boolean): string {
+  if (hasError) return '2px solid #ef4444';
+  if (!executed) return '1.5px solid #e5e7eb';
+  
+  const nodeId = node.id.toLowerCase();
+  if (nodeId.includes('conversation')) return '2px solid #3b82f6';
+  if (nodeId.includes('planner') || node.metadata.llm_used) return '2px solid #a855f7';
+  if (nodeId.includes('executor') || nodeId.includes('tool')) return '2px solid #10b981';
+  if (nodeId.includes('gate')) return '2px solid #eab308';
+  
+  return '2px solid #10b981';
+}
+
+// Calculate node positions in a more horizontal layout
+function calculatePosition(node: GraphNode, index: number, total: number) {
+  const HORIZONTAL_SPACING = 240;
+  const VERTICAL_SPACING = 140;
+  
+  // Horizontal-first layout for better space usage
   const layers: { [key: string]: { layer: number; position: number } } = {
-    '__start__': { layer: 0, position: 0 },
+    '__start__': { layer: 0, position: 1 },
     'conversation_manager': { layer: 1, position: 0 },
-    'strategic_planner': { layer: 2, position: 0 },
-    'tool_executor': { layer: 3, position: 0 },
-    'decision_gate': { layer: 4, position: 0 },
-    'response_synthesizer': { layer: 5, position: 0 },
-    'artifact_decision': { layer: 6, position: 0 },
-    'artifact_creator': { layer: 7, position: 1 },
-    '__end__': { layer: 7, position: -1 },
+    'strategic_planner': { layer: 1, position: 1 },
+    'tool_executor': { layer: 1, position: 2 },
+    'decision_gate': { layer: 2, position: 0 },
+    'response_synthesizer': { layer: 2, position: 1 },
+    'artifact_decision': { layer: 2, position: 2 },
+    'artifact_creator': { layer: 3, position: 2 },
+    '__end__': { layer: 3, position: 0 },
   };
 
-  const layout = layers[node.id] || { layer: Math.floor(index / 2), position: index % 2 };
+  const layout = layers[node.id] || { layer: Math.floor(index / 3), position: index % 3 };
 
   return {
     x: layout.position * HORIZONTAL_SPACING + 100,

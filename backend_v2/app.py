@@ -995,9 +995,9 @@ async def websocket_analyze(websocket: WebSocket):
                         cached_result = CACHED_RESPONSES[query_lower].copy()
                         result = cached_result
                     else:
-                        # Process query with agent (with 90s timeout)
+                        # Process query with agent (with 180s timeout for S3 uploads)
                         try:
-                            print(f"⏱️  Starting agent.process_query() with 90s timeout...")
+                            print(f"⏱️  Starting agent.process_query() with 180s timeout...")
                             print(f"   📚 Conversation history: {len(conversation_history)} messages")
                             result = await asyncio.wait_for(
                                 agent.process_query(
@@ -1005,7 +1005,7 @@ async def websocket_analyze(websocket: WebSocket):
                                     conversation_history=conversation_history.copy(),
                                     session_id=session_id
                                 ),
-                                timeout=90.0
+                                timeout=180.0
                             )
                             print(f"✅ Agent completed successfully")
                             
@@ -1341,10 +1341,29 @@ async def get_explosive_topics(request: ExplosiveTopicsRequest):
         if agent_path not in sys.path:
             sys.path.insert(0, agent_path)
         
-        # Import agent components
-        from graph import create_live_monitor_graph
-        from state import LiveMonitorState
-        from tools.cache_manager import CacheManager
+        # Import agent components using importlib to avoid conflicts
+        import importlib.util
+        
+        # Load graph module
+        graph_path = os.path.join(agent_path, 'graph.py')
+        spec = importlib.util.spec_from_file_location("live_monitor_graph", graph_path)
+        graph_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(graph_module)
+        create_live_monitor_graph = graph_module.create_live_monitor_graph
+        
+        # Load state module
+        state_path = os.path.join(agent_path, 'state.py')
+        spec = importlib.util.spec_from_file_location("live_monitor_state", state_path)
+        state_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(state_module)
+        LiveMonitorState = state_module.LiveMonitorState
+        
+        # Load cache manager
+        cache_path = os.path.join(agent_path, 'tools', 'cache_manager.py')
+        spec = importlib.util.spec_from_file_location("cache_manager_module", cache_path)
+        cache_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cache_module)
+        CacheManager = cache_module.CacheManager
         
         # Initialize cache manager with global mongo_service
         cache_manager = CacheManager(mongo_service=mongo_service)
@@ -1439,13 +1458,12 @@ async def get_explosive_topics(request: ExplosiveTopicsRequest):
 if __name__ == "__main__":
     import uvicorn
     
-    port = int(os.getenv("PORT", 8001))
+    port = int(os.getenv("PORT", 8000))
     
     uvicorn.run(
-        "app:app",
+        app,  # Use app instance directly (no reload needed)
         host="0.0.0.0",
         port=port,
-        reload=True,  # Enable auto-reload for development
         log_level="info"
     )
 

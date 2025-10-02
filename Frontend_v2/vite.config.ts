@@ -16,6 +16,18 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: parseInt(env.VITE_PORT || '3000'),
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8001',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/ws': {
+          target: 'ws://localhost:8001',
+          ws: true,
+          changeOrigin: true,
+        },
+      },
     },
   }
 })

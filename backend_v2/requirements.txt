@@ -39,3 +39,7 @@ pytest
 pytest-asyncio
 httpx
 
+
+# Data manipulation and Excel export
+pandas
+openpyxl

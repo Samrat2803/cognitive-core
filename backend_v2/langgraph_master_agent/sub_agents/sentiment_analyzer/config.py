@@ -9,7 +9,7 @@ MODEL = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
 TEMPERATURE = 0  # Always 0 for consistency
 
 # Search Configuration
-DEFAULT_COUNTRIES = ["US", "UK", "France", "Germany", "Japan"]
+DEFAULT_COUNTRIES = ["US", "UK", "China", "India", "Russia"]  # More diverse geopolitical coverage
 MAX_COUNTRIES = 10
 DEFAULT_TIME_RANGE_DAYS = 7
 SEARCH_DEPTH = "basic"

@@ -42,6 +42,23 @@ async def artifact_decision(state: dict) -> dict:
     state["artifact_data"] = None
     state["artifact_title"] = None
     
+    # SKIP if sub-agents already created artifacts (Oct 2, 2025)
+    sub_agent_results = state.get("sub_agent_results", {})
+    for agent_name, agent_result in sub_agent_results.items():
+        if isinstance(agent_result, dict):
+            agent_data = agent_result.get("data", {})
+            if agent_data.get("artifacts"):
+                artifact_count = len(agent_data["artifacts"])
+                print(f"✅ Sub-agent '{agent_name}' already created {artifact_count} artifact(s), skipping master agent artifact creation")
+                state["execution_log"].append({
+                    "step": "artifact_decision",
+                    "action": f"Artifact decision: NO (sub-agent '{agent_name}' already created {artifact_count} artifacts)",
+                    "timestamp": datetime.now().isoformat(),
+                    "input": f"Query: {message[:100]}",
+                    "output": f"Using artifacts from {agent_name}"
+                })
+                return state
+    
     # Only proceed if user explicitly requests visualization
     message_lower = message.lower()
     explicit_request = any(word in message_lower for word in ["chart", "graph", "visualiz", "plot", "show", "create"])

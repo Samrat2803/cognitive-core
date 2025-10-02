@@ -7,9 +7,13 @@ import os
 
 # Add parent to path for shared modules
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-sys.path.insert(0, parent_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 from langgraph.graph import StateGraph, END
+
+# NOTE: These imports work correctly when called via sub_agent_caller (which uses importlib)
+# The sub_agent_caller loads this module with the correct context
 from state import SentimentAnalyzerState
 from nodes import (
     query_analyzer,

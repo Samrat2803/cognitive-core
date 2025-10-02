@@ -36,6 +36,8 @@ async def bias_detector(state: SentimentAnalyzerState) -> Dict[str, Any]:
                 "bias_types": [],
                 "overall_bias": "none",
                 "bias_score": 0.0,
+                "bias_severity": 0.0,
+                "bias_notes": "No data available for bias analysis",
                 "examples": []
             }
             print(f"   ⚠️ {country}: No results")
@@ -48,7 +50,7 @@ async def bias_detector(state: SentimentAnalyzerState) -> Dict[str, Any]:
         
         prompt = f"""Analyze bias in coverage of "{query}" from {country}.
 
-Detect these bias types:
+Detect these bias types (methodological issues, NOT sentiment):
 {', '.join(BIAS_TYPES)}
 
 Sources:
@@ -58,9 +60,11 @@ Return JSON with:
 - bias_types: list of detected bias types (from the list above)
 - overall_bias: "left", "right", "center", or "mixed"
 - bias_score: float from -1 (left) to +1 (right), 0 for center
+- bias_severity: float 0-1 indicating how much methodological issues affect reporting quality (1=severe, 0=minimal)
+- bias_notes: string explaining the methodological problems found (2-3 sentences)
 - examples: list of 1-2 specific biased phrases/framing found
 
-Example: {{"bias_types": ["political_lean", "framing_bias"], "overall_bias": "left", "bias_score": -0.4, "examples": ["Government-backed sources dominate", "Positive framing of policy"]}}"""
+Example: {{"bias_types": ["source_bias", "framing_bias"], "overall_bias": "left", "bias_score": -0.4, "bias_severity": 0.6, "bias_notes": "Coverage relies heavily on government-backed sources with limited independent voices. Framing consistently favors policy initiatives without presenting counter-arguments.", "examples": ["Government-backed sources dominate", "Positive framing of policy"]}}"""
         
         try:
             response = await client.chat.completions.create(
@@ -79,6 +83,8 @@ Example: {{"bias_types": ["political_lean", "framing_bias"], "overall_bias": "le
                 "bias_types": [],
                 "overall_bias": "unknown",
                 "bias_score": 0.0,
+                "bias_severity": 0.0,
+                "bias_notes": f"Analysis error: {str(e)[:100]}",
                 "examples": []
             }
     

@@ -46,21 +46,74 @@ class SubAgentCaller:
         """
         # Lazy import (only loads when this function is called)
         import sys
-        agent_dir = os.path.join(os.path.dirname(__file__), '../sub_agents/sentiment_analyzer')
-        sys.path.insert(0, agent_dir)
+        import os
+        
+        # Get absolute path to sentiment analyzer directory
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        agent_dir = os.path.abspath(os.path.join(current_file_dir, '../sub_agents/sentiment_analyzer'))
+        
+        print(f"\n🔍 Attempting to load sentiment analyzer from: {agent_dir}")
+        print(f"   Directory exists: {os.path.exists(agent_dir)}")
+        
+        if not os.path.exists(agent_dir):
+            return {
+                "success": False,
+                "sub_agent": "sentiment_analyzer",
+                "status": "ERROR",
+                "error": f"Sentiment analyzer directory not found: {agent_dir}",
+                "query": query,
+                "countries": countries
+            }
         
         try:
-            # Import from the agent folder
+            # SIMPLE FIX: Ensure agent_dir is FIRST in sys.path and clean conflicting modules
+            import importlib.util
+            
+            # Save original sys.path and modules
+            original_sys_path = sys.path.copy()
+            saved_modules = {}
+            conflict_modules = ['state', 'nodes', 'config', 'graph']
+            
+            for mod_name in conflict_modules:
+                if mod_name in sys.modules:
+                    saved_modules[mod_name] = sys.modules[mod_name]
+                    del sys.modules[mod_name]
+            
+            # Put agent_dir FIRST, remove other sub-agent paths
+            clean_path = [agent_dir]
+            for path in original_sys_path:
+                if 'sub_agents' not in path:
+                    clean_path.append(path)
+            sys.path = clean_path
+            
+            print(f"   🧹 Cleaned sys.path (sentiment_analyzer ONLY)")
+            print(f"   📦 Loading modules with normal imports...")
+            
+            # Now use normal imports - they'll find the sentiment_analyzer modules
             from graph import create_sentiment_analyzer_graph
             from state import SentimentAnalyzerState
+            
+            print(f"   ✅ Successfully loaded sentiment_analyzer modules")
+            
+            # Restore
+            sys.path = original_sys_path
+            for mod_name in conflict_modules:
+                if mod_name in sys.modules:
+                    del sys.modules[mod_name]
+            for mod_name, mod_obj in saved_modules.items():
+                sys.modules[mod_name] = mod_obj
+            
+            print(f"   🔄 Restored sys.path and sys.modules")
+            print()
             
             # Create graph
             graph = create_sentiment_analyzer_graph()
             
             # Initialize state with all required fields
+            # Note: If countries is None, sentiment analyzer will extract from query or use defaults
             initial_state: SentimentAnalyzerState = {
                 "query": query,
-                "countries": countries or ["US", "UK", "France"],
+                "countries": countries or [],  # Empty list = let analyzer extract from query
                 "time_range_days": time_range_days,
                 "search_results": {},
                 "sentiment_scores": {},
@@ -95,12 +148,21 @@ class SubAgentCaller:
             }
             
         except Exception as e:
-            # Graceful error handling
+            # Graceful error handling with detailed logging
+            print(f"\n❌ Error in sentiment analyzer sub-agent:")
+            print(f"   Error type: {type(e).__name__}")
+            print(f"   Error message: {str(e)}")
+            
+            import traceback
+            print(f"\n   Full traceback:")
+            traceback.print_exc()
+            print()
+            
             return {
                 "success": False,
                 "sub_agent": "sentiment_analyzer",
                 "status": "ERROR",
-                "error": str(e),
+                "error": f"{type(e).__name__}: {str(e)}",
                 "query": query,
                 "countries": countries
             }

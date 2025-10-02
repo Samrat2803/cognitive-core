@@ -1,5 +1,5 @@
 """
-Visualizer Node - Generate artifacts (simplified for testing)
+Visualizer Node - Generate artifacts using shared visualization tools
 """
 
 import sys
@@ -7,19 +7,30 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
 
 from typing import Dict, Any
-import plotly.graph_objects as go
-import plotly.express as px
-from config import ARTIFACT_DIR, MAP_COLOR_SCALE
+from config import ARTIFACT_DIR
 from state import SentimentAnalyzerState
-import uuid
-from datetime import datetime
+
+# Import shared visualization tools
+from shared.visualization_factory import (
+    VisualizationFactory,
+    create_sentiment_bar_chart,
+    create_sentiment_radar_chart,
+    create_sentiment_table
+)
 
 
 async def visualizer(state: SentimentAnalyzerState) -> Dict[str, Any]:
-    """Generate artifacts"""
+    """Generate artifacts using shared visualization tools
+    
+    DEFAULT BEHAVIOR: Creates 2 artifacts (Table + Bar Chart)
+    User can request additional visualizations via state['requested_visualizations']
+    """
     
     sentiment_scores = state["sentiment_scores"]
+    bias_analysis = state.get("bias_analysis", {})
+    search_results = state.get("search_results", {})
     query = state["query"]
+    requested_viz = state.get("requested_visualizations", [])
     artifacts = []
     
     print(f"🎨 Visualizer: Creating artifacts...")
@@ -39,125 +50,89 @@ async def visualizer(state: SentimentAnalyzerState) -> Dict[str, Any]:
             }]
         }
     
-    countries_list = list(sentiment_scores.keys())
-    scores_list = [sentiment_scores[c].get('score', 0) for c in countries_list]
-    
-    # Artifact 1: Bar Chart (Sentiment Scores) - Simple and reliable
+    # DEFAULT ARTIFACTS (Always Created)
+    # 1. Data Table with Excel Export (3 sheets)
+    print(f"   📊 Creating default visualizations...")
     try:
-        artifact_id_bar = f"sentiment_bar_{uuid.uuid4().hex[:12]}"
-        
-        fig_bar = go.Figure(data=[
-            go.Bar(
-                x=countries_list,
-                y=scores_list,
-                marker=dict(
-                    color=scores_list,
-                    colorscale='RdYlGn',
-                    cmin=-1,
-                    cmax=1,
-                    colorbar=dict(title="Sentiment")
-                )
-            )
-        ])
-        
-        fig_bar.update_layout(
-            title=f"Sentiment Analysis: {query}",
-            xaxis_title="Country",
-            yaxis_title="Sentiment Score",
-            height=500,
-            template="plotly_white"
+        artifact_table = create_sentiment_table(
+            country_scores=sentiment_scores,
+            bias_analysis=bias_analysis,
+            query=query,
+            output_dir=output_dir,
+            search_results=search_results
         )
+        artifacts.append(artifact_table)
+        print(f"   ✅ Data table created: {artifact_table['artifact_id']}")
+        if 'excel_path' in artifact_table:
+            print(f"      Excel: {os.path.basename(artifact_table['excel_path'])}")
         
-        html_path = os.path.join(output_dir, f"{artifact_id_bar}.html")
-        fig_bar.write_html(html_path)
-        
-        artifacts.append({
-            "artifact_id": artifact_id_bar,
-            "type": "bar_chart",
-            "title": "Sentiment Score Comparison",
-            "html_path": html_path
-        })
-        
-        print(f"   ✅ Bar chart created: {artifact_id_bar}")
+    except Exception as e:
+        print(f"   ❌ Error creating data table: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # 2. Bar Chart (Sentiment Comparison)
+    try:
+        artifact_bar = create_sentiment_bar_chart(
+            country_scores=sentiment_scores,
+            query=query,
+            output_dir=output_dir
+        )
+        artifacts.append(artifact_bar)
+        print(f"   ✅ Bar chart created: {artifact_bar['artifact_id']}")
         
     except Exception as e:
         print(f"   ❌ Error creating bar chart: {e}")
     
-    # Artifact 2: Radar Chart (Multi-dimensional comparison)
-    try:
-        artifact_id_radar = f"sentiment_radar_{uuid.uuid4().hex[:12]}"
+    # OPTIONAL ARTIFACTS (User Requested)
+    if requested_viz:
+        print(f"   🎨 Creating {len(requested_viz)} additional visualizations...")
         
-        fig_radar = go.Figure()
+        if "radar_chart" in requested_viz:
+            try:
+                artifact_radar = create_sentiment_radar_chart(
+                    country_scores=sentiment_scores,
+                    query=query,
+                    output_dir=output_dir,
+                    max_countries=5
+                )
+                artifacts.append(artifact_radar)
+                print(f"   ✅ Radar chart created: {artifact_radar['artifact_id']}")
+            except Exception as e:
+                print(f"   ❌ Error creating radar chart: {e}")
         
-        for country in countries_list[:5]:  # Limit to 5 countries for readability
-            scores = sentiment_scores[country]
-            fig_radar.add_trace(go.Scatterpolar(
-                r=[
-                    scores.get('positive_pct', 0.33),
-                    scores.get('neutral_pct', 0.33),
-                    scores.get('negative_pct', 0.33)
-                ],
-                theta=['Positive', 'Neutral', 'Negative'],
-                fill='toself',
-                name=country
-            ))
-        
-        fig_radar.update_layout(
-            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
-            title="Sentiment Distribution by Country",
-            height=500
-        )
-        
-        html_path = os.path.join(output_dir, f"{artifact_id_radar}.html")
-        fig_radar.write_html(html_path)
-        
-        artifacts.append({
-            "artifact_id": artifact_id_radar,
-            "type": "radar_chart",
-            "title": "Sentiment Distribution Radar",
-            "html_path": html_path
-        })
-        
-        print(f"   ✅ Radar chart created: {artifact_id_radar}")
-        
-    except Exception as e:
-        print(f"   ❌ Error creating radar chart: {e}")
+        if "json" in requested_viz:
+            try:
+                from datetime import datetime
+                table_data = {
+                    "query": query,
+                    "timestamp": datetime.now().isoformat(),
+                    "countries": list(sentiment_scores.keys()),
+                    "scores": sentiment_scores,
+                    "bias": bias_analysis
+                }
+                
+                artifact_json = VisualizationFactory.save_json_export(
+                    data=table_data,
+                    output_dir=output_dir,
+                    artifact_type="sentiment_data_export",
+                    title="Sentiment Data Export (JSON)"
+                )
+                artifacts.append(artifact_json)
+                print(f"   ✅ JSON export created: {artifact_json['artifact_id']}")
+            except Exception as e:
+                print(f"   ❌ Error creating JSON export: {e}")
     
-    # Artifact 3: Summary Table (JSON format for now)
-    try:
-        artifact_id_table = f"sentiment_table_{uuid.uuid4().hex[:12]}"
-        
-        import json
-        table_data = {
-            "query": query,
-            "timestamp": datetime.now().isoformat(),
-            "countries": countries_list,
-            "scores": sentiment_scores
-        }
-        
-        json_path = os.path.join(output_dir, f"{artifact_id_table}.json")
-        with open(json_path, 'w') as f:
-            json.dump(table_data, f, indent=2)
-        
-        artifacts.append({
-            "artifact_id": artifact_id_table,
-            "type": "data_table",
-            "title": "Sentiment Data Export",
-            "json_path": json_path
-        })
-        
-        print(f"   ✅ Data export created: {artifact_id_table}")
-        
-    except Exception as e:
-        print(f"   ❌ Error creating data export: {e}")
-    
-    print(f"   Total artifacts created: {len(artifacts)}")
+    print(f"   📦 Total artifacts created: {len(artifacts)}")
+    print(f"      - Defaults: 2 (table + bar chart)")
+    if requested_viz:
+        print(f"      - Additional: {len(requested_viz)} requested")
     
     return {
         "artifacts": artifacts,
         "execution_log": state.get("execution_log", []) + [{
             "step": "visualizer",
-            "action": f"Generated {len(artifacts)} artifacts"
+            "action": f"Generated {len(artifacts)} artifacts (2 default + {len(requested_viz)} requested)"
         }]
     }
 

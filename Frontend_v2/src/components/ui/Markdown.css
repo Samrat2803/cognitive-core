@@ -95,16 +95,18 @@
   margin: 0;
 }
 
-/* Links */
+/* Links - FIXED: Using centralized theme variables for visibility */
 .markdown-link {
-  color: #d9f378;
-  text-decoration: none;
+  color: var(--link-color);
+  text-decoration: var(--link-underline);
   border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
+  transition: all var(--transition-normal);
+  font-weight: var(--font-weight-medium);
 }
 
 .markdown-link:hover {
-  border-bottom-color: #d9f378;
+  color: var(--link-color-hover);
+  border-bottom: var(--link-underline-hover);
 }
 
 /* Tables */
@@ -181,6 +183,217 @@
 .markdown-ul .markdown-ol,
 .markdown-ol .markdown-ul,
 .markdown-ol .markdown-ol {
+  margin: 0.25rem 0 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+/* Enhanced list styling */
+.markdown-ul {
+  list-style-type: none;
+}
+
+.markdown-ul > .markdown-li {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.markdown-ul > .markdown-li::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: #d9f378;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+/* Smaller arrows and less padding for nested lists */
+.markdown-ul .markdown-ul > .markdown-li {
+  padding-left: 1.25rem;
+}
+
+.markdown-ul .markdown-ul > .markdown-li::before {
+  content: "›";
+  font-size: 1.2em;
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+/* Even smaller for deeply nested */
+.markdown-ul .markdown-ul .markdown-ul > .markdown-li {
+  padding-left: 1rem;
+}
+
+.markdown-ul .markdown-ul .markdown-ul > .markdown-li::before {
+  content: "·";
+  font-size: 1.4em;
+  opacity: 0.7;
+}
+
+.markdown-ol {
+  counter-reset: markdown-counter;
+  list-style: none;
+}
+
+.markdown-ol > .markdown-li {
+  position: relative;
+  padding-left: 1.75rem;
+  counter-increment: markdown-counter;
+}
+
+.markdown-ol > .markdown-li::before {
+  content: counter(markdown-counter) ".";
+  position: absolute;
+  left: 0;
+  color: #d9f378;
+  font-weight: 600;
+  min-width: 1.5rem;
+}
+
+/* Smaller numbers and less padding for nested ordered lists */
+.markdown-ol .markdown-ol > .markdown-li {
+  padding-left: 1.5rem;
+}
+
+.markdown-ol .markdown-ol > .markdown-li::before {
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+/* Task lists */
+.markdown-li input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: #d9f378;
+  cursor: pointer;
+}
+
+/* Blockquote enhancements */
+.markdown-blockquote {
+  position: relative;
+}
+
+.markdown-blockquote::before {
+  content: '"';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.25rem;
+  font-size: 3rem;
+  color: rgba(217, 243, 120, 0.2);
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+/* Code enhancement - inline */
+.inline-code {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Keyboard keys */
+.markdown-kbd {
+  display: inline-block;
+  padding: 3px 8px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 0.8em;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(93, 83, 92, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Highlight/mark text */
+.markdown-mark {
+  background-color: rgba(217, 243, 120, 0.3);
+  color: rgba(255, 255, 255, 0.95);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Better spacing between different elements */
+.markdown-content > .markdown-h2 + .markdown-p,
+.markdown-content > .markdown-h3 + .markdown-p {
+  margin-top: 0.5rem;
+}
+
+/* Details/Summary (collapsible sections) */
+.markdown-details {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: rgba(93, 83, 92, 0.1);
+  border: 1px solid rgba(217, 243, 120, 0.2);
+  border-radius: 8px;
+}
+
+.markdown-summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #d9f378;
+  user-select: none;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-summary:hover {
+  color: #e5ff8f;
+}
+
+.markdown-details[open] .markdown-summary {
+  margin-bottom: 1rem;
+}
+
+/* Enhanced text styling for data visibility */
+.markdown-content {
+  line-height: 1.8;
+}
+
+/* Make percentages and numbers more visible */
+.markdown-li:has(strong),
+.markdown-p:has(strong) {
+  line-height: 1.9;
+}
+
+/* Section spacing */
+.markdown-h2 + .markdown-p,
+.markdown-h3 + .markdown-p {
+  margin-top: 0.75rem;
+}
+
+.markdown-h3 {
+  margin-top: 1.5rem;
+}
+
+/* Improve readability */
+.markdown-content > * {
+  max-width: none;
+}
+
+/* Better list item spacing for data */
+.markdown-ul > .markdown-li,
+.markdown-ol > .markdown-li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+/* Compact spacing for nested lists */
+.markdown-ul .markdown-ul > .markdown-li,
+.markdown-ul .markdown-ol > .markdown-li,
+.markdown-ol .markdown-ul > .markdown-li,
+.markdown-ol .markdown-ol > .markdown-li {
   margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+/* Even more compact for deeply nested lists */
+.markdown-ul .markdown-ul .markdown-ul > .markdown-li,
+.markdown-ul .markdown-ul .markdown-ol > .markdown-li {
+  margin: 0.15rem 0;
+  line-height: 1.4;
+}
+
+/* Style for definition-like content (label: value) */
+.markdown-strong:has(+ *),
+.markdown-content strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
 }
 

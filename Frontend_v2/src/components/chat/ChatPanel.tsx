@@ -18,9 +18,10 @@ interface StatusUpdate {
 
 interface ChatPanelProps {
   onArtifactReceived?: (artifact: Artifact) => void;
+  initialQuery?: string;
 }
 
-export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
+export function ChatPanel({ onArtifactReceived, initialQuery }: ChatPanelProps) {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
@@ -30,8 +31,50 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasInitialQuerySent = useRef(false);
   const { isConnected } = useWebSocket();
   const sendMessage = useWebSocketSend();
+
+  // Define handleSendMessage early so it can be used in effects
+  const handleSendMessage = useCallback((query: string) => {
+    if (!query.trim() || !isConnected) {
+      console.warn('Cannot send message: empty or not connected');
+      return;
+    }
+
+    console.log('🚀 handleSendMessage called with query:', query);
+
+    // Add user message to chat
+    setMessages((prev) => {
+      console.log(`   📝 Adding user message (prev count: ${prev.length})`);
+      return [
+        ...prev,
+        {
+          id: `user_${Date.now()}`,
+          role: 'user',
+          content: query,
+          timestamp: new Date(),
+        },
+      ];
+    });
+
+    // Send message to backend via WebSocket
+    console.log('   📤 Calling sendMessage to backend');
+    const messageId = sendMessage('query', {
+      query: query,
+      use_citations: true,
+    });
+    console.log('   ✅ Message sent with ID:', messageId);
+  }, [isConnected, sendMessage]);
+
+  // Auto-send initial query if provided
+  useEffect(() => {
+    if (initialQuery && isConnected && !hasInitialQuerySent.current) {
+      hasInitialQuerySent.current = true;
+      console.log('Auto-sending initial query:', initialQuery);
+      handleSendMessage(initialQuery);
+    }
+  }, [initialQuery, isConnected, handleSendMessage]);
 
   // Auto-scroll to bottom - throttled to reduce flickering during streaming
   useEffect(() => {
@@ -110,10 +153,24 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
 
   // Handle artifacts
   useWebSocketMessage('artifact', useCallback((message: ServerMessage) => {
-    console.log('Artifact received:', message.data);
+    console.log('🎨 ChatPanel: Artifact WebSocket message received:', {
+      raw_message: message,
+      artifact_id: message.data.artifact_id,
+      type: message.data.type,
+      title: message.data.title,
+      has_html_url: !!message.data.html_url,
+      has_png_url: !!message.data.png_url
+    });
+    
+    // Normalize artifact type (remove 'sentiment_' prefix if present)
+    let normalizedType = message.data.type || 'bar_chart';
+    if (normalizedType.startsWith('sentiment_')) {
+      normalizedType = normalizedType.replace('sentiment_', '');
+    }
+    
     const artifact: Artifact = {
       artifact_id: message.data.artifact_id || '',
-      type: message.data.type || 'bar_chart',
+      type: normalizedType as Artifact['type'],
       title: message.data.title || 'Visualization',
       description: message.data.description,
       status: message.data.status || 'ready',
@@ -124,9 +181,18 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
       size_bytes: message.data.size_bytes,
     };
     
-    // Notify parent component (App) about the artifact
+    console.log('   ✅ Artifact normalized:', {
+      artifact_id: artifact.artifact_id,
+      type: artifact.type,
+      title: artifact.title
+    });
+    
+    // Notify parent component (MainLayout) about the artifact
     if (onArtifactReceived) {
+      console.log('   📤 Calling onArtifactReceived callback');
       onArtifactReceived(artifact);
+    } else {
+      console.warn('   ⚠️  onArtifactReceived callback is not defined!');
     }
   }, [onArtifactReceived]));
 
@@ -182,37 +248,6 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
     setCurrentAssistantMessage('');
   }, []));
 
-  const handleSendMessage = (query: string) => {
-    if (!query.trim() || !isConnected) {
-      console.warn('Cannot send message: empty or not connected');
-      return;
-    }
-
-    console.log('🚀 handleSendMessage called with query:', query);
-
-    // Add user message to chat
-    setMessages((prev) => {
-      console.log(`   📝 Adding user message (prev count: ${prev.length})`);
-      return [
-        ...prev,
-        {
-          id: `user_${Date.now()}`,
-          role: 'user',
-          content: query,
-          timestamp: new Date(),
-        },
-      ];
-    });
-
-    // Send message to backend via WebSocket
-    console.log('   📤 Calling sendMessage to backend');
-    const messageId = sendMessage('query', {
-      query: query,
-      use_citations: true,
-    });
-    console.log('   ✅ Message sent with ID:', messageId);
-  };
-
   const handleStop = () => {
     // TODO: Implement cancel functionality
     console.log('Stop requested');
@@ -224,7 +259,7 @@ export function ChatPanel({ onArtifactReceived }: ChatPanelProps) {
       <div className="chat-messages">
         {messages.length === 0 && !currentAssistantMessage && (
           <div className="welcome-message">
-            <h2>Welcome to Political Analyst Workbench</h2>
+            <h2>Welcome to Cognitive Core</h2>
             <p>Ask me about:</p>
                 <div className="suggestion-grid">
                   <button className="suggestion-card" onClick={() => handleSendMessage("give me a visualization of india's gdp growth since 2020")}>

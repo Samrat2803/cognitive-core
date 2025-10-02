@@ -1,44 +1,46 @@
+/* MessageInput - Uses Centralized Theme Variables */
+
 .message-input-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  background-color: #1c1e20;
-  border-top: 1px solid #333333;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background-color: var(--color-background-darkest);
+  border-top: 1px solid var(--color-border-default);
 }
 
 .message-input-wrapper {
   display: flex;
-  gap: 12px;
+  gap: var(--space-md);
   align-items: flex-end;
-  background-color: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 12px;
-  padding: 12px;
-  transition: border-color 0.2s;
+  background-color: var(--color-background-dark);
+  border: 1px solid var(--color-background-light);
+  border-radius: var(--radius-xl);
+  padding: var(--space-md);
+  transition: border-color var(--transition-normal);
 }
 
 .message-input-wrapper:focus-within {
-  border-color: #d9f378;
+  border-color: var(--color-primary);
 }
 
 .message-textarea {
   flex: 1;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-  line-height: 1.5;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
   resize: none;
   outline: none;
   min-height: 24px;
   max-height: 200px;
   overflow-y: auto;
-  font-family: 'Roboto Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-primary);
 }
 
 .message-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--color-text-muted);
 }
 
 .message-textarea:disabled {
@@ -50,33 +52,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--button-height-md);
+  height: var(--button-height-md);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   flex-shrink: 0;
 }
 
 .send-button.send {
-  background-color: #d9f378;
-  color: #1c1e20;
+  background-color: var(--color-primary);
+  color: var(--color-background-darkest);
 }
 
 .send-button.send:hover:not(:disabled) {
-  background-color: #c5e065;
+  background-color: var(--color-primary-hover);
   transform: scale(1.05);
 }
 
 .send-button.send:disabled {
-  background-color: #5d535c;
-  color: rgba(255, 255, 255, 0.3);
+  background-color: var(--color-secondary);
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
 .send-button.stop {
-  background-color: #ff6b6b;
+  background-color: var(--color-error);
   color: white;
 }
 
@@ -89,26 +91,26 @@
   display: block;
   stroke: currentColor;
   fill: none;
-  stroke-width: 2;
+  stroke-width: var(--icon-stroke-width);
 }
 
 .message-input-hint {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
-  padding: 0 4px;
+  gap: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  padding: 0 var(--space-xs);
 }
 
 .message-input-hint kbd {
-  background-color: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 4px;
+  background-color: var(--color-background-dark);
+  border: 1px solid var(--color-background-light);
+  border-radius: var(--radius-sm);
   padding: 2px 6px;
   font-size: 0.7rem;
-  font-family: monospace;
-  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
 }
 
 /* Scrollbar styling for textarea */
