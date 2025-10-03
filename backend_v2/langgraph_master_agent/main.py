@@ -109,7 +109,9 @@ class MasterPoliticalAnalyst:
                 "artifact": final_state.get("artifact"),
                 "artifact_id": final_state.get("artifact_id"),
                 # Sub-agent results (NEW)
-                "sub_agent_results": final_state.get("sub_agent_results", {})
+                "sub_agent_results": final_state.get("sub_agent_results", {}),
+                # Conversation history for multi-turn conversations
+                "conversation_history": final_state.get("conversation_history", [])
             }
             
             # DEBUG: Check sub-agent results

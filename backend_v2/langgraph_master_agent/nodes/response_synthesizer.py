@@ -121,8 +121,14 @@ async def response_synthesizer(state: dict) -> dict:
             # Default handling for other sub-agents
             results_summary += f"{str(result)[:500]}\n"
     
+    # Get current date/time for recency context
+    current_datetime = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p %Z")
+    
     synthesis_prompt = f"""
 You are a Political Analyst AI assistant synthesizing results for a user query.
+
+CURRENT DATE & TIME: {current_datetime}
+Use this for understanding recency. When discussing events, provide temporal context.
 
 {"CONVERSATION HISTORY:" if conversation_context else ""}
 {conversation_context if conversation_context else ""}
@@ -133,6 +139,25 @@ USER QUERY:
 GATHERED INFORMATION:
 {results_summary}
 
+YOUR CAPABILITIES:
+You have access to the following tools and capabilities:
+1. **Real-time Web Search** (Tavily): Search for current political information, news, and events
+2. **Content Extraction**: Extract full content from specific URLs
+3. **Sentiment Analysis Agent**: Multi-country sentiment analysis with bias detection
+4. **Media Bias Detector**: Analyze and compare media bias across sources
+5. **VISUALIZATION TOOLS**: 
+   - Map charts (choropleth maps for geographic/country data)
+   - Bar charts (categorical comparisons, rankings)
+   - Line charts (trends over time)
+   - Mind maps (hierarchical concepts)
+   - Infographics (rich data displays)
+   
+IMPORTANT VISUALIZATION RULES:
+- When a user asks to "create a map", "visualize", "create a chart", etc., ACKNOWLEDGE that you CAN and WILL create it
+- Do NOT say "I cannot create visualizations" or "I don't have access to tools"
+- Visualizations are automatically generated in the next step after your response
+- If the data is already available (from previous analysis or current results), confirm that the visualization will be created
+
 YOUR TASK:
 Create a comprehensive, well-structured response that:
 1. Directly answers the user's question
@@ -140,8 +165,8 @@ Create a comprehensive, well-structured response that:
 3. Includes citations and sources
 4. Is formatted with clear headings and bullet points
 5. Is conversational and professional
-
-IMPORTANT: If the user says "create a chart for this" or "visualize this data", extract the numerical data from the conversation history above.
+6. If user asks about your capabilities or tools, accurately describe what you CAN do (including visualizations)
+7. If user requests a visualization, acknowledge it and confirm it will be created
 
 If results are incomplete or tools failed, acknowledge limitations honestly.
 

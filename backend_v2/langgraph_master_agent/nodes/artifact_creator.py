@@ -161,33 +161,47 @@ async def artifact_creator(state: dict) -> dict:
         if S3_AVAILABLE and s3_service:
             try:
                 print(f"📤 Uploading artifact to S3...")
-                # Upload and get presigned URLs (24 hour expiration)
-                html_url, png_url = await s3_service.upload_artifact_pair(
-                    html_path=artifact["html_path"],
-                    png_path=artifact["png_path"],
-                    artifact_id=artifact["artifact_id"],
-                    artifact_type=artifact["type"],
-                    generate_urls=True,
-                    url_expiration=86400  # 24 hours
-                )
                 
-                # Also get the S3 keys (without presigned URLs) for storage
-                html_key = f"artifacts/{artifact['type']}/{artifact['artifact_id']}/{os.path.basename(artifact['html_path'])}"
-                png_key = f"artifacts/{artifact['type']}/{artifact['artifact_id']}/{os.path.basename(artifact['png_path'])}"
+                # Check if PNG exists before uploading
+                has_png = artifact.get("png_path") is not None
                 
-                if html_url and png_url:
-                    artifact["s3_html_key"] = html_key        # Store permanent S3 key
-                    artifact["s3_png_key"] = png_key          # Store permanent S3 key
-                    artifact["s3_html_url"] = html_url        # Presigned URL (temp, 24h)
-                    artifact["s3_png_url"] = png_url          # Presigned URL (temp, 24h)
-                    artifact["storage"] = "s3"
-                    print(f"✅ Artifact uploaded to S3 (private, encrypted)")
-                    print(f"   HTML Key: {html_key}")
-                    print(f"   PNG Key: {png_key}")
-                    print(f"   Presigned URLs valid for 24 hours")
+                if has_png:
+                    # Upload both HTML and PNG
+                    html_url, png_url = await s3_service.upload_artifact_pair(
+                        html_path=artifact["html_path"],
+                        png_path=artifact["png_path"],
+                        artifact_id=artifact["artifact_id"],
+                        artifact_type=artifact["type"],
+                        generate_urls=True,
+                        url_expiration=86400  # 24 hours
+                    )
+                    png_key = f"artifacts/{artifact['type']}/{artifact['artifact_id']}/{os.path.basename(artifact['png_path'])}"
                 else:
-                    artifact["storage"] = "local"
-                    print("⚠️  S3 upload failed, using local storage")
+                    # Upload only HTML (PNG export failed)
+                    print("⚠️  PNG not generated, uploading HTML only...")
+                    await s3_service.upload_artifact(
+                        local_file_path=artifact["html_path"],
+                        artifact_id=artifact["artifact_id"],
+                        artifact_type=artifact["type"]
+                    )
+                    png_key = None
+                
+                # Get S3 keys for storage
+                html_key = f"artifacts/{artifact['type']}/{artifact['artifact_id']}/{os.path.basename(artifact['html_path'])}"
+                
+                # Use public S3 URLs (bucket is public)
+                artifact["s3_html_key"] = html_key
+                artifact["s3_html_url"] = f"https://political-analyst-artifacts.s3.amazonaws.com/{html_key}"
+                artifact["html_url"] = f"https://political-analyst-artifacts.s3.amazonaws.com/{html_key}"
+                artifact["storage"] = "s3"
+                print(f"✅ Artifact HTML uploaded to S3 (public)")
+                print(f"   HTML URL: {artifact['html_url']}")
+                
+                if png_key:
+                    artifact["s3_png_key"] = png_key
+                    artifact["s3_png_url"] = f"https://political-analyst-artifacts.s3.amazonaws.com/{png_key}"
+                    artifact["png_url"] = f"https://political-analyst-artifacts.s3.amazonaws.com/{png_key}"
+                    print(f"   PNG URL: {artifact['png_url']}")
                     
             except Exception as s3_error:
                 print(f"⚠️  S3 upload error: {s3_error}, falling back to local storage")

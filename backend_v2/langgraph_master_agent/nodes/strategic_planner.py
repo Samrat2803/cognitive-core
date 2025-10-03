@@ -53,8 +53,42 @@ async def strategic_planner(state: dict) -> dict:
         for name, info in MasterAgentConfig.AVAILABLE_TOOLS.items()
     ])
     
+    # Check if this is a retry with a specific strategy
+    retry_strategy = state.get("retry_strategy_next")
+    iteration_count = state.get("iteration_count", 0)
+    retry_context = ""
+    
+    if retry_strategy and iteration_count > 0:
+        retry_context = f"""
+⚠️ RETRY ATTEMPT {iteration_count + 1}/5
+Previous attempt didn't yield sufficient results. Use the following strategy:
+
+RETRY STRATEGY: {retry_strategy}
+
+Strategy Guidelines:
+- "broader_keywords": Use more general, high-level search terms (e.g., "corruption global" instead of "Corruption Perceptions Index 2024")
+- "specific_keywords": Use more specific, detailed terms with dates, locations, specific indices
+- "alternative_sources": Try different source types (academic, government, news, reports)
+- "advanced_search": Use Tavily advanced mode with max_results=15 instead of basic
+- "alternative_tools": Try different tool combinations (e.g., tavily_extract + tavily_search)
+
+IMPORTANT: Vary your search approach based on the strategy. Don't repeat the exact same query!
+"""
+        # Mark this strategy as used
+        if "retry_strategies_used" not in state:
+            state["retry_strategies_used"] = []
+        if retry_strategy not in state["retry_strategies_used"]:
+            state["retry_strategies_used"].append(retry_strategy)
+    
+    # Get current date/time for recency context
+    from datetime import datetime
+    current_datetime = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p %Z")
+    
     planning_prompt = f"""
 You are a Strategic Planner for a Political Analyst AI Agent.
+
+CURRENT DATE & TIME: {current_datetime}
+Use this for understanding recency in queries like "latest", "current", "recent", "2024", etc.
 
 AVAILABLE TOOLS:
 {tools_desc}
@@ -65,23 +99,30 @@ CONVERSATION HISTORY:
 CURRENT USER MESSAGE:
 {current_message}
 
+{retry_context if retry_context else ""}
+
 YOUR TASK:
 Analyze the user's request and create an action plan.
 
 CRITICAL RULES:
-1. **Visualization-Only Requests**: If user asks to "create a map", "visualize", "show a chart" of EXISTING data from conversation history:
+1. **Capability/Tool Questions**: If user asks "what tools do you have", "what can you do", "show me your capabilities":
+   - Set "can_answer_directly": true
+   - Set "tools_to_use": [] (empty - answer from AVAILABLE TOOLS list above)
+   - Respond with the full list of available tools and their capabilities
+
+2. **Visualization-Only Requests**: If user asks to "create a map", "visualize", "show a chart" of EXISTING data from conversation history:
    - Set "can_answer_directly": true
    - Set "tools_to_use": [] (empty - no tools needed!)
    - The artifact_decision node will handle extracting data from history and creating the visualization
    - DO NOT run sentiment_analysis_agent or any other tool again!
 
-2. **New Analysis Requests**: If user asks for NEW sentiment analysis or search:
+3. **New Analysis Requests**: If user asks for NEW sentiment analysis or search:
    - Use appropriate tools (sentiment_analysis_agent, tavily_search, etc.)
 
-3. **Check History**: If conversation history contains relevant data, DON'T re-run analysis tools!
+4. **Check History**: If conversation history contains relevant data, DON'T re-run analysis tools!
 
 Determine:
-1. Can you answer this directly without tools? (simple questions OR visualization of existing data)
+1. Can you answer this directly without tools? (simple questions OR visualization of existing data OR capability questions)
 2. Which tools should be used? (only if NEW data is needed)
 3. What's the execution strategy?
 
@@ -94,6 +135,7 @@ OUTPUT FORMAT (JSON):
 }}
 
 EXAMPLES:
+- "what tools do you have access to?" → {{"can_answer_directly": true, "tools_to_use": []}}
 - "create a map of this data" → {{"can_answer_directly": true, "tools_to_use": []}}
 - "sentiment on Hamas in US" → {{"can_answer_directly": false, "tools_to_use": ["sentiment_analysis_agent"]}}
 

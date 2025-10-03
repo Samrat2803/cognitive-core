@@ -353,7 +353,7 @@ class VisualizationFactory:
 # Country Code Mapping Utility
 # ============================================================================
 
-# Common country name variations → ISO 3-letter code
+# Common country name variations → ISO 3-letter code (All ~195 UN member states)
 COUNTRY_CODE_MAP = {
     # North America
     "US": "USA", "USA": "USA", "United States": "USA", "United States of America": "USA",
@@ -361,7 +361,37 @@ COUNTRY_CODE_MAP = {
     "Canada": "CAN", "CA": "CAN",
     "Mexico": "MEX", "MX": "MEX",
     
-    # Europe
+    # Central America & Caribbean
+    "Guatemala": "GTM", "GT": "GTM",
+    "Belize": "BLZ", "BZ": "BLZ",
+    "El Salvador": "SLV", "SV": "SLV",
+    "Honduras": "HND", "HN": "HND",
+    "Nicaragua": "NIC", "NI": "NIC",
+    "Costa Rica": "CRI", "CR": "CRI",
+    "Panama": "PAN", "PA": "PAN",
+    "Cuba": "CUB", "CU": "CUB",
+    "Jamaica": "JAM", "JM": "JAM",
+    "Haiti": "HTI", "HT": "HTI",
+    "Dominican Republic": "DOM", "DO": "DOM",
+    "Trinidad and Tobago": "TTO", "TT": "TTO",
+    "Bahamas": "BHS", "BS": "BHS",
+    "Barbados": "BRB", "BB": "BRB",
+    
+    # South America
+    "Brazil": "BRA", "BR": "BRA",
+    "Argentina": "ARG", "AR": "ARG",
+    "Chile": "CHL", "CL": "CHL",
+    "Colombia": "COL", "CO": "COL",
+    "Peru": "PER", "PE": "PER",
+    "Venezuela": "VEN", "VE": "VEN",
+    "Ecuador": "ECU", "EC": "ECU",
+    "Bolivia": "BOL", "BO": "BOL",
+    "Paraguay": "PRY", "PY": "PRY",
+    "Uruguay": "URY", "UY": "URY",
+    "Guyana": "GUY", "GY": "GUY",
+    "Suriname": "SUR", "SR": "SUR",
+    
+    # Western Europe
     "UK": "GBR", "United Kingdom": "GBR", "Britain": "GBR", "Great Britain": "GBR", "GB": "GBR",
     "England": "GBR", "Scotland": "GBR", "Wales": "GBR",
     "France": "FRA", "FR": "FRA",
@@ -372,70 +402,184 @@ COUNTRY_CODE_MAP = {
     "Belgium": "BEL", "BE": "BEL",
     "Switzerland": "CHE", "CH": "CHE",
     "Austria": "AUT", "AT": "AUT",
-    "Poland": "POL", "PL": "POL",
+    "Portugal": "PRT", "PT": "PRT",
+    "Ireland": "IRL", "IE": "IRL",
+    "Luxembourg": "LUX", "LU": "LUX",
+    "Monaco": "MCO", "MC": "MCO",
+    "Liechtenstein": "LIE", "LI": "LIE",
+    
+    # Northern Europe
     "Sweden": "SWE", "SE": "SWE",
     "Norway": "NOR", "NO": "NOR",
     "Denmark": "DNK", "DK": "DNK",
     "Finland": "FIN", "FI": "FIN",
-    "Ireland": "IRL", "IE": "IRL",
-    "Portugal": "PRT", "PT": "PRT",
-    "Greece": "GRC", "GR": "GRC",
+    "Iceland": "ISL", "IS": "ISL",
+    
+    # Eastern Europe
+    "Poland": "POL", "PL": "POL",
     "Czech Republic": "CZE", "Czechia": "CZE", "CZ": "CZE",
+    "Slovakia": "SVK", "SK": "SVK",
+    "Hungary": "HUN", "HU": "HUN",
+    "Romania": "ROU", "RO": "ROU",
+    "Bulgaria": "BGR", "BG": "BGR",
+    "Ukraine": "UKR", "UA": "UKR",
+    "Belarus": "BLR", "BY": "BLR",
+    "Moldova": "MDA", "MD": "MDA",
+    "Lithuania": "LTU", "LT": "LTU",
+    "Latvia": "LVA", "LV": "LVA",
+    "Estonia": "EST", "EE": "EST",
+    
+    # Southern Europe
+    "Greece": "GRC", "GR": "GRC",
+    "Croatia": "HRV", "HR": "HRV",
+    "Slovenia": "SVN", "SI": "SVN",
+    "Bosnia and Herzegovina": "BIH", "BA": "BIH", "Bosnia": "BIH",
+    "Serbia": "SRB", "RS": "SRB",
+    "Montenegro": "MNE", "ME": "MNE",
+    "North Macedonia": "MKD", "Macedonia": "MKD", "MK": "MKD",
+    "Albania": "ALB", "AL": "ALB",
+    "Kosovo": "XKX", "XK": "XKX",
+    "Malta": "MLT", "MT": "MLT",
+    "Cyprus": "CYP", "CY": "CYP",
+    
+    # Russia & Former USSR
+    "Russia": "RUS", "RU": "RUS", "Russian Federation": "RUS",
+    "Kazakhstan": "KAZ", "KZ": "KAZ",
+    "Uzbekistan": "UZB", "UZ": "UZB",
+    "Turkmenistan": "TKM", "TM": "TKM",
+    "Kyrgyzstan": "KGZ", "KG": "KGZ",
+    "Tajikistan": "TJK", "TJ": "TJK",
+    "Armenia": "ARM", "AM": "ARM",
+    "Azerbaijan": "AZE", "AZ": "AZE",
+    "Georgia": "GEO", "GE": "GEO",
     
     # Middle East
-    "Israel": "ISR", "IL": "ISR",
-    "Iran": "IRN", "IR": "IRN",
-    "Saudi Arabia": "SAU", "SA": "SAU",
-    "UAE": "ARE", "United Arab Emirates": "ARE",
     "Turkey": "TUR", "TR": "TUR", "Türkiye": "TUR",
-    "Egypt": "EGY", "EG": "EGY",
-    "Iraq": "IRQ", "IQ": "IRQ",
-    "Syria": "SYR", "SY": "SYR",
+    "Israel": "ISR", "IL": "ISR",
+    "Palestine": "PSE", "PS": "PSE",
     "Jordan": "JOR", "JO": "JOR",
     "Lebanon": "LBN", "LB": "LBN",
-    "Palestine": "PSE", "PS": "PSE",
+    "Syria": "SYR", "SY": "SYR",
+    "Iraq": "IRQ", "IQ": "IRQ",
+    "Iran": "IRN", "IR": "IRN",
+    "Saudi Arabia": "SAU", "SA": "SAU",
+    "Yemen": "YEM", "YE": "YEM",
+    "Oman": "OMN", "OM": "OMN",
+    "UAE": "ARE", "United Arab Emirates": "ARE", "AE": "ARE",
+    "Qatar": "QAT", "QA": "QAT",
+    "Kuwait": "KWT", "KW": "KWT",
+    "Bahrain": "BHR", "BH": "BHR",
     
-    # Asia
+    # North Africa
+    "Egypt": "EGY", "EG": "EGY",
+    "Libya": "LBY", "LY": "LBY",
+    "Tunisia": "TUN", "TN": "TUN",
+    "Algeria": "DZA", "DZ": "DZA",
+    "Morocco": "MAR", "MA": "MAR",
+    "Mauritania": "MRT", "MR": "MRT",
+    "Sudan": "SDN", "SD": "SDN",
+    "South Sudan": "SSD", "SS": "SSD",
+    
+    # West Africa
+    "Nigeria": "NGA", "NG": "NGA",
+    "Ghana": "GHA", "GH": "GHA",
+    "Senegal": "SEN", "SN": "SEN",
+    "Mali": "MLI", "ML": "MLI",
+    "Burkina Faso": "BFA", "BF": "BFA",
+    "Niger": "NER", "NE": "NER",
+    "Chad": "TCD", "TD": "TCD",
+    "Ivory Coast": "CIV", "Cote d'Ivoire": "CIV", "CI": "CIV",
+    "Guinea": "GIN", "GN": "GIN",
+    "Benin": "BEN", "BJ": "BEN",
+    "Togo": "TGO", "TG": "TGO",
+    "Sierra Leone": "SLE", "SL": "SLE",
+    "Liberia": "LBR", "LR": "LBR",
+    "Gambia": "GMB", "GM": "GMB",
+    "Guinea-Bissau": "GNB", "GW": "GNB",
+    "Cape Verde": "CPV", "CV": "CPV",
+    
+    # East Africa
+    "Kenya": "KEN", "KE": "KEN",
+    "Ethiopia": "ETH", "ET": "ETH",
+    "Tanzania": "TZA", "TZ": "TZA",
+    "Uganda": "UGA", "UG": "UGA",
+    "Somalia": "SOM", "SO": "SOM",
+    "Rwanda": "RWA", "RW": "RWA",
+    "Burundi": "BDI", "BI": "BDI",
+    "Eritrea": "ERI", "ER": "ERI",
+    "Djibouti": "DJI", "DJ": "DJI",
+    
+    # Central Africa
+    "Democratic Republic of the Congo": "COD", "DR Congo": "COD", "DRC": "COD", "CD": "COD",
+    "Congo": "COG", "Republic of the Congo": "COG", "CG": "COG",
+    "Central African Republic": "CAF", "CAR": "CAF", "CF": "CAF",
+    "Cameroon": "CMR", "CM": "CMR",
+    "Gabon": "GAB", "GA": "GAB",
+    "Equatorial Guinea": "GNQ", "GQ": "GNQ",
+    "Sao Tome and Principe": "STP", "ST": "STP",
+    
+    # Southern Africa
+    "South Africa": "ZAF", "ZA": "ZAF",
+    "Zimbabwe": "ZWE", "ZW": "ZWE",
+    "Zambia": "ZMB", "ZM": "ZMB",
+    "Botswana": "BWA", "BW": "BWA",
+    "Namibia": "NAM", "NA": "NAM",
+    "Angola": "AGO", "AO": "AGO",
+    "Mozambique": "MOZ", "MZ": "MOZ",
+    "Malawi": "MWI", "MW": "MWI",
+    "Lesotho": "LSO", "LS": "LSO",
+    "Eswatini": "SWZ", "Swaziland": "SWZ", "SZ": "SWZ",
+    "Madagascar": "MDG", "MG": "MDG",
+    "Mauritius": "MUS", "MU": "MUS",
+    "Seychelles": "SYC", "SC": "SYC",
+    "Comoros": "COM", "KM": "COM",
+    
+    # East Asia
     "China": "CHN", "CN": "CHN", "PRC": "CHN",
     "Japan": "JPN", "JP": "JPN",
     "South Korea": "KOR", "Korea": "KOR", "KR": "KOR",
     "North Korea": "PRK", "KP": "PRK", "DPRK": "PRK",
-    "India": "IND", "IN": "IND",
-    "Pakistan": "PAK", "PK": "PAK",
-    "Bangladesh": "BGD", "BD": "BGD",
+    "Mongolia": "MNG", "MN": "MNG",
+    "Taiwan": "TWN", "TW": "TWN",
+    
+    # Southeast Asia
     "Indonesia": "IDN", "ID": "IDN",
     "Thailand": "THA", "TH": "THA",
     "Vietnam": "VNM", "VN": "VNM",
     "Philippines": "PHL", "PH": "PHL",
     "Malaysia": "MYS", "MY": "MYS",
     "Singapore": "SGP", "SG": "SGP",
-    "Taiwan": "TWN", "TW": "TWN",
+    "Myanmar": "MMR", "Burma": "MMR", "MM": "MMR",
+    "Cambodia": "KHM", "KH": "KHM",
+    "Laos": "LAO", "LA": "LAO",
+    "Brunei": "BRN", "BN": "BRN",
+    "Timor-Leste": "TLS", "East Timor": "TLS", "TL": "TLS",
+    
+    # South Asia
+    "India": "IND", "IN": "IND",
+    "Pakistan": "PAK", "PK": "PAK",
+    "Bangladesh": "BGD", "BD": "BGD",
+    "Afghanistan": "AFG", "AF": "AFG",
+    "Sri Lanka": "LKA", "LK": "LKA",
+    "Nepal": "NPL", "NP": "NPL",
+    "Bhutan": "BTN", "BT": "BTN",
+    "Maldives": "MDV", "MV": "MDV",
     
     # Oceania
     "Australia": "AUS", "AU": "AUS",
     "New Zealand": "NZL", "NZ": "NZL",
-    
-    # South America
-    "Brazil": "BRA", "BR": "BRA",
-    "Argentina": "ARG", "AR": "ARG",
-    "Chile": "CHL", "CL": "CHL",
-    "Colombia": "COL", "CO": "COL",
-    "Peru": "PER", "PE": "PER",
-    "Venezuela": "VEN", "VE": "VEN",
-    
-    # Africa
-    "South Africa": "ZAF", "ZA": "ZAF",
-    "Nigeria": "NGA", "NG": "NGA",
-    "Kenya": "KEN", "KE": "KEN",
-    "Ethiopia": "ETH", "ET": "ETH",
-    "Ghana": "GHA", "GH": "GHA",
-    "Morocco": "MAR", "MA": "MAR",
-    "Algeria": "DZA", "DZ": "DZA",
-    
-    # Russia & Former USSR
-    "Russia": "RUS", "RU": "RUS", "Russian Federation": "RUS",
-    "Ukraine": "UKR", "UA": "UKR",
-    "Belarus": "BLR", "BY": "BLR",
+    "Papua New Guinea": "PNG", "PG": "PNG",
+    "Fiji": "FJI", "FJ": "FJI",
+    "Solomon Islands": "SLB", "SB": "SLB",
+    "Vanuatu": "VUT", "VU": "VUT",
+    "Samoa": "WSM", "WS": "WSM",
+    "Tonga": "TON", "TO": "TON",
+    "Micronesia": "FSM", "FM": "FSM",
+    "Palau": "PLW", "PW": "PLW",
+    "Marshall Islands": "MHL", "MH": "MHL",
+    "Kiribati": "KIR", "KI": "KIR",
+    "Tuvalu": "TUV", "TV": "TUV",
+    "Nauru": "NRU", "NR": "NRU",
 }
 
 

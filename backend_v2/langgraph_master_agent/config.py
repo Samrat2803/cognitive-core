@@ -21,7 +21,7 @@ class MasterAgentConfig:
     MAX_TOKENS = 4000
     
     # Agent Behavior
-    MAX_TOOL_ITERATIONS = 3  # Maximum loops before forcing response
+    MAX_TOOL_ITERATIONS = 5  # Maximum loops before forcing response (increased for persistence)
     MAX_CONVERSATION_HISTORY = 10  # Keep last N messages
     
     # Tavily Settings

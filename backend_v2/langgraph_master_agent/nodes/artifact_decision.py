@@ -87,7 +87,12 @@ async def artifact_decision(state: dict) -> dict:
             for msg in recent_history[:-1]
         ])
     
+    # Get current date/time for context
+    current_datetime = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p %Z")
+    
     extraction_prompt = f"""You are a data extraction expert. Analyze the user's query and the agent's response to determine if a visualization should be created and extract the necessary data.
+
+CURRENT DATE & TIME: {current_datetime}
 
 {"CONVERSATION HISTORY (for context if user refers to 'this' or previous data):" if history_context else ""}
 {history_context if history_context else ""}
@@ -123,6 +128,10 @@ For bar_chart:
 For map_chart:
 - countries: List of country names (e.g., ["US", "Israel", "UK"])
 - values: List of numerical values (e.g., [-0.4, -0.7, 0.3])
+  IMPORTANT: ALL values must be numbers, not None/null. If a value is not specified:
+  * For corruption scores (0-100 scale): use 50 as default
+  * For sentiment scores (-1 to +1 scale): use 0 as default
+  * Add note in label that it's estimated
 - labels: Optional list of labels (e.g., ["US: Negative", "Israel: Very Negative"])
 - legend_title: Title for the legend (e.g., "Sentiment Score")
 

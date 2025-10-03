@@ -49,6 +49,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add GZip compression middleware for artifact optimization
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Global instances
 agent: Optional[MasterPoliticalAnalyst] = None
 mongo_service = MongoService() if os.getenv("MONGODB_CONNECTION_STRING") else None
@@ -1177,6 +1181,42 @@ async def websocket_analyze(websocket: WebSocket):
                         else:
                             print("   ✗ sub_agent_results NOT in result")
                     print("=" * 70 + "\n")
+                    
+                    # Send master agent artifact first (if it exists)
+                    if result.get("artifact"):
+                        artifact_data = result["artifact"]
+                        if artifact_data and artifact_data.get("artifact_id"):
+                            # Handle both S3 and local storage URLs
+                            html_url = (artifact_data.get("s3_html_url") or 
+                                       artifact_data.get("html_url") or
+                                       f"{BASE_URL}/api/artifacts/{artifact_data.get('artifact_id')}.html")
+                            
+                            # Get PNG URL (prioritize for fast loading)
+                            png_url = (artifact_data.get("s3_png_url") or 
+                                      artifact_data.get("png_url") or
+                                      f"{BASE_URL}/api/artifacts/{artifact_data.get('artifact_id')}.png")
+                            
+                            # Build artifact message with PNG prioritized
+                            artifact_message = {
+                                "artifact_id": artifact_data.get("artifact_id"),
+                                "type": artifact_data.get("type", "chart"),
+                                "title": artifact_data.get("title", "Visualization"),
+                                "png_url": png_url,  # PNG first for instant display
+                                "html_url": html_url,  # HTML for interactive fallback
+                                "storage": artifact_data.get("storage", "local"),
+                                "metadata": artifact_data.get("metadata", {}),
+                                "source": "master_agent"
+                            }
+                            
+                            await websocket.send_json(create_message(
+                                "artifact",
+                                artifact_message,
+                                current_message_id
+                            ))
+                            
+                            print(f"📊 Sent MASTER AGENT artifact to frontend: {artifact_data.get('artifact_id')} ({artifact_data.get('type')})")
+                    
+                    # Send sub-agent artifacts
                     if sub_agent_artifacts:
                         for agent_name, artifacts_list in sub_agent_artifacts.items():
                             if isinstance(artifacts_list, list):
@@ -1191,21 +1231,22 @@ async def websocket_analyze(websocket: WebSocket):
                                                artifact_data.get("html_url") or
                                                f"{BASE_URL}/api/artifacts/{artifact_data.get('artifact_id')}.html")
                                     
-                                    # Only include png_url if it exists in artifact_data
+                                    # Get PNG URL (prioritize for fast loading)
+                                    png_url = (artifact_data.get("s3_png_url") or 
+                                              artifact_data.get("png_url") or
+                                              f"{BASE_URL}/api/artifacts/{artifact_data.get('artifact_id')}.png")
+                                    
+                                    # Build artifact message with PNG prioritized
                                     artifact_message = {
                                         "artifact_id": artifact_data.get("artifact_id"),
                                         "type": artifact_data.get("type", "chart"),
                                         "title": artifact_data.get("title", "Visualization"),
-                                        "html_url": html_url,
+                                        "png_url": png_url,  # PNG first for instant display
+                                        "html_url": html_url,  # HTML for interactive fallback
                                         "storage": artifact_data.get("storage", "local"),
                                         "metadata": artifact_data.get("metadata", {}),
                                         "source": agent_name
                                     }
-                                    
-                                    # Add png_url only if it actually exists
-                                    if artifact_data.get("s3_png_url") or artifact_data.get("png_url"):
-                                        artifact_message["png_url"] = (artifact_data.get("s3_png_url") or 
-                                                                      artifact_data.get("png_url"))
                                     
                                     await websocket.send_json(create_message(
                                         "artifact",
@@ -1213,7 +1254,7 @@ async def websocket_analyze(websocket: WebSocket):
                                         current_message_id
                                     ))
                                     
-                                    print(f"📊 Sent artifact to frontend: {artifact_data.get('artifact_id')} ({artifact_data.get('type')})")
+                                    print(f"📊 Sent SUB-AGENT artifact to frontend: {artifact_data.get('artifact_id')} ({artifact_data.get('type')})")
                     
                         # Debug: Log total artifacts sent
                         artifact_count = 1 if result.get("artifact") else 0
