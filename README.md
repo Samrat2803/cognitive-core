@@ -75,9 +75,10 @@ The Political Analyst Workbench is a sophisticated AI-powered research platform 
 |---------|-----|--------|
 | **Frontend** | [https://d2dk8wkh2d0mmy.cloudfront.net](https://d2dk8wkh2d0mmy.cloudfront.net) | ✅ Live |
 | **Info Page** | [/info](https://d2dk8wkh2d0mmy.cloudfront.net/info) | 🎬 Demo Ready |
-| **Backend API** | [http://political-analyst-backend-prod.eba-tf2vrc23.us-east-1.elasticbeanstalk.com](http://political-analyst-backend-prod.eba-tf2vrc23.us-east-1.elasticbeanstalk.com) | ✅ Live |
-| **API Health** | [/health](http://political-analyst-backend-prod.eba-tf2vrc23.us-east-1.elasticbeanstalk.com/health) | ✅ Healthy |
-| **API Docs** | [/docs](http://political-analyst-backend-prod.eba-tf2vrc23.us-east-1.elasticbeanstalk.com/docs) | 📖 Available |
+| **Backend API** | [https://d1h4cjcbl77aah.cloudfront.net](https://d1h4cjcbl77aah.cloudfront.net) | ✅ Live |
+| **API Health** | [/health](https://d1h4cjcbl77aah.cloudfront.net/health) | ✅ Healthy |
+| **API Docs** | [/docs](https://d1h4cjcbl77aah.cloudfront.net/docs) | 📖 Available |
+| **WebSocket** | `wss://d1h4cjcbl77aah.cloudfront.net/ws/analyze` | ✅ Connected |
 
 > **Note**: Frontend may take 15-20 minutes to propagate globally via CloudFront
 
