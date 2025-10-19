@@ -62,6 +62,76 @@ class AnalysisSession:
         }
 
 
+class Investigation:
+    """Model for investigative journalist investigation"""
+    def __init__(self, **kwargs):
+        self.investigation_id: str = kwargs.get('investigation_id', f"inv_{uuid.uuid4().hex[:12]}")
+        self.title: str = kwargs.get('title', 'Untitled Investigation')
+        self.query: str = kwargs['query']
+        self.status: str = kwargs.get('status', 'active')  # active, paused, completed, archived
+        
+        # Progress tracking
+        self.current_iteration: int = kwargs.get('current_iteration', 0)
+        self.max_iterations: int = kwargs.get('max_iterations', 20)
+        self.phase: str = kwargs.get('phase', 'initial')  # initial, deepening, synthesis
+        
+        # Evidence collected
+        self.entities: List[Dict[str, Any]] = kwargs.get('entities', [])
+        self.facts: List[Dict[str, Any]] = kwargs.get('facts', [])
+        self.connections: List[Dict[str, Any]] = kwargs.get('connections', [])
+        self.anomalies: List[Dict[str, Any]] = kwargs.get('anomalies', [])
+        
+        # Article content
+        self.article: str = kwargs.get('article', '')
+        self.article_draft: str = kwargs.get('article_draft', '')
+        
+        # Search history and caching
+        self.seen_urls: List[str] = kwargs.get('seen_urls', [])
+        self.search_queries: List[str] = kwargs.get('search_queries', [])
+        self.extracted_articles: List[Dict[str, Any]] = kwargs.get('extracted_articles', [])
+        
+        # Execution tracking
+        self.execution_log: List[Dict[str, Any]] = kwargs.get('execution_log', [])
+        self.cost_usd: float = kwargs.get('cost_usd', 0.0)
+        
+        # Timestamps
+        self.created_at: datetime = kwargs.get('created_at', datetime.utcnow())
+        self.updated_at: datetime = kwargs.get('updated_at', datetime.utcnow())
+        self.completed_at: Optional[datetime] = kwargs.get('completed_at')
+        
+        # User/session info
+        self.user_session: Optional[str] = kwargs.get('user_session')
+        self.thread_id: Optional[str] = kwargs.get('thread_id')
+        
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for MongoDB"""
+        return {
+            'investigation_id': self.investigation_id,
+            'title': self.title,
+            'query': self.query,
+            'status': self.status,
+            'current_iteration': self.current_iteration,
+            'max_iterations': self.max_iterations,
+            'phase': self.phase,
+            'entities': self.entities,
+            'facts': self.facts,
+            'connections': self.connections,
+            'anomalies': self.anomalies,
+            'article': self.article,
+            'article_draft': self.article_draft,
+            'seen_urls': self.seen_urls,
+            'search_queries': self.search_queries,
+            'extracted_articles': self.extracted_articles,
+            'execution_log': self.execution_log,
+            'cost_usd': self.cost_usd,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'completed_at': self.completed_at,
+            'user_session': self.user_session,
+            'thread_id': self.thread_id
+        }
+
+
 class ArtifactMetadata:
     """Model for artifact metadata"""
     def __init__(self, **kwargs):
@@ -199,6 +269,13 @@ class MongoService:
             # Execution logs indexes
             await self.db.execution_logs.create_index("session_id")
             await self.db.execution_logs.create_index([("timestamp", DESCENDING)])
+            
+            # Investigations indexes (for Investigative Journalist)
+            await self.db.investigations.create_index("investigation_id", unique=True)
+            await self.db.investigations.create_index("status")
+            await self.db.investigations.create_index("user_session")
+            await self.db.investigations.create_index([("updated_at", DESCENDING)])
+            await self.db.investigations.create_index([("created_at", DESCENDING)])
             
             print("✅ Database indexes created")
             
@@ -456,6 +533,175 @@ class MongoService:
             'avg_processing_time_ms': timing_stats['avg_time'],
             'min_processing_time_ms': timing_stats['min_time'],
             'max_processing_time_ms': timing_stats['max_time']
+        }
+    
+    # ========================================================================
+    # Investigation Management (for Investigative Journalist Sub-Agent)
+    # ========================================================================
+    
+    async def create_investigation(
+        self, 
+        query: str, 
+        title: Optional[str] = None,
+        max_iterations: int = 20,
+        user_session: Optional[str] = None
+    ) -> str:
+        """Create a new investigation"""
+        await self.connect()
+        
+        investigation = Investigation(
+            query=query,
+            title=title or query[:100],  # Use first 100 chars of query as title
+            max_iterations=max_iterations,
+            user_session=user_session
+        )
+        
+        try:
+            await self.db.investigations.insert_one(investigation.to_dict())
+            print(f"✅ Created investigation: {investigation.investigation_id}")
+            return investigation.investigation_id
+        except DuplicateKeyError:
+            # Shouldn't happen with UUID, but handle gracefully
+            print(f"⚠️  Investigation ID collision: {investigation.investigation_id}")
+            raise
+    
+    async def get_investigation(self, investigation_id: str) -> Optional[Dict[str, Any]]:
+        """Get investigation by ID"""
+        await self.connect()
+        return await self.db.investigations.find_one({'investigation_id': investigation_id})
+    
+    async def list_investigations(
+        self, 
+        status: Optional[str] = None,
+        limit: int = 50,
+        skip: int = 0
+    ) -> List[Dict[str, Any]]:
+        """List investigations with optional filtering"""
+        await self.connect()
+        
+        query = {}
+        if status:
+            query['status'] = status
+        
+        cursor = self.db.investigations.find(query).sort('updated_at', DESCENDING).skip(skip).limit(limit)
+        return await cursor.to_list(length=limit)
+    
+    async def update_investigation(
+        self, 
+        investigation_id: str, 
+        update_data: Dict[str, Any]
+    ) -> bool:
+        """Update investigation fields"""
+        await self.connect()
+        
+        # Always update the updated_at timestamp
+        update_data['updated_at'] = datetime.utcnow()
+        
+        # If status changed to completed, set completed_at
+        if update_data.get('status') == 'completed' and 'completed_at' not in update_data:
+            update_data['completed_at'] = datetime.utcnow()
+        
+        result = await self.db.investigations.update_one(
+            {'investigation_id': investigation_id},
+            {'$set': update_data}
+        )
+        
+        return result.modified_count > 0
+    
+    async def append_to_investigation(
+        self,
+        investigation_id: str,
+        field: str,  # 'entities', 'facts', 'connections', 'anomalies', 'execution_log', etc.
+        items: List[Dict[str, Any]]
+    ) -> bool:
+        """Append items to an array field in the investigation"""
+        await self.connect()
+        
+        result = await self.db.investigations.update_one(
+            {'investigation_id': investigation_id},
+            {
+                '$push': {field: {'$each': items}},
+                '$set': {'updated_at': datetime.utcnow()}
+            }
+        )
+        
+        return result.modified_count > 0
+    
+    async def increment_investigation_iteration(
+        self,
+        investigation_id: str,
+        cost_delta: float = 0.0
+    ) -> bool:
+        """Increment the current iteration counter and add cost"""
+        await self.connect()
+        
+        result = await self.db.investigations.update_one(
+            {'investigation_id': investigation_id},
+            {
+                '$inc': {
+                    'current_iteration': 1,
+                    'cost_usd': cost_delta
+                },
+                '$set': {'updated_at': datetime.utcnow()}
+            }
+        )
+        
+        return result.modified_count > 0
+    
+    async def delete_investigation(self, investigation_id: str) -> bool:
+        """Delete an investigation (or archive it)"""
+        await self.connect()
+        
+        # Soft delete - just archive it
+        result = await self.db.investigations.update_one(
+            {'investigation_id': investigation_id},
+            {
+                '$set': {
+                    'status': 'archived',
+                    'updated_at': datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+    
+    async def get_investigation_logs(
+        self,
+        investigation_id: str,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Get execution logs for an investigation"""
+        await self.connect()
+        
+        investigation = await self.get_investigation(investigation_id)
+        if not investigation:
+            return []
+        
+        # Return the last N log entries
+        logs = investigation.get('execution_log', [])
+        return logs[-limit:] if len(logs) > limit else logs
+    
+    async def get_investigation_evidence(
+        self,
+        investigation_id: str
+    ) -> Dict[str, Any]:
+        """Get all evidence for an investigation (entities, facts, connections)"""
+        await self.connect()
+        
+        investigation = await self.get_investigation(investigation_id)
+        if not investigation:
+            return {
+                'entities': [],
+                'facts': [],
+                'connections': [],
+                'anomalies': []
+            }
+        
+        return {
+            'entities': investigation.get('entities', []),
+            'facts': investigation.get('facts', []),
+            'connections': investigation.get('connections', []),
+            'anomalies': investigation.get('anomalies', [])
         }
 
 

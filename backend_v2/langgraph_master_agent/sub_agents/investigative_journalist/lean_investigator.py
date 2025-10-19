@@ -102,11 +102,11 @@ class LeanInvestigator:
             "total_cost": 0.0
         }
         
-        # Build graph
+        # Build graph (MongoDB saves handled separately in analyzer_node)
         self.graph = self._build_graph()
     
     def _build_graph(self) -> StateGraph:
-        """Build the investigation graph"""
+        """Build the investigation graph (state saved to MongoDB in nodes)"""
         workflow = StateGraph(HypothesisState)
         
         # Nodes
@@ -132,6 +132,7 @@ class LeanInvestigator:
         workflow.add_edge("analyzer", "strategist")
         workflow.add_edge("synthesizer", END)
         
+        # Compile without checkpointer (we use MongoDB directly)
         return workflow.compile()
     
     def _route_from_strategist(self, state: HypothesisState) -> str:
@@ -162,6 +163,15 @@ class LeanInvestigator:
         log(f"\n{'='*80}")
         log(f"🧠 STRATEGIST - Iteration {iteration}/{state['max_iterations']}")
         log(f"{'='*80}")
+        
+        # Emit iteration start event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"🔄 Iteration {iteration}/{state['max_iterations']}"
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
         
         # Initialize questions list
         questions = state.get("questions", [])
@@ -466,6 +476,15 @@ Be specific. Be surgical. Find what others missed.
         log(f"{'='*80}")
         log(f"Query: {query}")
         
+        # Emit search event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"🔍 Searching: {query}"
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
+        
         # Execute single Tavily search
         results = await self.tavily.tavily_search(
             query=query,
@@ -487,6 +506,15 @@ Be specific. Be surgical. Find what others missed.
         ]
         log(f"   📰 {len(new_articles)} new articles")
         
+        # Emit articles found event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"📰 Found {len(new_articles)} new articles to analyze"
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
+        
         return {
             **state,
             "search_results": new_articles,
@@ -503,6 +531,15 @@ Be specific. Be surgical. Find what others missed.
         log(f"📖 EXTRACTOR (Free Methods)")
         log(f"{'='*80}")
         log(f"   📊 Extracting from {len(articles)} articles")
+        
+        # Emit extraction start event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"📖 Extracting content from {min(len(articles), 2)} articles..."
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
         
         extracted_content = []
         
@@ -638,6 +675,15 @@ Be specific. Be surgical. Find what others missed.
         log(f"\n{'='*80}")
         log(f"🔬 ANALYZER")
         log(f"{'='*80}")
+        
+        # Emit analysis start event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"🔬 Analyzing content for insights..."
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
         
         if not extracted:
             log("   ⚠️  No content to analyze")
@@ -775,6 +821,19 @@ Focus on NOVELTY. What would an investigative journalist find interesting?
         log(f"   🔍 Checking incremental save: investigation_id={investigation_id}")
         if investigation_id:
             try:
+                # Import using absolute path to avoid module conflicts
+                import sys
+                import os
+                from pathlib import Path
+                
+                # Get the investigative_journalist directory
+                current_dir = Path(__file__).parent
+                tools_dir = current_dir / 'tools'
+                
+                # Add to sys.path if not already there
+                if str(current_dir) not in sys.path:
+                    sys.path.insert(0, str(current_dir))
+                
                 from tools.evidence_repository import save_investigation
                 log(f"   💾 Saving iteration {updated_state['iteration']} to MongoDB...")
                 await save_investigation({
@@ -784,8 +843,7 @@ Focus on NOVELTY. What would an investigative journalist find interesting?
                 log(f"   ✅ Saved iteration {updated_state['iteration']} to MongoDB")
             except Exception as e:
                 log(f"   ⚠️  Failed to save iteration: {e}")
-                import traceback
-                log(traceback.format_exc())
+                # Don't print full traceback, just continue
         else:
             log(f"   ⚠️  No investigation_id found, skipping incremental save")
         
@@ -938,11 +996,6 @@ Write a professional investigative report following this EXACT structure:
 
 ## **UNANSWERED QUESTIONS**
 [Critical questions that remain unresolved]
-
----
-
-## **SOURCES**
-[List all article URLs that were analyzed in this investigation]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

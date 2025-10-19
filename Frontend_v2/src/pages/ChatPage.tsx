@@ -12,4 +12,3 @@ export function ChatPage() {
 
   return <MainLayout initialQuery={initialQuery} />;
 }
-

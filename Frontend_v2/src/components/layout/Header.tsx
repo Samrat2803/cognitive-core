@@ -1,4 +1,4 @@
-import { Brain, History, Settings, Info } from 'lucide-react';
+import { Brain, History, Settings, Info, FileSearch, Bot } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ConnectionStatus from '../ui/ConnectionStatus';
 import { AgentTooltip, EnhancedTooltip, FeatureBadge } from '../ui/EnhancedTooltip';
@@ -39,6 +39,52 @@ export function Header() {
           </h1>
         </div>
       </AgentTooltip>
+      
+      {/* Navigation Menu */}
+      <nav className="header-nav">
+        <EnhancedTooltip
+          content="Multi-agent chat interface with orchestration"
+          icon="agent"
+          position="bottom"
+        >
+          <button 
+            className={`header-nav-button ${location.pathname === '/chat' ? 'active' : ''}`}
+            onClick={() => navigate('/chat')}
+          >
+            <Brain size={18} />
+            <span>Master Agent</span>
+          </button>
+        </EnhancedTooltip>
+        
+        <EnhancedTooltip
+          content="Deep investigative research with hypothesis testing"
+          icon="agent"
+          position="bottom"
+        >
+          <button 
+            className={`header-nav-button ${location.pathname === '/investigative-journalist' ? 'active' : ''}`}
+            onClick={() => navigate('/investigative-journalist')}
+          >
+            <FileSearch size={18} />
+            <span>Investigative Journalist</span>
+          </button>
+        </EnhancedTooltip>
+        
+        <EnhancedTooltip
+          content="Web crawler with RAG chat - crawl any website and chat with the content"
+          icon="agent"
+          position="bottom"
+        >
+          <button 
+            className={`header-nav-button ${location.pathname === '/cognitive-crawler' ? 'active' : ''}`}
+            onClick={() => navigate('/cognitive-crawler')}
+          >
+            <Bot size={18} />
+            <span>Cognitive Crawler</span>
+          </button>
+        </EnhancedTooltip>
+      </nav>
+      
       <div className="header-right">
         <ConnectionStatus />
         <EnhancedTooltip

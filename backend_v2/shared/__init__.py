@@ -1,17 +1,16 @@
 """
-Shared utilities for all agents
+Shared RSS Tools
+
+Reusable tools for RSS data collection, storage, and embedding.
 """
 
-from shared.tavily_client import TavilyClient
-from shared.llm_factory import LLMFactory
-from shared.observability import ObservabilityManager
-
-# Visualization factory is imported lazily to avoid pandas dependency for all modules
-# Import directly: from shared.visualization_factory import VisualizationFactory
+from shared.rss_sources import RSSSourceManager
+from shared.rss_collector import RSSCollector
+from shared.rss_embedder import RSSEmbedder
 
 __all__ = [
-    "TavilyClient",
-    "LLMFactory",
-    "ObservabilityManager"
+    "RSSSourceManager",
+    "RSSCollector",
+    "RSSEmbedder"
 ]
 

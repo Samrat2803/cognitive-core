@@ -19,8 +19,8 @@ export default defineConfig({
   
   /* Reporter to use */
   reporter: [
-    ['html'],
-    ['list'],
+    ['html', { open: 'never' }], // Generate HTML report but don't open it automatically
+    ['list'], // Console output
   ],
   
   /* Shared settings for all the projects below */

@@ -86,7 +86,7 @@ case $choice in
             if [ "$confirm" == "yes" ]; then
                 echo ""
                 echo -e "${YELLOW}Terminating environment...${NC}"
-                cd ../backend_v2
+                cd "$(dirname "$0")/../backend_v2"
                 eb terminate $ENV_NAME --force
                 echo ""
                 echo -e "${GREEN}✅ Backend terminated successfully!${NC}"
@@ -119,7 +119,7 @@ case $choice in
             
             if [ "$confirm" == "yes" ]; then
                 echo ""
-                cd ../backend_v2
+                cd "$(dirname "$0")/../backend_v2"
                 
                 # Check if .elasticbeanstalk/config.yml exists
                 if [ ! -f ".elasticbeanstalk/config.yml" ]; then
