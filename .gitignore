@@ -207,3 +207,77 @@ ipython_config.py
 # Linux
 *.deb
 *.rpm
+
+# ============================================================================
+# Project-Specific Ignores
+# ============================================================================
+
+# Backup files
+*.bak
+*.backup
+*.backup2
+.env.bak
+.env.backup
+
+# Test scripts and temporary test files
+test_*.py
+test_*.sh
+test_*.js
+test_*.ts
+!test_master_agent_delegation.py
+!test_unified_api_manager.py
+check_*.py
+quick_*.py
+quick_*.sh
+simulate_*.py
+proof_of_concept_*.py
+poll_*.py
+cleanup_*.py
+cleanup_*.sh
+
+# Test checkpoints and results
+test_checkpoints/
+test-results/
+playwright-report/
+
+# Extraction and crawl cache
+extraction_cache/
+crawl_cache/
+
+# Temporary documentation (keep main docs)
+*_COMPLETE.md
+*_IMPLEMENTATION.md
+*_STATUS.md
+*_SUMMARY.md
+*_FIX.md
+*_GUIDE.md
+*_PLAN.md
+CONTINUE_*.md
+COGNITIVE_CRAWLER_CHAT_UPDATE.md
+COGNITIVE_CRAWLER_DB_EXPLORER.md
+COGNITIVE_CRAWLER_QUICK_START.md
+!README.md
+!ARCHITECTURE_OVERVIEW.md
+!DEPLOYMENT_GUIDE.md
+!CONTRIBUTING.md
+!LICENSE
+
+# Poller and background scripts (keep only what's needed)
+rss_background_poller.py
+start_rss_poller.sh
+
+# Analysis and playground scripts
+analyze_*.py
+tavily_playground.py
+deep_intelligence_analyzer.py
+
+# Test HTML files
+test-*.html
+test_connection.html
+
+# Standalone test utilities
+add_political_feeds.py
+check_investigation.py
+check_rss_data.py
+check_stored_content.py
+check_cough_syrup_content.py
