@@ -10,66 +10,10 @@
 }
 
 /* ============================================
-   Header
+   Header (Removed - using top navigation instead)
    ============================================ */
 
-.chat-header {
-  height: 64px;
-  background-color: var(--color-background-dark);
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding: 0 var(--space-xl);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-}
-
-.chat-header h1 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.connection-status {
-  font-size: var(--font-size-sm);
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-full);
-  font-weight: var(--font-weight-medium);
-}
-
-.status-connected {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #4ade80;
-}
-
-.status-connecting {
-  background-color: rgba(217, 243, 120, 0.1);
-  color: var(--color-primary);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.status-disconnected {
-  background-color: rgba(100, 116, 139, 0.1);
-  color: #94a3b8;
-}
-
-.status-error {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.investigation-id {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  font-family: var(--font-family-mono, monospace);
-}
+/* Removed redundant chat-header styles */
 
 /* ============================================
    Main Content - Split Layout
@@ -77,9 +21,9 @@
 
 .chat-content {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 350px;
+  display: flex;
   overflow: hidden;
+  width: 100%;
 }
 
 /* ============================================
@@ -213,9 +157,9 @@
 
 .message-user {
   align-self: flex-end;
-  background-color: var(--color-primary);
-  color: #000000; /* Pure black for maximum contrast */
-  font-weight: 600; /* Bolder text */
+  background-color: #d9f378 !important; /* Parrot green from Aistra palette */
+  color: #000000 !important; /* Pure black for maximum contrast */
+  font-weight: 700 !important; /* Extra bold for readability */
 }
 
 .message-assistant {
@@ -270,14 +214,18 @@
 }
 
 .message-user .message-content {
-  color: #000000; /* Pure black for maximum contrast */
-  font-weight: 600; /* Bold for better readability */
+  color: #000000 !important; /* Pure black for maximum contrast on parrot green */
+  font-weight: 700 !important; /* Extra bold for better readability */
+}
+
+.message-user .message-content div {
+  color: #000000 !important; /* Ensure nested div also has black text */
 }
 
 .message-user .message-timestamp {
-  color: #000000;
-  opacity: 0.7; /* Darker for readability on lime background */
-  font-weight: 500;
+  color: #000000 !important; /* Pure black */
+  opacity: 0.7 !important; /* Slightly dimmed but still readable */
+  font-weight: 600 !important;
 }
 
 .message-timestamp {
@@ -397,6 +345,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%; /* Ensure full height */
 }
 
 .artifacts-header {
@@ -531,28 +480,12 @@
    ============================================ */
 
 @media (max-width: 1024px) {
-  .chat-content {
-    grid-template-columns: 1fr;
-  }
-
   .artifacts-panel {
     display: none;
   }
 }
 
 @media (max-width: 768px) {
-  .chat-header {
-    padding: 0 var(--space-lg);
-  }
-
-  .chat-header h1 {
-    font-size: var(--font-size-lg);
-  }
-
-  .investigation-id {
-    display: none;
-  }
-
   .messages-container {
     padding: var(--space-lg);
   }
@@ -637,6 +570,25 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--space-md);
+  min-height: 0; /* Critical for flex scrolling */
+}
+
+/* Custom scrollbar for artifacts content */
+.artifacts-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.artifacts-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.artifacts-content::-webkit-scrollbar-thumb {
+  background: #d9f378;
+  border-radius: 4px;
+}
+
+.artifacts-content::-webkit-scrollbar-thumb:hover {
+  background: #c5e065;
 }
 
 /* Stop button */
@@ -674,7 +626,7 @@
 .chat-page-content {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px); /* Subtract header height */
+  flex: 1;
   overflow: hidden;
 }
 
@@ -697,7 +649,10 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-md);
-  overflow: hidden;
+  overflow: hidden; /* Keep hidden to clip rounded corners */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0; /* Prevent collapsing */
 }
 
 .artifact-article-collapsible[open] {
@@ -740,9 +695,29 @@
 .artifact-article-content {
   padding: var(--space-lg);
   border-top: 1px solid var(--color-border-subtle);
-  max-height: 600px;
+  max-height: 60vh; /* Use viewport height for responsive sizing */
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: var(--color-background-darkest);
+}
+
+/* Enhanced scrollbar for article content */
+.artifact-article-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.artifact-article-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.artifact-article-content::-webkit-scrollbar-thumb {
+  background: #d9f378;
+  border-radius: 4px;
+}
+
+.artifact-article-content::-webkit-scrollbar-thumb:hover {
+  background: #c5e065;
 }
 
 .artifact-article-content h1,

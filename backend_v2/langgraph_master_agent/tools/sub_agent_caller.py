@@ -514,6 +514,7 @@ class SubAgentCaller:
         query: str,
         max_iterations: int = 20,
         resume_from: str = None,
+        user_instruction: str = None,  # User's latest instruction
         event_callback: callable = None  # Simple callback for real-time updates
     ) -> Dict[str, Any]:
         """
@@ -599,6 +600,11 @@ class SubAgentCaller:
                     # Use max_iterations from MongoDB (already calculated in app.py)
                     actual_max_iterations = initial_state.get('max_iterations', max_iterations)
                     print(f"   📊 Using max_iterations from MongoDB: {actual_max_iterations}")
+                    
+                    # Inject user_instruction into loaded state
+                    if user_instruction:
+                        initial_state['user_instruction'] = user_instruction
+                        print(f"   💬 User instruction injected: {user_instruction[:60]}...")
             
             # Create investigator with correct max_iterations
             investigator = LeanInvestigator(max_iterations=actual_max_iterations)
@@ -608,6 +614,8 @@ class SubAgentCaller:
             result = await investigator.investigate(
                 query=query,
                 investigation_id=resume_from,  # Pass ID for real-time MongoDB updates
+                user_instruction=user_instruction,  # Pass user's instruction
+                initial_state=initial_state,  # Pass loaded state to resume
                 event_callback=event_callback  # Pass callback for real-time WebSocket events
             )
             

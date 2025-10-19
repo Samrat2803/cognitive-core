@@ -47,6 +47,13 @@ export function InvestigativeJournalistPage() {
 
   // WebSocket connection
   useEffect(() => {
+    // Guard: Prevent duplicate connections in React StrictMode (dev mode)
+    if (wsRef.current?.readyState === WebSocket.CONNECTING || 
+        wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already connecting/connected, skipping duplicate connection');
+      return;
+    }
+    
     connectWebSocket();
     
     return () => {
@@ -262,9 +269,9 @@ export function InvestigativeJournalistPage() {
   };
 
   const handleStop = () => {
-    if (ws && isLoading) {
+    if (wsRef.current && isLoading) {
       // Send stop command to backend
-      ws.send(JSON.stringify({ type: 'stop_investigation' }));
+      wsRef.current.send(JSON.stringify({ type: 'stop_investigation' }));
       setIsLoading(false);
       addSystemMessage('⏹️ Investigation stopped by user', 'warning');
     }
@@ -300,32 +307,12 @@ export function InvestigativeJournalistPage() {
       <Header />
       
       <div className="chat-page-content">
-        {/* Header */}
-        <header className="chat-header">
-          <div className="header-left">
-            <h1>🔬 Investigator Agent</h1>
-            <span className={`connection-status status-${connectionState}`}>
-              {connectionState === 'connected' && '● Connected'}
-              {connectionState === 'connecting' && '◌ Connecting...'}
-              {connectionState === 'disconnected' && '◌ Disconnected'}
-              {connectionState === 'error' && '● Error'}
-            </span>
-          </div>
-          <div className="header-right">
-            {investigationId && (
-              <span className="investigation-id">
-                ID: {investigationId.slice(0, 8)}...
-              </span>
-            )}
-          </div>
-        </header>
-
       {/* Main Content with Resizable Panels */}
       <div className="chat-content">
         <PanelGroup direction="horizontal">
           {/* Chat Panel (Left) */}
           <Panel 
-            defaultSize={artifacts.length > 0 ? 60 : 100} 
+            defaultSize={60} 
             minSize={30}
           >
         {/* Chat Panel (Left/Center) */}
@@ -392,7 +379,7 @@ export function InvestigativeJournalistPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type a message... (e.g., 'Investigate X for 10 iterations' or 'Continue for 5 more iterations')"
+                placeholder="Enter your investigation query..."
                 disabled={connectionState !== 'connected'}
                 rows={1}
               />
@@ -420,19 +407,17 @@ export function InvestigativeJournalistPage() {
         </div>
           </Panel>
 
-          {/* Artifacts Panel (Right) - Only show if artifacts exist */}
-          {artifacts.length > 0 && (
-            <>
-              {/* Resize Handle */}
-              <PanelResizeHandle className="resize-handle">
-                <div className="resize-handle-line" />
-              </PanelResizeHandle>
+          {/* Resize Handle */}
+          <PanelResizeHandle className="resize-handle">
+            <div className="resize-handle-line" />
+          </PanelResizeHandle>
 
-              <Panel 
-                defaultSize={40} 
-                minSize={20}
-                collapsible
-              >
+          {/* Artifacts Panel (Right) - Always visible */}
+          <Panel 
+            defaultSize={40} 
+            minSize={20}
+            collapsible
+          >
         {/* Artifacts Panel (Right) */}
         <div className="artifacts-panel">
           <div className="artifacts-header">
@@ -530,9 +515,7 @@ export function InvestigativeJournalistPage() {
             )}
           </div>
         </div>
-              </Panel>
-            </>
-          )}
+          </Panel>
         </PanelGroup>
       </div>
       </div>

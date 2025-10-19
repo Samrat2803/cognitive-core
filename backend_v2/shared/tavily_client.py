@@ -81,7 +81,10 @@ class TavilyClient:
         if self.caching_enabled:
             cached_result = await self.cache.get_cached_search(query, search_depth, max_results)
             if cached_result:
+                print(f"💾 CACHE HIT - Tavily Search: {query[:60]}... (saved $0.01)")
                 return cached_result
+            else:
+                print(f"🔍 CACHE MISS - Tavily Search: {query[:60]}... (calling API)")
         
         # Cache miss or caching disabled - call Tavily API
         async with httpx.AsyncClient(timeout=30) as client:
@@ -127,6 +130,7 @@ class TavilyClient:
                     # Cache the successful result
                     if self.caching_enabled:
                         await self.cache.cache_search(query, result, search_depth, max_results)
+                        print(f"💾 CACHED - Tavily Search: {query[:60]}... (24h TTL)")
                     
                     return result
                 elif response.status_code == 432:
@@ -163,11 +167,18 @@ class TavilyClient:
         if self.caching_enabled:
             cached_extracts = await self.cache.get_multiple_cached_extracts(urls)
             urls_to_fetch = [url for url in urls if url not in cached_extracts]
+            
+            # Log cache hits
+            if cached_extracts:
+                print(f"💾 CACHE HIT - {len(cached_extracts)} Tavily Extracts (saved ${len(cached_extracts) * 0.05:.2f})")
+            if urls_to_fetch:
+                print(f"🔍 CACHE MISS - {len(urls_to_fetch)} Tavily Extracts (calling API)")
         else:
             urls_to_fetch = urls
         
         # If all URLs are cached, return immediately
         if not urls_to_fetch:
+            print(f"✅ ALL {len(cached_extracts)} EXTRACTS FROM CACHE")
             return {
                 "results": [
                     {"url": url, "raw_content": content, "method": "cache"}
@@ -198,6 +209,7 @@ class TavilyClient:
                     
                     # Cache each extracted result
                     if self.caching_enabled:
+                        cached_count = 0
                         for item in fresh_results:
                             url = item.get("url")
                             content = item.get("raw_content", "")
@@ -209,6 +221,9 @@ class TavilyClient:
                                     metadata={"format": format, "depth": extract_depth},
                                     store_vector=True
                                 )
+                                cached_count += 1
+                        if cached_count > 0:
+                            print(f"💾 CACHED - {cached_count} Tavily Extracts (7d TTL)")
                     
                     # Combine cached + fresh results
                     all_results = [

@@ -49,3 +49,4 @@ REPORT_FORMAT = "markdown"  # Output format for final report
 SAVE_TO_MONGODB = True  # Save evidence repository to MongoDB
 AUTO_SAVE_FREQUENCY = 5  # Save every N iterations
 
+

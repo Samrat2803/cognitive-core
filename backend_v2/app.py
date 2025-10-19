@@ -2184,6 +2184,13 @@ async def investigation_websocket(websocket: WebSocket, investigation_id: str):
             sys.stdout.flush()
             
             if msg_type == "start" or msg_type == "continue":
+                # Extract user instruction from client message
+                user_instruction = client_message.get("content") or client_message.get("instruction")
+                
+                if user_instruction:
+                    print(f"💬 User instruction: {user_instruction[:100]}...")
+                    sys.stdout.flush()
+                
                 # Send investigation started
                 await websocket.send_json(create_ws_message(
                     "investigation_started",
@@ -2371,6 +2378,7 @@ async def investigation_websocket(websocket: WebSocket, investigation_id: str):
                         query=investigation.get('query', ''),
                         max_iterations=investigation.get('max_iterations', 20),
                         resume_from=investigation_id,  # Always pass ID to update existing investigation
+                        user_instruction=user_instruction,  # Pass user's explicit instruction
                         event_callback=push_event  # Push events directly to WebSocket!
                     )
                     
@@ -2407,9 +2415,8 @@ async def investigation_websocket(websocket: WebSocket, investigation_id: str):
                         except RuntimeError:
                             pass
                 except Exception as e:
-                    # Stop log streaming and polling
+                    # Stop log streaming
                     log_task.cancel()
-                    poll_task.cancel()
                     
                     # Restore stdout/stderr
                     sys.stdout = original_stdout
@@ -2953,42 +2960,135 @@ async def chat_websocket(websocket: WebSocket):
         
         # Track running investigation
         investigation_task = None
-        stop_requested = False
         
-        # Wait for messages from client
-        while True:
-            message = await websocket.receive_json()
-            msg_type = message.get("type")
-            content = message.get("content", "").strip()
-            investigation_id = message.get("investigation_id")
-            
-            # Handle stop request
-            if msg_type == "stop_investigation":
-                print(f"\n⏹️  Stop requested by user")
-                sys.stdout.flush()
-                stop_requested = True
-                if investigation_task and not investigation_task.done():
-                    investigation_task.cancel()
-                await websocket.send_json({
-                    "type": "log",
-                    "data": {"message": "⏹️ Investigation stopped by user"}
-                })
-                continue
-            
-            if msg_type != "message" or not content:
-                continue
-            
-            # Cancel previous investigation if running
-            if investigation_task and not investigation_task.done():
-                print(f"\n⏹️  Cancelling previous investigation (new message received)")
-                sys.stdout.flush()
-                investigation_task.cancel()
+        # Create a message receiver task
+        async def message_receiver():
+            """Continuously receive messages from WebSocket"""
+            while True:
                 try:
-                    await investigation_task
-                except asyncio.CancelledError:
-                    pass
+                    message = await websocket.receive_json()
+                    return message
+                except Exception as e:
+                    raise e
+        
+        # Main event loop - handle messages and investigations concurrently
+        while True:
+            # Create a new message receiver task
+            message_task = asyncio.create_task(message_receiver())
             
-            stop_requested = False  # Reset stop flag
+            # Wait for either a new message or investigation completion
+            if investigation_task and not investigation_task.done():
+                # Investigation running - wait for either message or completion
+                done, pending = await asyncio.wait(
+                    [message_task, investigation_task],
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+                
+                # Check what completed
+                if investigation_task in done:
+                    # Investigation completed
+                    message_task.cancel()  # Cancel the pending message receiver
+                    
+                    try:
+                        result = await investigation_task
+                        
+                        # Handle artifacts
+                        if result.get("success") and result.get("artifacts"):
+                            for artifact in result["artifacts"]:
+                                await websocket.send_json({
+                                    "type": "artifact",
+                                    "data": artifact
+                                })
+                        
+                        # Send article as artifact with unique ID (versioned by timestamp)
+                        if result.get("article"):
+                            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+                            investigation_id_result = result.get("investigation_id", "unknown")
+                            await websocket.send_json({
+                                "type": "artifact",
+                                "data": {
+                                    "artifact_id": f"article_{investigation_id_result}_{timestamp}",
+                                    "type": "article",
+                                    "title": f"Investigation Report ({timestamp})",
+                                    "description": "Complete investigative report with findings and analysis",
+                                    "status": "ready",
+                                    "article_text": result.get("article", ""),
+                                    "created_at": datetime.now(timezone.utc).isoformat()
+                                }
+                            })
+                        
+                        # Send completion
+                        await websocket.send_json({
+                            "type": "investigation_complete",
+                            "data": {
+                                "total_cost": result.get("cost_breakdown", {}).get("total_cost", 0),
+                                "article": result.get("article", ""),
+                                "investigation_id": result.get("investigation_id")
+                            }
+                        })
+                        
+                    except asyncio.CancelledError:
+                        print(f"\n⏹️  Investigation cancelled")
+                        sys.stdout.flush()
+                    except Exception as e:
+                        print(f"❌ Error handling investigation result: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        await websocket.send_json({
+                            "type": "error",
+                            "data": {"message": str(e)}
+                        })
+                    
+                    investigation_task = None
+                    continue
+                
+                else:
+                    # Message received while investigation running
+                    message = await message_task
+                    msg_type = message.get("type")
+                    
+                    # Handle stop request
+                    if msg_type == "stop_investigation":
+                        print(f"\n⏹️  Stop requested by user")
+                        sys.stdout.flush()
+                        if investigation_task and not investigation_task.done():
+                            investigation_task.cancel()
+                            try:
+                                await investigation_task
+                            except asyncio.CancelledError:
+                                pass
+                        await websocket.send_json({
+                            "type": "log",
+                            "data": {"message": "⏹️ Investigation stopped by user"}
+                        })
+                        investigation_task = None
+                        continue
+                    
+                    # New message while investigation running - cancel old investigation
+                    content = message.get("content", "").strip()
+                    if msg_type == "message" and content:
+                        print(f"\n⏹️  Cancelling previous investigation (new message received)")
+                        sys.stdout.flush()
+                        investigation_task.cancel()
+                        try:
+                            await investigation_task
+                        except asyncio.CancelledError:
+                            pass
+                        investigation_task = None
+                        # Fall through to handle the new message below
+                    else:
+                        continue
+            else:
+                # No investigation running - just wait for message
+                message = await message_task
+                msg_type = message.get("type")
+                content = message.get("content", "").strip()
+                
+                if msg_type != "message" or not content:
+                    continue
+            
+            # At this point we have a new message to process
+            investigation_id = message.get("investigation_id")
             
             print(f"\n💬 User message: {content}")
             sys.stdout.flush()
@@ -2996,32 +3096,32 @@ async def chat_websocket(websocket: WebSocket):
             # Parse user intent
             content_lower = content.lower()
             
-            # Check if this is a "continue" command
-            if "continue" in content_lower and investigation_id:
-                # Extract iteration count from message
-                import re
-                match = re.search(r'(\d+)', content)
-                additional_iterations = int(match.group(1)) if match else 5
-                
-                await websocket.send_json({
-                    "type": "log",
-                    "data": {"message": f"🔄 Continuing investigation for {additional_iterations} more iterations..."}
-                })
-                
-                # Update max_iterations via REST API
-                if mongo_service:
-                    investigation = await mongo_service.get_investigation(investigation_id)
-                    if investigation:
-                        current_iter = investigation.get("current_iteration", 0)
-                        new_max = current_iter + additional_iterations
-                        
-                        await mongo_service.db.investigations.update_one(
-                            {"investigation_id": investigation_id},
-                            {"$set": {"max_iterations": new_max, "status": "active"}}
-                        )
-            
             # Start investigation (new or continue)
             try:
+                # Check if this is a "continue" command
+                if "continue" in content_lower and investigation_id:
+                    # Extract iteration count from message
+                    import re
+                    match = re.search(r'(\d+)', content)
+                    additional_iterations = int(match.group(1)) if match else 5
+                    
+                    await websocket.send_json({
+                        "type": "log",
+                        "data": {"message": f"🔄 Continuing investigation for {additional_iterations} more iterations..."}
+                    })
+                    
+                    # Update max_iterations via REST API
+                    if mongo_service:
+                        investigation = await mongo_service.get_investigation(investigation_id)
+                        if investigation:
+                            current_iter = investigation.get("current_iteration", 0)
+                            new_max = current_iter + additional_iterations
+                            
+                            await mongo_service.db.investigations.update_one(
+                                {"investigation_id": investigation_id},
+                                {"$set": {"max_iterations": new_max, "status": "active"}}
+                            )
+                
                 # Create callback to stream logs to WebSocket
                 async def stream_log(message: str):
                     """Stream log message to WebSocket"""
@@ -3050,10 +3150,26 @@ async def chat_websocket(websocket: WebSocket):
                 
                 # Parse intent: extract max_iterations if specified
                 import re
+                
+                # Word to number mapping
+                word_to_num = {
+                    'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+                    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+                }
+                
                 max_iterations = 5  # Default
-                match = re.search(r'(\d+)\s+iterations?', content_lower)
+                
+                # Try to match digits first
+                match = re.search(r'(\d+)\s+(?:more\s+)?iterations?', content_lower)
                 if match:
                     max_iterations = int(match.group(1))
+                else:
+                    # Try to match text numbers
+                    match = re.search(r'(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:more\s+)?iterations?', content_lower)
+                    if match:
+                        max_iterations = word_to_num.get(match.group(1), 5)
+                
+                print(f"   📊 Parsed iterations: {max_iterations}")
                 
                 # Create investigation if new
                 if not investigation_id and mongo_service:
@@ -3110,88 +3226,13 @@ async def chat_websocket(websocket: WebSocket):
                         query=actual_query,  # Use the actual query (original or new)
                         max_iterations=max_iterations,
                         resume_from=investigation_id,
+                        user_instruction=content if "continue" in content_lower else None,  # Pass user message
                         event_callback=event_callback
                     )
                 
+                # Start investigation as background task (don't await here!)
+                # The main loop will handle it and wait for messages concurrently
                 investigation_task = asyncio.create_task(run_investigation())
-                
-                # Wait for investigation with ability to receive stop messages
-                while not investigation_task.done():
-                    try:
-                        # Wait for either investigation completion or new message (with timeout)
-                        done, pending = await asyncio.wait(
-                            [investigation_task, asyncio.create_task(websocket.receive_json())],
-                            return_when=asyncio.FIRST_COMPLETED,
-                            timeout=0.1  # Check every 100ms
-                        )
-                        
-                        # Check if we received a message
-                        for task in done:
-                            if task != investigation_task:
-                                # We received a message
-                                msg = await task
-                                if msg.get("type") == "stop_investigation":
-                                    print(f"\n⏹️  Stop requested during investigation")
-                                    sys.stdout.flush()
-                                    investigation_task.cancel()
-                                    await websocket.send_json({
-                                        "type": "log",
-                                        "data": {"message": "⏹️ Investigation stopped by user"}
-                                    })
-                                    break
-                        
-                        # Cancel pending tasks
-                        for task in pending:
-                            if task != investigation_task:
-                                task.cancel()
-                    except asyncio.TimeoutError:
-                        continue  # Timeout is normal, keep waiting
-                
-                # Get result if investigation completed successfully
-                if not investigation_task.cancelled():
-                    try:
-                        result = await investigation_task
-                    except asyncio.CancelledError:
-                        print(f"\n⏹️  Investigation cancelled")
-                        sys.stdout.flush()
-                        continue
-                else:
-                    continue  # Investigation was cancelled, skip to next message
-                
-                # Handle artifacts
-                if result.get("success") and result.get("artifacts"):
-                    for artifact in result["artifacts"]:
-                        await websocket.send_json({
-                            "type": "artifact",
-                            "data": artifact
-                        })
-                
-                # Send article as an artifact too
-                # Send article as artifact with unique ID (versioned by timestamp)
-                if result.get("article"):
-                    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-                    await websocket.send_json({
-                        "type": "artifact",
-                        "data": {
-                            "artifact_id": f"article_{investigation_id}_{timestamp}",
-                            "type": "article",
-                            "title": f"Investigation Report ({timestamp})",
-                            "description": "Complete investigative report with findings and analysis",
-                            "status": "ready",
-                            "article_text": result.get("article", ""),
-                            "created_at": datetime.now(timezone.utc).isoformat()
-                        }
-                    })
-                
-                # Send completion
-                await websocket.send_json({
-                    "type": "investigation_complete",
-                    "data": {
-                        "total_cost": result.get("cost_breakdown", {}).get("total_cost", 0),
-                        "article": result.get("article", ""),
-                        "investigation_id": result.get("investigation_id")
-                    }
-                })
                 
             except Exception as e:
                 print(f"❌ Error in chat handler: {e}")

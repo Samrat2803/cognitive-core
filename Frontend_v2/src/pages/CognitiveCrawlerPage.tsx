@@ -73,6 +73,13 @@ export function CognitiveCrawlerPage() {
 
   // WebSocket connection
   useEffect(() => {
+    // Guard: Prevent duplicate connections in React StrictMode (dev mode)
+    if (wsRef.current?.readyState === WebSocket.CONNECTING || 
+        wsRef.current?.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already connecting/connected, skipping duplicate connection');
+      return;
+    }
+    
     connectWebSocket();
     return () => {
       if (wsRef.current) {

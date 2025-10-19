@@ -12,6 +12,7 @@ class InvestigativeJournalistState(TypedDict):
     
     # ============ INPUT & CONTROL ============
     initial_query: str                      # Original investigation query
+    user_instruction: Optional[str]         # Latest user instruction (e.g., "query local rag")
     investigation_id: Optional[str]         # UUID for evidence repository
     session_id: Optional[str]               # Master agent session ID
     iteration: int                          # Current iteration number
@@ -45,4 +46,5 @@ class InvestigativeJournalistState(TypedDict):
     execution_log: List[Dict[str, str]]     # Step-by-step execution log
     error_log: List[str]                    # Errors encountered
     cost_tracking: Dict[str, Any]           # Cost breakdown
+
 

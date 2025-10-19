@@ -75,6 +75,10 @@ async def save_investigation(state: Dict[str, Any], session_id: Optional[str] = 
         "search_queries": state.get("previous_queries", []),
         "seen_urls": state.get("seen_urls", []),
         
+        # LOCAL RAG tracking
+        "documents_in_rag": state.get("documents_in_rag", 0),
+        "rag_queries_made": state.get("rag_queries_made", 0),
+        
         # Final outputs
         "article": state.get("final_report", ""),
         "article_draft": state.get("article_draft", ""),
@@ -142,6 +146,7 @@ async def load_investigation(investigation_id: str) -> Optional[Dict[str, Any]]:
         "investigation_id": doc["investigation_id"],
         "session_id": doc.get("session_id"),
         "initial_query": doc["query"],
+        "user_instruction": None,  # Will be set by caller if continuing
         "iteration": current_iter + 1,  # Start from next iteration
         "max_iterations": doc.get("max_iterations", 20),
         
@@ -153,6 +158,10 @@ async def load_investigation(investigation_id: str) -> Optional[Dict[str, Any]]:
         "hypotheses": doc.get("hypotheses", []),
         "questions": doc.get("questions", []),
         "evidence": [],
+        
+        # LOCAL RAG tracking (IMPORTANT!)
+        "documents_in_rag": doc.get("documents_in_rag", 0),  # Restore RAG count
+        "rag_queries_made": doc.get("rag_queries_made", 0),  # Restore RAG usage stats
         
         # Restore search history
         "seen_urls": doc.get("seen_urls", []),

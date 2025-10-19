@@ -15,15 +15,15 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_core.documents import Document
 from datetime import datetime
-from config import (
-    MONGODB_URI,
-    DATABASE_NAME,
-    PORTALS_COLLECTION,
-    TENDERS_COLLECTION,
-    VECTORS_COLLECTION,
-    EMBEDDING_MODEL,
-    OPENAI_API_KEY
-)
+
+# Import from environment variables (works from any sub-agent)
+MONGODB_URI = os.getenv("MONGODB_CONNECTION_STRING")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "political_analyst")
+PORTALS_COLLECTION = "tender_portals"
+TENDERS_COLLECTION = "tenders"
+VECTORS_COLLECTION = "vectors"
+EMBEDDING_MODEL = "text-embedding-3-small"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 class TenderMongoDBHandler:
@@ -196,7 +196,7 @@ class TenderMongoDBHandler:
         
         Args:
             query: Search query
-            thread_id: IGNORED - always searches globally
+            thread_id: Filter to specific session/investigation (None = search all data)
             top_k: Number of results to return (default 30)
             
         Returns:
@@ -206,6 +206,8 @@ class TenderMongoDBHandler:
         total_vectors = await collection.count_documents({})
         
         print(f"   🚀 Atlas Vector Search: {total_vectors} vectors indexed")
+        if thread_id:
+            print(f"   🔒 Filtering to thread_id: {thread_id[:30]}...")
         
         try:
             # METHOD 1: Use LangChain's Atlas Vector Search (FAST!)
@@ -220,27 +222,42 @@ class TenderMongoDBHandler:
                         "path": "embedding",
                         "queryVector": query_embedding,
                         "numCandidates": top_k * 10,  # Oversample for better recall
-                        "limit": top_k
-                    }
-                },
-                {
-                    "$project": {
-                        "content": 1,
-                        # LangChain stores metadata fields at root level, not in 'metadata' subdoc
-                        "url": 1,
-                        "domain": 1,
-                        "relevance_score": 1,
-                        "query_keywords": 1,
-                        "chunk_index": 1,
-                        "total_chunks": 1,
-                        "original_doc_id": 1,
-                        "doc_id": 1,
-                        "thread_id": 1,
-                        "created_at": 1,
-                        "score": {"$meta": "vectorSearchScore"}
+                        "limit": top_k * 3 if thread_id else top_k  # Get extra for filtering
                     }
                 }
             ]
+            
+            # Add thread_id filter if provided (LOCAL RAG)
+            if thread_id:
+                pipeline.append({
+                    "$match": {
+                        "thread_id": thread_id
+                    }
+                })
+            
+            # Apply final limit after filtering
+            if thread_id:
+                pipeline.append({
+                    "$limit": top_k
+                })
+            
+            pipeline.append({
+                "$project": {
+                    "content": 1,
+                    # LangChain stores metadata fields at root level, not in 'metadata' subdoc
+                    "url": 1,
+                    "domain": 1,
+                    "relevance_score": 1,
+                    "query_keywords": 1,
+                    "chunk_index": 1,
+                    "total_chunks": 1,
+                    "original_doc_id": 1,
+                    "doc_id": 1,
+                    "thread_id": 1,
+                    "created_at": 1,
+                    "score": {"$meta": "vectorSearchScore"}
+                }
+            })
             
             # Execute search (async)
             cursor = collection.aggregate(pipeline)

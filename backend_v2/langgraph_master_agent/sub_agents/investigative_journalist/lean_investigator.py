@@ -33,7 +33,13 @@ current_dir = Path(__file__).parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
 
+# Add shared directory to path for cached Tavily client
+shared_dir = Path(__file__).parent.parent.parent.parent / 'shared'
+if str(shared_dir) not in sys.path:
+    sys.path.insert(0, str(shared_dir))
+
 from tavily_tools import TavilyTools
+from tavily_client import TavilyClient  # Cached client
 
 
 def log(message: str):
@@ -87,8 +93,15 @@ class LeanInvestigator:
     
     def __init__(self, max_iterations: int = 100):
         self.max_iterations = max_iterations
-        self.llm = ChatOpenAI(model="gpt-4o", temperature=0)
-        self.tavily = TavilyTools()
+        # Use gpt-4o-2024-08-06 or later for prompt caching support
+        self.llm = ChatOpenAI(
+            model="gpt-4o-2024-08-06",  # Supports prompt caching
+            temperature=0,
+            model_kwargs={"store": True}  # Enable prompt caching
+        )
+        # Use TavilyClient with caching instead of TavilyTools
+        self.tavily = TavilyClient(enable_caching=True)
+        self.tavily_tools = TavilyTools()  # Keep for compatibility
         self.cache_dir = Path("extraction_cache")
         self.cache_dir.mkdir(exist_ok=True)
         
@@ -113,6 +126,7 @@ class LeanInvestigator:
         workflow.add_node("strategist", self._strategist_node)
         workflow.add_node("searcher", self._searcher_node)
         workflow.add_node("extractor", self._extractor_node)
+        workflow.add_node("local_rag_query", self._local_rag_query_node)
         workflow.add_node("analyzer", self._analyzer_node)
         workflow.add_node("synthesizer", self._synthesizer_node)
         
@@ -123,12 +137,14 @@ class LeanInvestigator:
             self._route_from_strategist,
             {
                 "search": "searcher",
+                "query_local_rag": "local_rag_query",
                 "analyze": "analyzer",
                 "complete": "synthesizer"
             }
         )
         workflow.add_edge("searcher", "extractor")
         workflow.add_edge("extractor", "analyzer")
+        workflow.add_edge("local_rag_query", "analyzer")  # LOCAL RAG goes directly to analyzer
         workflow.add_edge("analyzer", "strategist")
         workflow.add_edge("synthesizer", END)
         
@@ -143,8 +159,18 @@ class LeanInvestigator:
             return "complete"
         
         action = state.get("next_action", "search")
+        
+        # Handle analyze_only (skip search)
         if action == "analyze_only":
             return "analyze"
+        
+        # Handle LOCAL RAG query
+        if action == "query_local_rag":
+            log(f"   🔀 Router: query_local_rag → local_rag_query node")
+            return "query_local_rag"
+        
+        # Default: search
+        log(f"   🔀 Router: {action} → searcher node")
         return "search"
     
     async def _strategist_node(self, state: HypothesisState) -> HypothesisState:
@@ -243,6 +269,56 @@ Your goal: Search for information that could lead to new hypothesis generation.
 All hypotheses have been sufficiently tested. Time to synthesize findings.
 """
         
+        # Check if LOCAL RAG is available (iteration 2+)
+        documents_in_rag = state.get('documents_in_rag', 0)
+        has_local_rag = iteration >= 2 and documents_in_rag > 0
+        
+        # Check if user explicitly asked to query LOCAL RAG
+        user_instruction = state.get('user_instruction', '')
+        force_local_rag = user_instruction and ('local' in user_instruction.lower() or 'knowledge base' in user_instruction.lower())
+        
+        # Log LOCAL RAG status
+        log(f"\n{'─'*80}")
+        log(f"💾 LOCAL RAG STATUS:")
+        log(f"   Documents in RAG: {documents_in_rag}")
+        log(f"   Has LOCAL RAG: {has_local_rag} (iteration >= 2 and docs > 0)")
+        log(f"   User instruction: {user_instruction[:80] if user_instruction else 'None'}...")
+        log(f"   Force LOCAL RAG: {force_local_rag}")
+        if force_local_rag:
+            log(f"   🎯 USER EXPLICITLY ASKED TO QUERY LOCAL RAG!")
+        log(f"{'─'*80}\n")
+        
+        # Add LOCAL RAG context if available
+        local_rag_context = ""
+        if has_local_rag or force_local_rag:
+            local_rag_context = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💾 LOCAL KNOWLEDGE BASE AVAILABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You have accumulated {documents_in_rag} documents in your LOCAL knowledge base from previous iterations.
+
+{f'🎯 USER REQUEST: "{user_instruction}"' if force_local_rag else ''}
+{f'⚠️  YOU MUST query_local_rag this iteration to answer the user request!' if force_local_rag else ''}
+
+✨ NEW OPTION AVAILABLE: "query_local_rag"
+
+You can now choose to:
+1. **query_local_rag**: Search your accumulated knowledge (FAST, NO COST, revisit past findings)
+   - Use when: Reviewing what you've already learned, cross-referencing entities, checking for contradictions
+   - Example: "What companies have we identified?" or "What did we learn about regulatory failures?"
+   - {f'USE THIS NOW - User explicitly asked!' if force_local_rag else 'Consider this before searching web'}
+   
+2. **search**: Use Tavily for fresh web content (COSTS MONEY, finds new information)
+   - Use when: Need new information not in local knowledge base
+   
+3. **complete**: End investigation
+
+💡 TIP: Often it's smart to query LOCAL RAG first to understand what you already know, 
+then decide if you need fresh information from Tavily.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+        
         strategy_prompt = f"""You are an investigative strategist finding NOVEL angles others miss.
 
 INVESTIGATION: {state['initial_query']}
@@ -257,19 +333,20 @@ KNOWLEDGE GATHERED SO FAR:
 - Hypotheses: {len(state['hypotheses'])}
 - Connections mapped: {len(state['connections'])}
 - Anomalies found: {len(state['anomalies'])}
+{f"- Documents in LOCAL RAG: {documents_in_rag}" if has_local_rag else ""}
 
 EXISTING HYPOTHESES:
 {json.dumps(state['hypotheses'], indent=2)}
 
-RECENT FACTS:
-{json.dumps(state['facts'][-10:], indent=2)}
+RECENT FACTS (Last 5):
+{json.dumps(state['facts'][-5:], indent=2)}
 
-ANOMALIES DETECTED:
-{json.dumps(state['anomalies'], indent=2)}
+KEY ANOMALIES (Top 5):
+{json.dumps(state['anomalies'][-5:], indent=2)}
 
 PREVIOUS SEARCH QUERIES (MUST NOT REPEAT):
 {json.dumps(state.get('previous_queries', []), indent=2)}
-
+{local_rag_context}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 YOUR MISSION: Find what others missed
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -291,20 +368,23 @@ Your task:
 1. Review existing knowledge and hypotheses
 2. Identify which hypothesis needs testing
 3. Formulate a specific QUESTION to test that hypothesis
-4. Generate ONE specific search query to answer that question
+4. {"Decide: Query LOCAL RAG or search fresh web content" if has_local_rag else "Generate ONE specific search query to answer that question"}
 5. Explain what NOVEL insight you're seeking
 
 Return JSON:
 {{
-  "decision": "search" | "complete",
+  "decision": {'query_local_rag OR search OR complete' if has_local_rag else 'search OR complete'},
   "hypothesis_id": "ID of hypothesis being tested (e.g., 'h1', 'h2') or 'general' for initial exploration",
   "question": "Specific question you're trying to answer (e.g., 'Who are the key people involved?', 'What regulatory actions were taken?')",
-  "search_query": "Specific search query (keywords, not questions)",
+  {'rag_query OR search_query' if has_local_rag else 'search_query'}: "Natural language question for LOCAL RAG" {'OR Keywords for Tavily search' if has_local_rag else '(keywords, not questions)'},
   "hypothesis_being_tested": "Which hypothesis are you testing?",
   "novel_angle": "What new insight are you seeking that others missed?",
   "expected_evidence": "What would prove/disprove your hypothesis?",
   "completion_reason": "ONLY if decision='complete': Why investigation is complete"
 }}
+
+{"💡 If you choose 'query_local_rag', provide 'rag_query' with a natural language question." if has_local_rag else ""}
+{"💡 If you choose 'search', provide 'search_query' with keywords for Tavily." if has_local_rag else ""}
 
 Be specific. Be surgical. Find what others missed.
 """
@@ -365,11 +445,21 @@ Be specific. Be surgical. Find what others missed.
         
         log(f"\n📋 STRATEGY:")
         log(f"   Decision: {decision.get('decision', 'N/A')}")
+        
+        # Highlight if LOCAL RAG was chosen
+        if decision.get('decision') == 'query_local_rag':
+            log(f"   ✅ CHOSE LOCAL RAG QUERY! (User instruction was followed)")
+        elif force_local_rag and decision.get('decision') == 'search':
+            log(f"   ⚠️  WARNING: User asked for LOCAL RAG but LLM chose Tavily search!")
+        
         log(f"   Hypothesis ID: {decision.get('hypothesis_id', 'general')}")
         log(f"   Question: {decision.get('question', 'N/A')}")
         log(f"   Novel angle: {decision.get('novel_angle', 'N/A')}")
         log(f"   Hypothesis: {decision.get('hypothesis_being_tested', 'N/A')}")
-        log(f"   Query: {decision.get('search_query', 'N/A')}")
+        if decision.get('decision') == 'query_local_rag':
+            log(f"   RAG Query: {decision.get('rag_query', decision.get('search_query', 'N/A'))}")
+        else:
+            log(f"   Query: {decision.get('search_query', 'N/A')}")
         
         # Track new question if formulated
         if decision.get("question") and decision.get("decision") == "search":
@@ -420,14 +510,28 @@ Be specific. Be surgical. Find what others missed.
         # Update previous queries
         updated_queries = state.get("previous_queries", []) + [new_query]
         
-        return {
-            **state,
-            "next_action": "search",
-            "search_query": new_query,
-            "previous_queries": updated_queries,
-            "questions": questions,
-            "iteration": iteration + 1
-        }
+        # Determine action based on decision
+        action_type = decision.get("decision", "search")
+        
+        if action_type == "query_local_rag":
+            log(f"   📝 Next action: QUERY LOCAL RAG")
+            return {
+                **state,
+                "next_action": "query_local_rag",
+                "rag_query": decision.get("rag_query", decision.get("search_query", "")),
+                "questions": questions,
+                "iteration": iteration + 1
+            }
+        else:
+            log(f"   📝 Next action: TAVILY SEARCH")
+            return {
+                **state,
+                "next_action": "search",
+                "search_query": new_query,
+                "previous_queries": updated_queries,
+                "questions": questions,
+                "iteration": iteration + 1
+            }
     
     def _is_query_similar(self, new_query: str, previous_queries: List[str]) -> bool:
         """Check if query is too similar to previous ones"""
@@ -465,6 +569,84 @@ Be specific. Be surgical. Find what others missed.
         # Phase 3 (61-100): Search every 5 iterations (hypothesis refinement)
         return iteration % 5 == 1
     
+    async def _local_rag_query_node(self, state: HypothesisState) -> HypothesisState:
+        """
+        Query LOCAL RAG - search accumulated knowledge from this investigation
+        """
+        query = state.get("rag_query", "")
+        
+        log(f"\n{'='*80}")
+        log(f"💾 LOCAL RAG QUERY NODE")
+        log(f"{'='*80}")
+        log(f"Query: {query}")
+        
+        # Emit event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"💾 Querying local knowledge base: {query}"
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
+        
+        # Query local RAG
+        result = await self._query_local_rag(
+            query=query,
+            investigation_id=state["investigation_id"],
+            top_k=10
+        )
+        
+        # Track RAG usage
+        state["rag_queries_made"] = state.get("rag_queries_made", 0) + 1
+        
+        # Format results as "extracted content" for analyzer
+        rag_articles = []
+        if result.get('num_results', 0) > 0:
+            log(f"   ✅ Found {result['num_results']} relevant documents from local knowledge base")
+            
+            # Create article entries from RAG chunks
+            for i, chunk in enumerate(result.get('chunks', [])[:5], 1):  # Top 5
+                url = chunk.get('metadata', {}).get('url', 'Local Knowledge Base')
+                content = chunk.get('content', '')
+                score = chunk.get('score', 0)
+                
+                rag_articles.append({
+                    "url": url,
+                    "content": content[:3000],  # Limit content
+                    "method": f"local_rag (score: {score:.2f})",
+                    "iteration": chunk.get('metadata', {}).get('iteration', 'N/A')
+                })
+                
+                log(f"   [{i}] {url[:60]}... (score: {score:.2f})")
+            
+            # Emit event with sources
+            if hasattr(self, 'event_callback') and self.event_callback:
+                try:
+                    await self.event_callback('log', {
+                        "message": f"📄 Found {len(rag_articles)} relevant documents in local knowledge"
+                    })
+                except Exception as e:
+                    pass
+        else:
+            log(f"   ⚠️  No relevant documents found in local knowledge base")
+            log(f"   💡 May need to use Tavily search for fresh information")
+            
+            # Emit event
+            if hasattr(self, 'event_callback') and self.event_callback:
+                try:
+                    await self.event_callback('log', {
+                        "message": "⚠️ No relevant documents in local knowledge - may need fresh search"
+                    })
+                except Exception as e:
+                    pass
+        
+        return {
+            **state,
+            "extracted_content": rag_articles,
+            "rag_answer": result.get('answer', ''),
+            "rag_sources": result.get('sources', [])
+        }
+    
     async def _searcher_node(self, state: HypothesisState) -> HypothesisState:
         """
         Execute ONE targeted Tavily search
@@ -485,8 +667,8 @@ Be specific. Be surgical. Find what others missed.
             except Exception as e:
                 log(f"   ⚠️  WebSocket push failed: {e}")
         
-        # Execute single Tavily search
-        results = await self.tavily.tavily_search(
+        # Execute single Tavily search (WITH CACHING)
+        results = await self.tavily.search(
             query=query,
             max_results=5,  # Only 5 results
             search_depth="basic"  # Use basic, not advanced
@@ -665,6 +847,177 @@ Be specific. Be surgical. Find what others missed.
         """Generate cache key from URL"""
         return hashlib.md5(url.encode()).hexdigest()
     
+    async def _store_in_local_rag(self, extracted_content: List[Dict], state: HypothesisState):
+        """
+        Store extracted articles in vector DB for local RAG queries (ASYNC)
+        
+        This enables the investigative journalist to query its own accumulated
+        evidence using semantic search. Uses the same MongoDB handler as cognitive crawler.
+        """
+        import hashlib
+        
+        log(f"\n{'─'*80}")
+        log(f"💾 LOCAL RAG STORAGE (ASYNC)")
+        log(f"{'─'*80}")
+        
+        try:
+            # Import mongodb handler from cognitive crawler
+            import sys
+            import os
+            crawler_dir = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../cognitive_crawler/tools')
+            )
+            if crawler_dir not in sys.path:
+                sys.path.insert(0, crawler_dir)
+            
+            from mongodb_handler import TenderMongoDBHandler
+            
+            log(f"   ✅ Using TenderMongoDBHandler (same as cognitive crawler)")
+            
+            db = TenderMongoDBHandler()
+            
+            # Prepare documents for storage
+            documents = []
+            for i, article in enumerate(extracted_content, 1):
+                # Generate unique doc_id
+                url = article.get("url", "")
+                doc_id = hashlib.md5(f"{url}_{state['investigation_id']}".encode()).hexdigest()
+                
+                doc = {
+                    "doc_id": doc_id,
+                    "content": article["content"],
+                    "metadata": {
+                        "url": url,
+                        "investigation_id": state["investigation_id"],
+                        "query": state["initial_query"],
+                        "iteration": state["iteration"],
+                        "extraction_method": article.get("method", "unknown"),
+                        "stored_at": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+                documents.append(doc)
+                
+                log(f"   [{i}] URL: {url[:60]}...")
+                log(f"       doc_id: {doc_id[:16]}...")
+                log(f"       content_length: {len(article['content'])} chars")
+            
+            # Store with investigation_id as thread_id for LOCAL RAG filtering
+            log(f"   🔒 thread_id: {state['investigation_id'][:30]}...")
+            log(f"   📦 Storing {len(documents)} documents...")
+            
+            await db.store_vectors(
+                documents=documents,
+                thread_id=state["investigation_id"]
+            )
+            
+            log(f"   ✅ Storage complete - {len(documents)} articles now in LOCAL RAG")
+            log(f"   🔍 Queryable from iteration 2+ using investigation_id filter")
+            log(f"{'─'*80}\n")
+            
+            db.close()
+            
+        except Exception as e:
+            log(f"   ❌ LOCAL RAG storage failed (non-critical): {e}")
+            log(f"   🔍 Investigation will continue without RAG storage")
+            log(f"{'─'*80}\n")
+            import traceback
+            traceback.print_exc()
+            # Don't fail the investigation if RAG storage fails
+    
+    async def _query_local_rag(self, query: str, investigation_id: str, top_k: int = 10) -> Dict[str, Any]:
+        """
+        Query LOCAL RAG - only content from THIS investigation
+        
+        Args:
+            query: Question to ask
+            investigation_id: Current investigation ID
+            top_k: Number of results to return
+            
+        Returns:
+            Dict with answer, sources, chunks, scores
+        """
+        log(f"\n{'─'*80}")
+        log(f"🔍 LOCAL RAG QUERY")
+        log(f"{'─'*80}")
+        log(f"   Query: {query}")
+        log(f"   🔒 Filtering to investigation: {investigation_id[:30]}...")
+        log(f"   📊 Requesting top_{top_k} results")
+        
+        try:
+            from tools.rag_query import query_rag
+            
+            result = await query_rag(
+                query=query,
+                thread_id=investigation_id,  # Filter to this investigation only
+                top_k=top_k,
+                min_score=0.3,
+                generate_answer=True
+            )
+            
+            log(f"   ✅ Found {result['num_results']} relevant chunks")
+            
+            if result['num_results'] > 0:
+                log(f"   📄 Sources:")
+                for i, source in enumerate(result.get('sources', [])[:3], 1):
+                    log(f"       [{i}] {source[:70]}...")
+                log(f"   💡 Answer generated: {len(result.get('answer', ''))} chars")
+            else:
+                log(f"   ℹ️  No relevant content found in local knowledge base")
+            
+            log(f"{'─'*80}\n")
+            
+            return result
+            
+        except Exception as e:
+            log(f"   ❌ Local RAG query failed: {e}")
+            log(f"{'─'*80}\n")
+            import traceback
+            traceback.print_exc()
+            return {
+                "success": False,
+                "answer": "",
+                "sources": [],
+                "chunks": [],
+                "num_results": 0,
+                "error": str(e)
+            }
+    
+    async def _query_global_rag(self, query: str, top_k: int = 10) -> Dict[str, Any]:
+        """
+        Query GLOBAL RAG - search all accumulated knowledge across investigations
+        
+        Args:
+            query: Question to ask
+            top_k: Number of results to return
+            
+        Returns:
+            Dict with answer, sources, chunks, scores
+        """
+        try:
+            from tools.rag_query import query_rag
+            
+            result = await query_rag(
+                query=query,
+                thread_id=None,  # No filter = search everything
+                top_k=top_k,
+                min_score=0.3,
+                generate_answer=True
+            )
+            
+            log(f"   🌐 Global RAG: Found {result['num_results']} relevant chunks across all investigations")
+            return result
+            
+        except Exception as e:
+            log(f"   ❌ Global RAG query failed: {e}")
+            return {
+                "success": False,
+                "answer": "",
+                "sources": [],
+                "chunks": [],
+                "num_results": 0,
+                "error": str(e)
+            }
+    
     async def _analyzer_node(self, state: HypothesisState) -> HypothesisState:
         """
         Analyze extracted content for novel insights
@@ -755,6 +1108,15 @@ Focus on NOVELTY. What would an investigative journalist find interesting?
         self.costs["llm_calls"] += 1
         self.costs["total_cost"] += (self.COST_GPT4O_INPUT + self.COST_GPT4O_OUTPUT)
         
+        # ✨ NEW: Store extracted content in RAG for local queries
+        # Track documents stored in RAG BEFORE storage (important for state updates)
+        documents_in_rag = state.get("documents_in_rag", 0)
+        
+        if extracted and state.get("investigation_id"):
+            await self._store_in_local_rag(extracted, state)
+            documents_in_rag += len(extracted)
+            log(f"   💾 Documents in LOCAL RAG: {len(extracted)}")
+        
         # Update state
         new_entities = state["entities"].copy()
         for entity in analysis.get("new_entities", []):
@@ -799,6 +1161,7 @@ Focus on NOVELTY. What would an investigative journalist find interesting?
         log(f"   ✅ Anomalies: {len(analysis.get('anomalies', []))}")
         log(f"   🔬 New hypotheses: {len(new_hypotheses_from_analysis)}")
         log(f"   💡 Novel insights: {len(analysis.get('novel_insights', []))}")
+        log(f"   💾 Documents in LOCAL RAG: {documents_in_rag}")
         
         if analysis.get("novel_insights"):
             for insight in analysis["novel_insights"]:
@@ -812,6 +1175,7 @@ Focus on NOVELTY. What would an investigative journalist find interesting?
             "connections": new_connections,
             "anomalies": new_anomalies,
             "hypotheses": updated_hypotheses,
+            "documents_in_rag": documents_in_rag,  # Track for strategist
             "questions": state.get("questions", []),  # Preserve questions from strategist
             "investigation_id": state.get("investigation_id")  # Explicitly preserve investigation_id
         }
@@ -1017,13 +1381,27 @@ Write the complete report now.
         self.costs["llm_calls"] += 1
         self.costs["total_cost"] += (self.COST_GPT4O_INPUT + self.COST_GPT4O_OUTPUT)
         
-        # Append source URLs to the report
+        # Get report content
         report_content = response.content
-        if unique_urls:
-            report_content += "\n\n---\n\n## **SOURCES**\n\n"
-            report_content += "This investigation analyzed the following sources:\n\n"
-            for i, url in enumerate(unique_urls, 1):
-                report_content += f"{i}. {url}\n"
+        
+        # FIX: Don't append sources if LLM already included them
+        # Check if report already has a SOURCES section (multiple variations)
+        has_sources = (
+            "## **SOURCES**" in report_content or 
+            "## SOURCES" in report_content or
+            "**Sources:**" in report_content or
+            "**SOURCES:**" in report_content
+        )
+        
+        if not has_sources:
+            # Only append if missing
+            if unique_urls:
+                report_content += "\n\n---\n\n## **SOURCES**\n\n"
+                report_content += "This investigation analyzed the following sources:\n\n"
+                for i, url in enumerate(unique_urls, 1):
+                    report_content += f"{i}. {url}\n"
+        else:
+            log(f"   ✓ Report already contains SOURCES section, skipping append")
         
         log(f"\n{'='*80}")
         log(f"📄 FINAL REPORT")
@@ -1049,13 +1427,15 @@ Write the complete report now.
             log(f"   ⚠️  JSON parse error: {e}")
             return {}
     
-    async def investigate(self, query: str, investigation_id: str = None, event_callback: callable = None) -> Dict:
+    async def investigate(self, query: str, investigation_id: str = None, user_instruction: str = None, initial_state: Dict = None, event_callback: callable = None) -> Dict:
         """
         Run the investigation
         
         Args:
             query: Investigation query
             investigation_id: Optional investigation ID for incremental MongoDB saves
+            user_instruction: Optional user instruction (e.g., "query local rag")
+            initial_state: Optional loaded state to resume from
             event_callback: Optional async function for real-time events
         """
         # Store callback for use in nodes
@@ -1068,40 +1448,52 @@ Write the complete report now.
         log(f"Max Iterations: {self.max_iterations}")
         if investigation_id:
             log(f"Investigation ID: {investigation_id} (incremental saves enabled)")
+        if user_instruction:
+            log(f"User Instruction: {user_instruction}")
         if event_callback:
             log(f"Event Callback: Enabled (real-time WebSocket events)")
         log(f"{'#'*80}\n")
         
-        initial_state: HypothesisState = {
-            "initial_query": query,
-            "iteration": 1,
-            "max_iterations": self.max_iterations,
-            "investigation_id": investigation_id,  # Store for incremental saves
-            
-            "entities": {},
-            "facts": [],
-            "hypotheses": [],
-            "evidence": [],
-            "connections": [],
-            "anomalies": [],
-            "questions": [],  # Question tree for UI
-            
-            "seen_urls": [],
-            "extracted_cache": {},
-            "previous_queries": [],
-            
-            # Working variables
-            "search_results": [],  # ⭐ CRITICAL: Initialize
-            "extracted_content": [],  # ⭐ CRITICAL: Initialize
-            
-            "next_action": "search",
-            "search_query": None,
-            "investigation_complete": False,
-            "final_report": None
-        }
+        # Use loaded state or create fresh
+        if initial_state:
+            log(f"   ✅ Resuming from loaded state (iteration {initial_state.get('iteration')})")
+            # Update with current parameters
+            initial_state['user_instruction'] = user_instruction
+            state_to_use = initial_state
+        else:
+            log(f"   🆕 Starting fresh investigation")
+            state_to_use: HypothesisState = {
+                "initial_query": query,
+                "iteration": 1,
+                "max_iterations": self.max_iterations,
+                "investigation_id": investigation_id,  # Store for incremental saves
+                "user_instruction": user_instruction,  # User's latest instruction
+                
+                "entities": {},
+                "facts": [],
+                "hypotheses": [],
+                "evidence": [],
+                "connections": [],
+                "anomalies": [],
+                "questions": [],  # Question tree for UI
+                
+                "seen_urls": [],
+                "extracted_cache": {},
+                "previous_queries": [],
+                "documents_in_rag": 0,  # ← FIX: Initialize RAG counter
+                
+                # Working variables
+                "search_results": [],  # ⭐ CRITICAL: Initialize
+                "extracted_content": [],  # ⭐ CRITICAL: Initialize
+                
+                "next_action": "search",
+                "search_query": None,
+                "investigation_complete": False,
+                "final_report": None
+            }
         
         final_state = await self.graph.ainvoke(
-            initial_state,
+            state_to_use,
             config={"recursion_limit": self.max_iterations * 5}  # Increased from 3 to 5
         )
         
