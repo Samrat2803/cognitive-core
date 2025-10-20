@@ -255,6 +255,57 @@ class LeanInvestigator:
         log(f"   🔀 Router: {action} → searcher node (tavily mode)")
         return "search"
     
+    def _build_hypothesis_context(self, state: HypothesisState, active_hypothesis: Dict) -> str:
+        """Build concise hypothesis testing summary for strategist to avoid loops"""
+        if not active_hypothesis:
+            return ""
+        
+        # Get questions for this hypothesis
+        hyp_id = active_hypothesis.get("id")
+        hyp_questions = [q for q in state.get("questions", []) if q.get("hypothesis_id") == hyp_id]
+        
+        # Count patterns
+        answered = [q for q in hyp_questions if q.get("answer")]
+        weak_answers = [q for q in answered if any(
+            phrase in q.get("answer", "").lower() 
+            for phrase in ["do not", "does not", "no evidence", "no specific", "no direct", "not provide", "not available"]
+        )]
+        
+        # Build last 3 Q&A pairs
+        recent_qa = []
+        for i, q in enumerate(answered[-3:] if answered else hyp_questions[-3:]):
+            qa_text = f"  Q{i+1} (iter {q.get('iteration', '?')}): {q.get('question', '')[:70]}..."
+            if q.get("answer"):
+                qa_text += f"\n  A{i+1}: {q.get('answer', '')[:100]}..."
+            else:
+                qa_text += "\n  A{i+1}: NOT ANSWERED"
+            recent_qa.append(qa_text)
+        
+        # Build warning flags
+        warnings = []
+        if len(weak_answers) >= 2:
+            warnings.append(f"  🔴 {len(weak_answers)}/3+ weak/negative answers - HYPOTHESIS MAY BE EXHAUSTED")
+        if len(hyp_questions) >= 3:
+            warnings.append(f"  🔴 {len(hyp_questions)}/3+ questions asked - AVOID REPEATING SAME ANGLE")
+        if len(hyp_questions) > 0 and len(answered) < len(hyp_questions) * 0.5:
+            warnings.append(f"  🟡 Only {len(answered)}/{len(hyp_questions)} questions answered - Consider different tool/approach")
+        
+        return f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 HYPOTHESIS TESTING PROGRESS (ID: {hyp_id})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Statement: {active_hypothesis.get('statement', 'N/A')[:120]}
+Status: {active_hypothesis.get('status')} | Confidence: {active_hypothesis.get('confidence', 0.5):.2f}
+Questions: {len(hyp_questions)} total, {len(answered)} answered, {len(weak_answers)} weak/negative
+
+Last 3 Q&A:
+{chr(10).join(recent_qa) if recent_qa else "  No questions yet"}
+
+⚠️  EXHAUSTION SIGNALS:
+{chr(10).join(warnings) if warnings else "  ✅ No exhaustion signals detected"}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+    
     async def _strategist_node(self, state: HypothesisState) -> HypothesisState:
         """
         Strategic decision maker - decides what to investigate next
@@ -612,6 +663,8 @@ KNOWLEDGE GATHERED SO FAR:
 - Anomalies found: {len(state['anomalies'])}
 {f"- Documents in LOCAL RAG: {documents_in_rag}" if has_local_rag else ""}
 
+{self._build_hypothesis_context(state, active_hypothesis)}
+
 EXISTING HYPOTHESES:
 {json.dumps(state['hypotheses'], indent=2)}
 
@@ -638,15 +691,45 @@ PREVIOUS TOOL USAGE (AVOID REPEATING):
 YOUR MISSION: Find what others missed
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🚨 CRITICAL: Your query MUST be COMPLETELY DIFFERENT from all previous queries above!
+🚨 MANDATORY ANTI-LOOP RULES (Check HYPOTHESIS TESTING PROGRESS above):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-If you find yourself asking similar questions:
-1. STOP - You're in a loop
-2. CHANGE APPROACH:
-   - If Tavily hasn't found it after 2 tries → Try specialized tools (wayback/aleph)
-   - If no new information → Use local_rag_query to synthesize what you know
-   - If hypothesis can't be proven with current approach → Mark it as "uncertain" and move on
-3. NEVER ask the same question 3+ times with just slight rewording
+1. **IF YOU SEE 🔴 RED FLAGS ABOVE → YOU MUST PIVOT**
+   - 2+ weak/negative answers? → Lower confidence to 0.25-0.35 OR try different tool
+   - 3+ questions on same hypothesis? → STOP asking similar questions
+   - Pattern of "does not"/"no evidence"? → Evidence doesn't exist, move on
+
+2. **NEVER REPEAT THE SAME QUESTION TYPE 3+ TIMES**
+   - Check "Last 3 Q&A" above - if they're all similar and all negative → STOP
+   - Your query MUST be COMPLETELY DIFFERENT from previous queries
+   - If stuck in loop → Use query_local_rag, wayback_machine, or aleph_search
+
+3. **CHANGE APPROACH AFTER 2 FAILED SEARCHES:**
+   - 1st search: No evidence → OK, try different angle
+   - 2nd search: Still no evidence → Last chance, different keywords
+   - 3rd search: Still no evidence → MANDATORY PIVOT:
+     ✅ Use query_local_rag (synthesize what we know)
+     ✅ Use different tool (wayback/aleph if justified)
+     ✅ Lower confidence to < 0.3 (refute hypothesis)
+     ✅ Generate alternative hypothesis
+     ❌ DO NOT search again with slight rewording
+
+4. **ARTICLE DEDUPLICATION:**
+   - We already seen {len(state.get('seen_urls', []))} URLs
+   - If search returns 0 new articles → same sources being found
+   - This is a STRONG signal to change approach or query angle
+
+5. **IF NO NEW INFORMATION → SYNTHESIZE OR PIVOT:**
+   - If last search found 0-1 new articles → Topic exhausted
+   - Use query_local_rag to consolidate findings
+   - OR mark hypothesis as inconclusive and move on
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ IF YOU'RE IN A LOOP: You'll see the same patterns in "Last 3 Q&A" + many seen_urls
+   → STOP and either: refute hypothesis, query local_rag, or generate new hypothesis
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EXAMPLE OF WHAT NOT TO DO:
 ❌ Iteration 3: "financial pressures to use cheaper chemicals"
