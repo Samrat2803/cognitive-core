@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Loader2, AlertCircle, Plus, X, Link as LinkIcon, MessageSquare, Search } from 'lucide-react';
+import { Send, Loader2, AlertCircle, Plus, X, Link as LinkIcon, MessageSquare, Search, ExternalLink } from 'lucide-react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Markdown } from '../components/ui/Markdown';
 import { Header } from '../components/layout/Header';
+import { ArticleViewer } from '../components/ArticleViewer';
 import { config } from '../config';
 import './CognitiveCrawlerPage.css';
 
@@ -12,6 +14,7 @@ interface Message {
   content: string;
   sources?: string[];
   timestamp: Date;
+  isStreaming?: boolean;  // NEW: For streaming responses
 }
 
 interface DBStats {
@@ -53,10 +56,18 @@ export function CognitiveCrawlerPage() {
   const [showExplorer, setShowExplorer] = useState(false);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   
+  // Article viewer state
+  const [selectedArticleUrl, setSelectedArticleUrl] = useState<string | null>(null);
+  
+  // Crawl logs state
+  const [crawlLogs, setCrawlLogs] = useState<string[]>([]);
+  const [showLogs, setShowLogs] = useState(true); // Logs expanded by default during crawl
+  
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSystemMessages, setShowSystemMessages] = useState(false); // Collapse system messages by default
   
   // Connection state
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
@@ -66,11 +77,19 @@ export function CognitiveCrawlerPage() {
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-scroll logs to bottom
+  useEffect(() => {
+    if (showLogs && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [crawlLogs, showLogs]);
 
   // WebSocket connection
   useEffect(() => {
@@ -168,33 +187,116 @@ export function CognitiveCrawlerPage() {
     
     switch (data.type) {
       case 'connected':
-        addSystemMessage('Connected to Cognitive Crawler. Ready to crawl or chat!');
+        // Connection established - no need to show a message as the UI already has proper empty state
         break;
       
       case 'crawl_started':
         setIsCrawling(true);
+        setCrawlLogs([]); // Clear previous logs
+        setShowLogs(true); // Auto-expand logs when crawl starts
+        addCrawlLog(`🔍 Starting crawl: "${data.query}"`);
+        addCrawlLog(`📊 Max pages: ${data.max_pages}, Max depth: ${data.max_depth}`);
         addSystemMessage(`Crawling ${data.urls?.length || 0} URLs (max ${data.max_pages} pages)...`);
         break;
       
       case 'crawl_complete':
         setIsCrawling(false);
         setCrawlComplete(true);
+        addCrawlLog(`✅ Crawl complete! ${data.pages_crawled} pages crawled, ${data.embeddings_generated} embeddings generated`);
+        // Auto-expand database explorer and reload stats to show crawled pages
+        setShowExplorer(true);
+        loadDatabaseStats();
         // Don't auto-switch - user can manually switch when ready
         addSystemMessage(
           `✅ Crawl complete! ${data.pages_crawled} pages crawled, ${data.embeddings_generated} embeddings generated. Switch to Chat mode to ask questions!`
         );
         break;
       
+      case 'log':
+        // Generic log event from backend
+        console.log('   📝 LOG EVENT RECEIVED:', data);
+        if (data.message) {
+          // If URL is provided, format it nicely
+          if (data.url) {
+            addCrawlLog(`${data.message}\n   ${data.url}`);
+          } else {
+            addCrawlLog(data.message);
+          }
+        }
+        break;
+      
       case 'chat_started':
+        console.log('   🔄 Chat started, setting isLoading=true');
         setIsLoading(true);
         break;
       
+      case 'progress':
+        // Live progress updates during RAG
+        console.log('   📊 Progress:', data.step, data.message);
+        addSystemMessage(data.message);
+        break;
+      
+      case 'chat_started':
+        console.log('   📤 Chat started');
+        // Create a placeholder message for streaming
+        const placeholderMessage: Message = {
+          id: `streaming_${Date.now()}`,
+          role: 'assistant',
+          content: '',
+          sources: [],
+          timestamp: new Date(),
+          isStreaming: true
+        };
+        setMessages(prev => [...prev, placeholderMessage]);
+        break;
+      
+      case 'chat_stream':
+        // Append streaming token to the last message
+        console.log('   🌊 Streaming token received');
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg && lastMsg.isStreaming) {
+            lastMsg.content += data.token;
+          }
+          return updated;
+        });
+        break;
+      
       case 'chat_answer':
+        console.log('   ✅ Chat answer received:', {
+          answerLength: data.answer?.length,
+          numResults: data.num_results,
+          numSources: data.sources?.length
+        });
         setIsLoading(false);
-        addAssistantMessage(data.answer, data.sources);
+        
+        // Update the streaming message with final data OR add new message if no streaming
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          
+          if (lastMsg && lastMsg.isStreaming) {
+            // Finalize the streaming message
+            lastMsg.content = data.answer;
+            lastMsg.sources = data.sources;
+            lastMsg.isStreaming = false;
+          } else {
+            // No streaming message exists, add new one
+            updated.push({
+              id: `asst_${Date.now()}`,
+              role: 'assistant',
+              content: data.answer,
+              sources: data.sources,
+              timestamp: new Date()
+            });
+          }
+          return updated;
+        });
         break;
       
       case 'error':
+        console.error('   ❌ WebSocket error:', data.message);
         setIsLoading(false);
         setIsCrawling(false);
         addSystemMessage(`❌ Error: ${data.message}`, true);
@@ -224,6 +326,11 @@ export function CognitiveCrawlerPage() {
       timestamp: new Date()
     };
     setMessages(prev => [...prev, message]);
+  };
+
+  const addCrawlLog = (logMessage: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setCrawlLogs(prev => [...prev, `[${timestamp}] ${logMessage}`]);
   };
 
   const handleCrawl = () => {
@@ -306,6 +413,8 @@ export function CognitiveCrawlerPage() {
     setCrawlQuery('');
     setSuggestedDomains([]);
     setMessages([]);
+    setCrawlLogs([]);
+    setShowLogs(true);
   };
 
   return (
@@ -339,8 +448,14 @@ export function CognitiveCrawlerPage() {
           </button>
         </div>
 
-        {/* Crawl Mode */}
-        {mode === 'crawl' && (
+        {/* Main Content - Two Panel Layout */}
+        <div className="crawler-content">
+          <PanelGroup direction="horizontal">
+            {/* Left Panel - Main Interface */}
+            <Panel defaultSize={60} minSize={30}>
+              <div className="crawler-panel">
+                {/* Crawl Mode */}
+                {mode === 'crawl' && (
           <div className="crawl-section">
             <div className="section-header">
               <h2>Configure Web Crawl</h2>
@@ -354,7 +469,7 @@ export function CognitiveCrawlerPage() {
                 onChange={(e) => setCrawlQuery(e.target.value)}
                 placeholder="E.g., 'Python documentation', 'React tutorials', 'AWS cloud services', 'Tesla company information'"
                 className="query-textarea"
-                rows={3}
+                rows={2}
               />
               <span className="query-hint">
                 💡 The AI will use Tavily to search the web and discover relevant URLs based on your query
@@ -442,11 +557,16 @@ export function CognitiveCrawlerPage() {
                 <div className="stats-grid">
                   <div className="stat-card">
                     <span className="stat-value">{dbStats.total_pages}</span>
-                    <span className="stat-label">Pages</span>
+                    <span className="stat-label">Pages Crawled</span>
                   </div>
-                  <div className="stat-card">
+                  <div className="stat-card" title="Each page is split into multiple chunks for better semantic search. More embeddings = better retrieval quality.">
                     <span className="stat-value">{dbStats.total_embeddings}</span>
-                    <span className="stat-label">Embeddings</span>
+                    <span className="stat-label">
+                      Embeddings 
+                      <span style={{ fontSize: '0.7em', opacity: 0.7, marginLeft: '4px' }}>
+                        (≈{Math.round(dbStats.total_embeddings / (dbStats.total_pages || 1))} per page)
+                      </span>
+                    </span>
                   </div>
                   <div className="stat-card">
                     <span className="stat-value">{dbStats.unique_domains}</span>
@@ -454,7 +574,7 @@ export function CognitiveCrawlerPage() {
                   </div>
                   <div className="stat-card">
                     <span className="stat-value">{dbStats.total_sessions}</span>
-                    <span className="stat-label">Sessions</span>
+                    <span className="stat-label">Crawl Sessions</span>
                   </div>
                 </div>
               )}
@@ -478,12 +598,28 @@ export function CognitiveCrawlerPage() {
                   <div className="pages-list">
                     {crawledPages.length > 0 ? (
                       crawledPages.map((page, idx) => (
-                        <div key={idx} className="page-item">
+                        <div 
+                          key={idx} 
+                          className={`page-item ${selectedArticleUrl === page.url ? 'selected' : ''}`}
+                          onClick={() => setSelectedArticleUrl(page.url)}
+                        >
                           <div className="page-info">
                             <span className="page-domain">{page.domain}</span>
-                            <a href={page.url} target="_blank" rel="noopener noreferrer" className="page-url">
-                              {page.url.length > 60 ? page.url.substring(0, 60) + '...' : page.url}
-                            </a>
+                            <div className="page-url-container">
+                              <span className="page-url">
+                                {page.url.length > 60 ? page.url.substring(0, 60) + '...' : page.url}
+                              </span>
+                              <a 
+                                href={page.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="page-external-link"
+                                onClick={(e) => e.stopPropagation()}
+                                title="Open original"
+                              >
+                                <ExternalLink size={12} />
+                              </a>
+                            </div>
                             <span className="page-meta">
                               {new Date(page.crawled_at).toLocaleDateString()} • {(page.content_length / 1024).toFixed(1)}KB
                             </span>
@@ -516,6 +652,30 @@ export function CognitiveCrawlerPage() {
               )}
             </button>
 
+            {/* Crawl Logs Section */}
+            {crawlLogs.length > 0 && (
+              <div className="crawl-logs-section">
+                <div className="logs-header" onClick={() => setShowLogs(!showLogs)}>
+                  <h3>
+                    {isCrawling ? '🔄' : '✅'} Crawl Logs ({crawlLogs.length})
+                  </h3>
+                  <button className="toggle-logs-btn">
+                    {showLogs ? '▼ Collapse' : '▶ Expand'}
+                  </button>
+                </div>
+                {showLogs && (
+                  <div className="logs-container">
+                    {crawlLogs.map((log, idx) => (
+                      <div key={idx} className="log-entry">
+                        {log}
+                      </div>
+                    ))}
+                    <div ref={logsEndRef} />
+                  </div>
+                )}
+              </div>
+            )}
+
             {crawlComplete && (
               <div className="crawl-complete-banner">
                 <AlertCircle className="w-5 h-5" />
@@ -525,11 +685,11 @@ export function CognitiveCrawlerPage() {
                 </button>
               </div>
             )}
-          </div>
-        )}
+                  </div>
+                )}
 
-        {/* Chat Mode */}
-        {mode === 'chat' && (
+                {/* Chat Mode */}
+                {mode === 'chat' && (
           <div className="chat-section">
             <div className="section-header">
               <h2>Chat with Crawled Data</h2>
@@ -547,27 +707,123 @@ export function CognitiveCrawlerPage() {
                   <p className="empty-state-hint">The system will search across all previously crawled data.</p>
                 </div>
               ) : (
-                messages.map((msg) => (
-                  <div key={msg.id} className={`message message-${msg.role}`}>
-                    <div className="message-content">
-                      <Markdown>{msg.content}</Markdown>
-                      {msg.sources && msg.sources.length > 0 && (
-                        <div className="sources">
-                          <strong>Sources:</strong>
-                          <ul>
-                            {msg.sources.map((source, idx) => (
-                              <li key={idx}>
-                                <a href={source} target="_blank" rel="noopener noreferrer">
-                                  {source}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
+                <>
+                  {/* Render messages in chronological order, grouping consecutive system messages */}
+                  {(() => {
+                    const rendered: JSX.Element[] = [];
+                    let systemGroup: Message[] = [];
+                    
+                    messages.forEach((msg, index) => {
+                      if (msg.role === 'system') {
+                        // Add to current system message group
+                        systemGroup.push(msg);
+                      } else {
+                        // Render any pending system messages as a collapsible group
+                        if (systemGroup.length > 0) {
+                          const groupId = `sys-group-${index}`;
+                          rendered.push(
+                            <div key={groupId} className="system-messages-section">
+                              <div 
+                                className="system-messages-header"
+                                onClick={() => setShowSystemMessages(!showSystemMessages)}
+                              >
+                                <span className="system-messages-title">
+                                  {showSystemMessages ? '▼' : '▶'} Progress Updates ({systemGroup.length})
+                                </span>
+                                <span className="system-messages-hint">
+                                  {showSystemMessages ? 'Click to hide' : 'Click to show'}
+                                </span>
+                              </div>
+                              {showSystemMessages && (
+                                <div className="system-messages-list">
+                                  {systemGroup.map((sysMsg) => (
+                                    <div key={sysMsg.id} className="message message-system-compact">
+                                      <div className="message-content">
+                                        <Markdown>{sysMsg.content}</Markdown>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                          systemGroup = [];
+                        }
+                        
+                        // Render user or assistant message
+                        rendered.push(
+                          <div 
+                            key={msg.id} 
+                            className={`message message-${msg.role}${msg.isStreaming ? ' streaming' : ''}`}
+                          >
+                            <div className="message-content">
+                              <Markdown>{msg.content}</Markdown>
+                              {msg.sources && msg.sources.length > 0 && (
+                                <div className="sources">
+                                  <strong>Sources:</strong>
+                                  <ul>
+                                    {msg.sources.map((source, idx) => (
+                                      <li key={idx}>
+                                        <button
+                                          className="source-link-btn"
+                                          onClick={() => setSelectedArticleUrl(source)}
+                                          title="View in article viewer"
+                                        >
+                                          {source}
+                                        </button>
+                                        <a 
+                                          href={source} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="source-external-link"
+                                          title="Open original"
+                                        >
+                                          <ExternalLink size={12} />
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    });
+                    
+                    // Render any remaining system messages at the end
+                    if (systemGroup.length > 0) {
+                      rendered.push(
+                        <div key="sys-group-end" className="system-messages-section">
+                          <div 
+                            className="system-messages-header"
+                            onClick={() => setShowSystemMessages(!showSystemMessages)}
+                          >
+                            <span className="system-messages-title">
+                              {showSystemMessages ? '▼' : '▶'} Progress Updates ({systemGroup.length})
+                            </span>
+                            <span className="system-messages-hint">
+                              {showSystemMessages ? 'Click to hide' : 'Click to show'}
+                            </span>
+                          </div>
+                          {showSystemMessages && (
+                            <div className="system-messages-list">
+                              {systemGroup.map((sysMsg) => (
+                                <div key={sysMsg.id} className="message message-system-compact">
+                                  <div className="message-content">
+                                    <Markdown>{sysMsg.content}</Markdown>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))
+                      );
+                    }
+                    
+                    return rendered;
+                  })()}
+                </>
               )}
               <div ref={messagesEndRef} />
             </div>
@@ -586,7 +842,7 @@ export function CognitiveCrawlerPage() {
                 placeholder="Ask a question about the crawled content..."
                 className="chat-input"
                 disabled={isLoading}
-                rows={3}
+                rows={2}
               />
               <button type="submit" disabled={isLoading || !input.trim()} className="send-btn">
                 {isLoading ? (
@@ -596,8 +852,21 @@ export function CognitiveCrawlerPage() {
                 )}
               </button>
             </form>
-          </div>
-        )}
+                  </div>
+                )}
+              </div>
+            </Panel>
+
+            <PanelResizeHandle className="resize-handle">
+              <div className="resize-handle-line" />
+            </PanelResizeHandle>
+
+            {/* Right Panel - Article Viewer */}
+            <Panel defaultSize={40} minSize={30}>
+              <ArticleViewer url={selectedArticleUrl} />
+            </Panel>
+          </PanelGroup>
+        </div>
       </div>
     </div>
   );

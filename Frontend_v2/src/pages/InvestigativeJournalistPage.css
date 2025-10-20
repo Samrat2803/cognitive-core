@@ -244,6 +244,7 @@
   line-height: var(--line-height-relaxed);  /* 1.6 for system messages */
   border-radius: 6px;  /* Subtle rounding */
   transition: all var(--transition-normal);
+  font-style: normal;  /* Remove italic styling */
 }
 
 .message-system:hover {
@@ -339,6 +340,7 @@
   font-size: var(--font-size-base);  /* Consistent font size */
   white-space: pre-wrap;  /* Preserve line breaks and wrap text */
   overflow-wrap: break-word;  /* Break long words if needed */
+  text-align: left;  /* Ensure text is left-aligned */
 }
 
 /* Markdown formatting within messages */
@@ -353,8 +355,9 @@
 }
 
 .message-content em {
-  font-style: italic;
+  font-style: normal;  /* Remove italic for better readability */
   color: inherit;
+  font-weight: var(--font-weight-medium);  /* Use medium weight instead */
 }
 
 .message-content code {

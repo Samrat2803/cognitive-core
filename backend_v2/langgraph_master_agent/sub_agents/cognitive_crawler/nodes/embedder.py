@@ -38,46 +38,83 @@ async def embedder(state: CognitiveCrawlerState) -> Dict[str, Any]:
             state["embeddings_generated"] = 0
             return state
         
-        # Initialize text splitter with LARGER chunks for better context
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=3000,          # 3000 chars (3x larger) to preserve context
-            chunk_overlap=400,         # 400 overlap for continuity
-            separators=["\n\n", "\n", ". ", " ", ""],  # Try natural boundaries first
-            length_function=len
-        )
+        # Get chunking strategy from state (default: "recursive" for crawler, "none" for RSS)
+        chunking_strategy = state.get("chunking_strategy", "recursive")
         
-        # Create chunked documents for embedding
-        all_chunks = []
-        total_chunks = 0
-        
-        for doc in tenders:
-            content = doc.get('content', '')
+        if chunking_strategy == "none":
+            # NO CHUNKING - one article = one embedding (for RSS feeds)
+            print(f"   📝 Chunking strategy: NONE (one article = one embedding)")
+            all_chunks = []
             
-            if len(content) < 100:
-                # Skip very short content (likely just metadata/navigation)
-                print(f"   ⚠️  Skipping short content from {doc.get('url', 'unknown')}")
-                continue
-            
-            # Split into chunks
-            chunks = text_splitter.split_text(content)
-            
-            # Create a document for each chunk
-            for i, chunk in enumerate(chunks):
+            for doc in tenders:
+                content = doc.get('content', '')
+                
+                if len(content) < 100:
+                    print(f"   ⚠️  Skipping short content from {doc.get('url', 'unknown')}")
+                    continue
+                
+                # Store entire article as one chunk
                 chunk_doc = {
-                    'doc_id': f"{doc.get('doc_id')}_chunk_{i}",
-                    'content': chunk,
+                    'doc_id': doc.get('doc_id'),
+                    'content': content,
                     'metadata': {
                         'url': doc.get('url'),
                         'domain': doc.get('domain'),
                         'relevance_score': doc.get('relevance_score'),
                         'query_keywords': doc.get('query_keywords'),
-                        'chunk_index': i,
-                        'total_chunks': len(chunks),
+                        'chunk_index': 0,
+                        'total_chunks': 1,
                         'original_doc_id': doc.get('doc_id')
                     }
                 }
                 all_chunks.append(chunk_doc)
-                total_chunks += 1
+            
+            total_chunks = len(all_chunks)
+            print(f"   📄 Stored {total_chunks} complete articles (no chunking)")
+            
+        else:
+            # RECURSIVE CHUNKING - split large documents (for crawler)
+            print(f"   📝 Chunking strategy: RECURSIVE (split large documents)")
+            
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=3000,          # 3000 chars (3x larger) to preserve context
+                chunk_overlap=400,         # 400 overlap for continuity
+                separators=["\n\n", "\n", ". ", " ", ""],  # Try natural boundaries first
+                length_function=len
+            )
+            
+            # Create chunked documents for embedding
+            all_chunks = []
+            total_chunks = 0
+            
+            for doc in tenders:
+                content = doc.get('content', '')
+                
+                if len(content) < 100:
+                    # Skip very short content (likely just metadata/navigation)
+                    print(f"   ⚠️  Skipping short content from {doc.get('url', 'unknown')}")
+                    continue
+                
+                # Split into chunks
+                chunks = text_splitter.split_text(content)
+                
+                # Create a document for each chunk
+                for i, chunk in enumerate(chunks):
+                    chunk_doc = {
+                        'doc_id': f"{doc.get('doc_id')}_chunk_{i}",
+                        'content': chunk,
+                        'metadata': {
+                            'url': doc.get('url'),
+                            'domain': doc.get('domain'),
+                            'relevance_score': doc.get('relevance_score'),
+                            'query_keywords': doc.get('query_keywords'),
+                            'chunk_index': i,
+                            'total_chunks': len(chunks),
+                            'original_doc_id': doc.get('doc_id')
+                        }
+                    }
+                    all_chunks.append(chunk_doc)
+                    total_chunks += 1
         
         print(f"   📄 Split {len(tenders)} documents into {total_chunks} chunks")
         print(f"   📊 Average: {total_chunks / len(tenders) if tenders else 0:.1f} chunks per document")
@@ -89,6 +126,12 @@ async def embedder(state: CognitiveCrawlerState) -> Dict[str, Any]:
             
             state["embeddings_generated"] = len(all_chunks)
             print(f"   ✅ Generated and stored {len(all_chunks)} embeddings")
+            
+            # Log embedding completion
+            state["execution_log"].append({
+                "step": "embedder",
+                "action": f"Generated {len(all_chunks)} embeddings from {len(tenders)} documents"
+            })
         else:
             print("   ⚠️  No valid chunks to embed (all content too short)")
             state["embeddings_generated"] = 0

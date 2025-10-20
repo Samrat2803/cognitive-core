@@ -844,8 +844,58 @@ class SubAgentCaller:
                 "execution_time": 0.0
             }
             
-            # Run agent
-            result = await graph.ainvoke(initial_state)
+            # Run agent with streaming support
+            if event_callback:
+                # Send initial log
+                try:
+                    await event_callback("log", {"message": "🚀 Initializing Cognitive Crawler..."})
+                except:
+                    pass
+                
+                # Stream execution with callbacks - use astream for real-time updates
+                result = None
+                last_log_count = 0  # Track how many logs we've already sent
+                
+                async for event in graph.astream(initial_state):
+                    # event is a dict with node name as key and state update as value
+                    if event:
+                        node_name = list(event.keys())[0]
+                        state_update = event[node_name]
+                        
+                        # Send execution logs in real-time as they're added
+                        execution_log = state_update.get("execution_log", [])
+                        if len(execution_log) > last_log_count:
+                            # Send only the new log entries since last time
+                            new_logs = execution_log[last_log_count:]
+                            for log_entry in new_logs:
+                                try:
+                                    action_text = log_entry.get('action', '')
+                                    url = log_entry.get('url', '')
+                                    if url:
+                                        await event_callback("log", {
+                                            "message": f"🔗 {action_text}",
+                                            "url": url
+                                        })
+                                    else:
+                                        await event_callback("log", {
+                                            "message": f"▶️ {action_text}"
+                                        })
+                                except Exception as e:
+                                    print(f"   ⚠️  Failed to send log event: {e}")
+                            
+                            # Update the counter
+                            last_log_count = len(execution_log)
+                        
+                        # Update result with latest state
+                        result = state_update
+                
+                # Final result is the last state update
+                if result is None:
+                    result = await graph.ainvoke(initial_state)
+                    
+            else:
+                # No callback, just run
+                result = await graph.ainvoke(initial_state)
             
             # Return in expected format
             return {

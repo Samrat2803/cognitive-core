@@ -70,6 +70,11 @@ class HypothesisState(TypedDict):
     anomalies: List[str]  # Unusual patterns/absences
     questions: List[Dict[str, Any]]  # Question tree for UI visualization
     
+    # RAG tracking (for LOCAL and GLOBAL RAG)
+    documents_in_rag: int  # Total documents stored in RAG for this investigation
+    global_rag_queries_made: int  # Count of GLOBAL RAG queries
+    rag_queries_made: int  # Count of LOCAL RAG queries
+    
     # Cache and efficiency
     seen_urls: List[str]
     extracted_cache: Dict[str, str]  # URL -> content cache
@@ -163,6 +168,7 @@ class LeanInvestigator:
         workflow.add_node("searcher", self._searcher_node)
         workflow.add_node("extractor", self._extractor_node)
         workflow.add_node("local_rag_query", self._local_rag_query_node)
+        workflow.add_node("global_rag_query", self._global_rag_query_node)
         workflow.add_node("analyzer", self._analyzer_node)
         workflow.add_node("synthesizer", self._synthesizer_node)
         
@@ -174,6 +180,7 @@ class LeanInvestigator:
             {
                 "search": "searcher",
                 "query_local_rag": "local_rag_query",
+                "query_global_rag": "global_rag_query",
                 "analyze": "analyzer",
                 "complete": "synthesizer"
             }
@@ -181,6 +188,7 @@ class LeanInvestigator:
         workflow.add_edge("searcher", "extractor")
         workflow.add_edge("extractor", "analyzer")
         workflow.add_edge("local_rag_query", "analyzer")  # LOCAL RAG goes directly to analyzer
+        workflow.add_edge("global_rag_query", "analyzer")  # GLOBAL RAG goes directly to analyzer
         workflow.add_conditional_edges(
             "analyzer",
             self._route_from_analyzer,
@@ -219,9 +227,7 @@ class LeanInvestigator:
     
     def _route_from_strategist(self, state: HypothesisState) -> str:
         """Route based on strategy decision"""
-        # 🐛 FIX: Check iteration BEFORE incrementing (strategist increments it)
-        # If strategist just ran iteration 5 and incremented to 6, we should still execute the action
-        current_iteration = state["iteration"] - 1  # Strategist already incremented
+        current_iteration = state["iteration"]  # Current iteration
         
         if current_iteration > state["max_iterations"]:
             log(f"   🛑 Max iterations exceeded ({current_iteration}/{state['max_iterations']})")
@@ -240,6 +246,11 @@ class LeanInvestigator:
         if action == "query_local_rag":
             log(f"   🔀 Router: query_local_rag → local_rag_query node")
             return "query_local_rag"
+        
+        # Handle GLOBAL RAG query
+        if action == "query_global_rag":
+            log(f"   🔀 Router: query_global_rag → global_rag_query node")
+            return "query_global_rag"
         
         # Handle Wayback Machine
         if action == "wayback_machine":
@@ -491,9 +502,9 @@ Your goal: Search for information that could lead to new hypothesis generation.
 All hypotheses have been sufficiently tested. Time to synthesize findings.
 """
         
-        # Check if LOCAL RAG is available (iteration 2+)
+        # Check if LOCAL RAG is available (requires 10+ documents)
         documents_in_rag = state.get('documents_in_rag', 0)
-        has_local_rag = iteration >= 2 and documents_in_rag > 0
+        has_local_rag = documents_in_rag >= 10  # Requires 10+ docs for LOCAL RAG
         
         # Check if user explicitly asked to query LOCAL RAG
         user_instruction = state.get('user_instruction')  # Keep as None if not present
@@ -503,7 +514,7 @@ All hypotheses have been sufficiently tested. Time to synthesize findings.
         log(f"\n{'─'*80}")
         log(f"💾 LOCAL RAG STATUS:")
         log(f"   Documents in RAG: {documents_in_rag}")
-        log(f"   Has LOCAL RAG: {has_local_rag} (iteration >= 2 and docs > 0)")
+        log(f"   Has LOCAL RAG: {has_local_rag} (requires 10+ docs)")
         log(f"   User instruction: {user_instruction[:80] if user_instruction else 'None'}...")
         log(f"   🐛 DEBUG - user_instruction type: {type(user_instruction)}, bool: {bool(user_instruction)}")
         log(f"   Force LOCAL RAG: {force_local_rag}")
@@ -516,29 +527,40 @@ All hypotheses have been sufficiently tested. Time to synthesize findings.
         if has_local_rag or force_local_rag:
             local_rag_context = f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💾 LOCAL KNOWLEDGE BASE AVAILABLE
+💾 KNOWLEDGE BASE OPTIONS AVAILABLE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 You have accumulated {documents_in_rag} documents in your LOCAL knowledge base from previous iterations.
 
 {f'🎯 USER REQUEST: "{user_instruction}"' if force_local_rag else ''}
-{f'⚠️  YOU MUST query_local_rag this iteration to answer the user request!' if force_local_rag else ''}
+{f'⚠️  YOU MUST query_local_rag or query_global_rag this iteration to answer the user request!' if force_local_rag else ''}
 
-✨ NEW OPTION AVAILABLE: "query_local_rag"
+✨ TWO RAG OPTIONS AVAILABLE:
 
-You can now choose to:
-1. **query_local_rag**: Search your accumulated knowledge (FAST, NO COST, revisit past findings)
-   - Use when: Reviewing what you've already learned, cross-referencing entities, checking for contradictions
-   - Example: "What companies have we identified?" or "What did we learn about regulatory failures?"
-   - {f'USE THIS NOW - User explicitly asked!' if force_local_rag else 'Consider this before searching web'}
+1. **query_global_rag**: Search ALL accumulated knowledge (FAST, NO COST) ⭐ PREFERRED
+   - Use when: Checking if topic was researched before, leveraging external data
+   - Scope: Everything in database (cognitive crawler, past investigations, all sources)
+   - Example: "What do we know about Company X from ALL sources?" or "Has anyone researched this before?"
+   - 🎯 **USE THIS FIRST** - Always check global knowledge before searching web
+   - ⚡ Priority: **HIGH** - Use early in investigation to leverage existing research
+
+2. **query_local_rag**: Search THIS investigation's knowledge (FAST, NO COST)
+   - Use when: **Only for noise reduction or fact verification** in large investigations
+   - Scope: Only articles from current investigation ({documents_in_rag} documents)
+   - Example: "Did we already find evidence of X?" or "Verify the date we found earlier"
+   - ⚠️  **NOT for primary research** - Only useful when you have {documents_in_rag}+ documents and need to verify/deduplicate
+   - ⚡ Priority: **LOW** - Use sparingly, only to cut through noise
+   - {f'✅ AVAILABLE NOW ({documents_in_rag} docs)' if has_local_rag else f'❌ NOT AVAILABLE (need 10+ docs, have {documents_in_rag})'}
    
-2. **search**: Use Tavily for fresh web content (COSTS MONEY, finds new information)
-   - Use when: Need new information not in local knowledge base
+3. **search**: Use Tavily for fresh web content (COSTS MONEY, finds new information)
+   - Use when: Need new information not in any knowledge base
    
-3. **complete**: End investigation
+4. **complete**: End investigation
 
-💡 TIP: Often it's smart to query LOCAL RAG first to understand what you already know, 
-then decide if you need fresh information from Tavily.
+💡 **PRIORITY ORDER**: 
+   1. query_global_rag (check existing research FIRST) 
+   2. search (get fresh data)
+   3. query_local_rag (only for verification/deduplication in large investigations)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
         
@@ -554,17 +576,25 @@ You have access to specialized tools beyond basic web search. Each offers unique
    ✅ Use when: Looking for recent news, breaking information, media coverage
    📊 Returns: News articles, press releases, public statements
    💰 Cost: $0.01 per search
-   🎯 Default choice for most investigations
+   🎯 **PRIMARY TOOL** for most investigations (after checking global RAG)
    
-2. **local_rag_query** - Query your accumulated knowledge
-   ✅ Use when: Synthesizing findings, cross-referencing entities, checking contradictions
-   📊 Returns: Information from YOUR previous iterations
+2. **query_global_rag** - Query ALL accumulated knowledge from all sources ⭐ **USE FIRST**
+   ✅ Use when: Checking if topic was researched before, leveraging external data
+   📊 Returns: Data from cognitive crawler, past investigations, all sources
    💰 Cost: FREE
-   🎯 HIGHLY RECOMMENDED every 2-3 iterations to consolidate learning{f" (AVAILABLE NOW - {documents_in_rag} documents)" if has_local_rag else " (will be available from iteration 2+)"}
-   💡 Smart pattern: Tavily → Tavily → local_rag_query → Tavily (synthesize periodically)
-   ⚠️  Most useful when you have 5+ documents (currently: {documents_in_rag})
+   🎯 **ALWAYS CHECK FIRST** before doing Tavily search
+   💡 Example: "Has Company X been investigated before?" or "What crawled data exists?"
+   ⚠️  May return unrelated data - use specific queries
    
-3. **wayback_machine** - Historical website comparison (⚠️ USE SPARINGLY)
+3. **query_local_rag** - Query THIS investigation's knowledge (RARELY NEEDED)
+   ✅ Use when: **Only for verification/deduplication** in large investigations (10+ docs)
+   📊 Returns: Information from YOUR previous iterations in THIS investigation
+   💰 Cost: FREE
+   🎯 Use sparingly - only to cut through noise or verify a specific fact
+   💡 Example: "Did we already find X?" or "Verify date from earlier"
+   ⚠️  **NOT for synthesis** - use only when you have {documents_in_rag}+ documents{f" (AVAILABLE NOW - {documents_in_rag} documents)" if has_local_rag else f" (need 10+, have {documents_in_rag})"}
+   
+4. **wayback_machine** - Historical website comparison (⚠️ USE SPARINGLY)
    ✅ Use when: SPECIFIC evidence from news articles suggests content was deleted/modified
    ✅ Good for: Government/company websites that may have removed statements
    ❌ DON'T use if:
@@ -595,12 +625,13 @@ You have access to specialized tools beyond basic web search. Each offers unique
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✅ **GOOD PATTERN** (Tool Diversity):
-   Iter 1: tavily_search → Find initial facts
-   Iter 2: tavily_search → Deeper investigation
-   Iter 3: local_rag_query → "What have we learned? Any gaps?" (SYNTHESIZE)
-   Iter 4: wayback_machine → Check government website (IF cover-up suspected)
-   Iter 5: tavily_search → Follow up on new leads
-   Iter 6: local_rag_query → Final synthesis
+   Iter 1: query_global_rag → "Has this been researched before?" (⭐ CHECK FIRST!)
+   Iter 2: tavily_search → Find initial facts (if not in global)
+   Iter 3: tavily_search → Deeper investigation
+   Iter 4: tavily_search → Follow up on leads
+   Iter 5: query_local_rag → "Did we already verify X?" (only if 10+ docs, for verification)
+   Iter 6: wayback_machine → Check government website (IF cover-up suspected)
+   Iter 7: tavily_search → Continue investigation
 
 ❌ **BAD PATTERN** (Tool Repetition):
    Iter 1: tavily_search → Same topic
@@ -608,15 +639,16 @@ You have access to specialized tools beyond basic web search. Each offers unique
    Iter 3: tavily_search → Still same topic ← STUCK IN LOOP!
    Iter 4: tavily_search → No new information ← WASTING RESOURCES!
 
-💡 **USE LOCAL_RAG_QUERY REGULARLY**:
-   - After every 2-3 Tavily searches
-   - Before using specialized tools (check what you know first)
-   - When feeling stuck (synthesize before changing approach)
-   - Before completion (ensure nothing missed)
+💡 **USE GLOBAL_RAG FIRST, LOCAL_RAG RARELY**:
+   - Check global RAG at start (iteration 1-2)
+   - Use Tavily for fresh research (most iterations)
+   - Use local RAG ONLY for verification when 10+ documents
+   - Local RAG is NOT for synthesis - it's for cutting noise
 
 🎯 **DEFAULT TOOL SELECTION LOGIC**:
-   - Start with tavily_search (80% of time)
-   - Use local_rag_query every 2-3 iterations (15% of time)
+   - Start with query_global_rag (iteration 1, ~5% of time - check prior research)
+   - Use tavily_search for new information (85% of time)
+   - Use query_local_rag ONLY for verification/dedup (5% of time, requires 10+ docs)
    - Use wayback/aleph only when unique value (5% of time)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -759,10 +791,11 @@ Your task:
 5. Explain what NOVEL insight you're seeking
 
 🎯 TOOL SELECTION LOGIC:
+- Check existing research → query_global_rag ⭐ (USE FIRST, iteration 1-2)
 - Company/person background → aleph_search
 - Government/company website → wayback_machine (check for cover-ups)
-- Recent news/events → tavily_search
-- Synthesize knowledge → local_rag_query{" (available now)" if has_local_rag else ""}
+- Recent news/events → tavily_search (PRIMARY TOOL)
+- Verify specific fact → query_local_rag{f" (available, {documents_in_rag} docs)" if has_local_rag else f" (need 10+ docs, have {documents_in_rag})"}
 
 Return JSON (include ALL relevant fields based on your decision):
 
@@ -771,9 +804,10 @@ IMPORTANT: Based on your "decision" value, you MUST include the corresponding qu
 - If decision="wayback_machine" → MUST include "target_url"
 - If decision="aleph_search" → MUST include "aleph_query"
 - If decision="query_local_rag" → MUST include "rag_query"
+- If decision="query_global_rag" → MUST include "rag_query"
 
 {{
-  "decision": "{'"tavily_search" OR "wayback_machine" OR "aleph_search"' if not has_local_rag else '"tavily_search" OR "wayback_machine" OR "aleph_search" OR "query_local_rag"'} OR "complete"",
+  "decision": "{'"tavily_search" OR "wayback_machine" OR "aleph_search" OR "query_global_rag"' if not has_local_rag else '"tavily_search" OR "wayback_machine" OR "aleph_search" OR "query_local_rag" OR "query_global_rag"'} OR "complete"",
   "hypothesis_id": "ID of hypothesis being tested",
   "question": "Specific question you're trying to answer",
   "hypothesis_being_tested": "Which hypothesis are you testing?",
@@ -784,13 +818,14 @@ IMPORTANT: Based on your "decision" value, you MUST include the corresponding qu
   "search_query": "REQUIRED IF decision='tavily_search': keywords like 'India cough syrup deaths 2024'",
   "target_url": "REQUIRED IF decision='wayback_machine': COMPLETE URL like 'https://cdsco.gov.in'",
   "aleph_query": "REQUIRED IF decision='aleph_search': entity name like 'Maiden Pharmaceuticals'",
-  "rag_query": "REQUIRED IF decision='query_local_rag': question like 'What have we learned?'",
+  "rag_query": "REQUIRED IF decision='query_local_rag' OR 'query_global_rag': question like 'What have we learned?' or 'Has Company X been researched?'",
   "completion_reason": "REQUIRED IF decision='complete': Why investigation is complete"
 }}
 
 🚨 CRITICAL: If you choose wayback_machine, you MUST provide a complete target_url!
 🚨 CRITICAL: If you choose aleph_search, you MUST provide aleph_query!
 🚨 CRITICAL: If you choose tavily_search, you MUST provide search_query!
+🚨 CRITICAL: If you choose query_local_rag or query_global_rag, you MUST provide rag_query!
 
 💡 EXAMPLES:
 - Testing company background → {{"decision": "aleph_search", "aleph_query": "Maiden Pharmaceuticals", "hypothesis_id": "h1", "question": "Who owns Maiden Pharma?", ...}}
@@ -800,6 +835,9 @@ IMPORTANT: Based on your "decision" value, you MUST include the corresponding qu
         # Add RAG example if available
         if has_local_rag:
             strategy_prompt += '- Synthesizing knowledge → {{"decision": "query_local_rag", "rag_query": "What companies have we identified?", "hypothesis_id": "general", "question": "What do we know?", ...}}\n'
+        
+        # Always available: GLOBAL RAG
+        strategy_prompt += '- Checking prior research → {{"decision": "query_global_rag", "rag_query": "Has Company X been investigated before?", "hypothesis_id": "general", "question": "Existing knowledge?", ...}}\n'
         
         strategy_prompt += """
 ⚠️  NOTICE: Each example includes BOTH the tool-specific field (target_url/aleph_query/search_query) AND the common fields!
@@ -1266,6 +1304,92 @@ Be specific. Be surgical. Use the RIGHT TOOL for the job. Find what others misse
                 try:
                     await self.event_callback('log', {
                         "message": "⚠️ No relevant documents in local knowledge - may need fresh search"
+                    })
+                except Exception as e:
+                    pass
+        
+        return {
+            **state,
+            "extracted_content": rag_articles,
+            "rag_answer": result.get('answer', ''),
+            "rag_sources": result.get('sources', [])
+        }
+    
+    async def _global_rag_query_node(self, state: HypothesisState) -> HypothesisState:
+        """
+        Query GLOBAL RAG - search ALL accumulated knowledge across ALL sessions
+        """
+        query = state.get("rag_query", "")
+        
+        log(f"\n{'='*80}")
+        log(f"🌍 GLOBAL RAG QUERY NODE")
+        log(f"{'='*80}")
+        log(f"Query: {query}")
+        log(f"Scope: ALL data (cognitive crawler, past investigations, all sources)")
+        
+        # Emit event
+        if hasattr(self, 'event_callback') and self.event_callback:
+            try:
+                await self.event_callback('log', {
+                    "message": f"🌍 Querying global knowledge base: {query}"
+                })
+            except Exception as e:
+                log(f"   ⚠️  WebSocket push failed: {e}")
+        
+        # Query GLOBAL RAG (thread_id=None searches everything)
+        result = await self._query_local_rag(
+            query=query,
+            investigation_id=None,  # None = GLOBAL search across all data
+            top_k=15  # More results for global search
+        )
+        
+        # Track usage
+        state["global_rag_queries_made"] = state.get("global_rag_queries_made", 0) + 1
+        
+        # Format results same as local RAG
+        rag_articles = []
+        if result.get('num_results', 0) > 0:
+            log(f"   ✅ Found {result['num_results']} relevant documents from GLOBAL knowledge base")
+            log(f"   🌍 Sources: All investigations, cognitive crawler, and past sessions")
+            
+            # Create article entries from RAG chunks
+            for i, chunk in enumerate(result.get('chunks', [])[:10], 1):  # Top 10 for global
+                url = chunk.get('metadata', {}).get('url', 'Global Knowledge Base')
+                content = chunk.get('content', '')
+                score = chunk.get('score', 0)
+                
+                # Get source information
+                source_inv = chunk.get('metadata', {}).get('investigation_id', 'Unknown')
+                source_session = chunk.get('metadata', {}).get('session_id', 'Unknown')
+                source_type = source_inv if source_inv != 'Unknown' else source_session
+                
+                rag_articles.append({
+                    "url": url,
+                    "content": content[:3000],  # Limit content
+                    "method": f"global_rag (score: {score:.2f}, source: {source_type[:30]}...)",
+                    "iteration": chunk.get('metadata', {}).get('iteration', 'N/A'),
+                    "source_type": source_type
+                })
+                
+                log(f"   [{i}] {url[:60]}... (score: {score:.2f}, from: {source_type[:20]}...)")
+            
+            # Emit event with sources
+            if hasattr(self, 'event_callback') and self.event_callback:
+                try:
+                    await self.event_callback('log', {
+                        "message": f"🌍 Found {len(rag_articles)} documents from GLOBAL knowledge (all sources)"
+                    })
+                except Exception as e:
+                    pass
+        else:
+            log(f"   ⚠️  No relevant documents found in global knowledge base")
+            log(f"   💡 Topic may not have been researched before - use Tavily search")
+            
+            # Emit event
+            if hasattr(self, 'event_callback') and self.event_callback:
+                try:
+                    await self.event_callback('log', {
+                        "message": "⚠️ No relevant documents in global knowledge - topic not researched before"
                     })
                 except Exception as e:
                     pass
@@ -1786,11 +1910,20 @@ ANALYSIS:
             # Import mongodb handler from cognitive crawler
             import sys
             import os
-            crawler_dir = os.path.abspath(
+            
+            # Add both the tools directory and the parent cognitive_crawler directory
+            crawler_tools_dir = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), '../cognitive_crawler/tools')
             )
-            if crawler_dir not in sys.path:
-                sys.path.insert(0, crawler_dir)
+            crawler_parent_dir = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../cognitive_crawler')
+            )
+            
+            # Add to sys.path (tools first, then parent for config import)
+            if crawler_tools_dir not in sys.path:
+                sys.path.insert(0, crawler_tools_dir)
+            if crawler_parent_dir not in sys.path:
+                sys.path.insert(0, crawler_parent_dir)
             
             from mongodb_handler import TenderMongoDBHandler
             

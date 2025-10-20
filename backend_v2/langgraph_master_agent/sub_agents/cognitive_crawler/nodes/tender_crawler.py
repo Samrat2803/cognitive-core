@@ -54,14 +54,26 @@ async def tender_crawler(state: CognitiveCrawlerState) -> Dict[str, Any]:
         
         if skipped_count > 0:
             print(f"   ♻️  Skipping {skipped_count} already-crawled URLs")
+            state["execution_log"].append({
+                "step": "tender_crawler",
+                "action": f"Skipped {skipped_count} already-crawled URLs"
+            })
         
         if not new_urls:
             print(f"   ✅ All URLs already in database - nothing to crawl!")
             state["crawl_results"] = []
+            state["pages_crawled"] = 0  # No new pages crawled
             return state
         
         print(f"   🆕 Crawling {len(new_urls)} new URLs...")
         print(f"   Strategy: Crawl4AI first, Tavily Extract fallback")
+        
+        # Log each URL being crawled
+        for url in new_urls:
+            state["execution_log"].append({
+                "step": "tender_crawler",
+                "action": f"Crawling: {url}"
+            })
         
         # Step 1: Try Crawl4AI first (FREE)
         print(f"   🤖 Attempting with Crawl4AI...")
@@ -95,13 +107,20 @@ async def tender_crawler(state: CognitiveCrawlerState) -> Dict[str, Any]:
             print(f"   ✅ Tavily Extract recovered: {len(tavily_results)} pages")
         
         state["crawl_results"] = successful_crawls
+        state["pages_crawled"] = len(successful_crawls)  # Update pages_crawled counter
         print(f"   📊 Total successful: {len(successful_crawls)}/{len(urls_to_crawl)} pages")
+        
+        state["execution_log"].append({
+            "step": "tender_crawler",
+            "action": f"Successfully crawled {len(successful_crawls)} pages"
+        })
         
     except Exception as e:
         error_msg = f"tender_crawler error: {str(e)}"
         print(f"   ❌ {error_msg}")
         state["error_log"].append(error_msg)
         state["crawl_results"] = []
+        state["pages_crawled"] = 0
     
     return state
 

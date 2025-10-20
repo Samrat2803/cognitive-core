@@ -2724,41 +2724,79 @@ async def cognitive_crawler_websocket(websocket: WebSocket, session_id: str):
                     # Use the knowledge_base tool (not a sub-agent!)
                     from langgraph_master_agent.tools.knowledge_base import query_knowledge_base
                     
-                    # Query the knowledge base
+                    # Progress callback to send live updates to frontend
+                    async def progress_callback(step: str, message: str):
+                        try:
+                            await websocket.send_json({
+                                "type": "progress",
+                                "step": step,
+                                "message": message
+                            })
+                        except:
+                            pass  # Don't fail if websocket closed
+                    
+                    # Stream callback for token-by-token streaming
+                    async def stream_callback(token: str):
+                        try:
+                            await websocket.send_json({
+                                "type": "chat_stream",
+                                "token": token
+                            })
+                        except:
+                            pass  # Don't fail if websocket closed
+                    
+                    # Query the knowledge base with progress updates AND streaming
                     result = await query_knowledge_base(
                         query=question,
                         top_k=10,
                         min_score=0.3,
-                        generate_answer=True
+                        generate_answer=True,
+                        progress_callback=progress_callback,
+                        stream_callback=stream_callback
                     )
                     
-                    # Send answer
+                    print(f"   📊 Knowledge base returned {result.get('num_results', 0)} results")
+                    
+                    # Send answer (ALWAYS send chat_answer to unblock UI)
                     if result.get("num_results", 0) > 0:
+                        answer_text = result.get("answer", "")
+                        print(f"   ✅ Sending answer: {answer_text[:100]}...")
                         await websocket.send_json({
                             "type": "chat_answer",
                             "question": question,
-                            "answer": result.get("answer", ""),
+                            "answer": answer_text,
                             "sources": result.get("sources", []),
                             "num_results": result.get("num_results", 0),
                             "confidence": 1.0 if result.get("num_results", 0) > 0 else 0.0
                         })
                     else:
+                        no_results_msg = "No relevant information found in the knowledge base. Try crawling some websites first!"
+                        print(f"   ⚠️  Sending no-results answer")
                         await websocket.send_json({
                             "type": "chat_answer",
                             "question": question,
-                            "answer": "No relevant information found in the knowledge base. Try crawling some websites first!",
+                            "answer": no_results_msg,
                             "sources": [],
                             "num_results": 0,
                             "confidence": 0.0
                         })
+                    
+                    print(f"   ✅ Chat answer sent successfully")
                 
                 except Exception as e:
                     print(f"   ❌ Chat error: {e}")
                     import traceback
                     traceback.print_exc()
+                    
+                    # Send error message to frontend
                     await websocket.send_json({
-                        "type": "error",
-                        "message": f"Chat error: {str(e)}"
+                        "type": "chat_answer",  # Changed from "error" to ensure UI unblocks
+                        "question": question,
+                        "answer": f"Error processing your question: {str(e)}. Please try again.",
+                        "sources": [],
+                        "num_results": 0,
+                        "confidence": 0.0,
+                        "error": True
                     })
             
             elif msg_type == "ping":
@@ -2817,26 +2855,33 @@ async def get_crawler_stats():
         # Use the actual collection names from gov_intelligence/cognitive_crawler
         pages_collection = mongo_service.db["tenders"]  # This is where pages are stored
         vectors_collection = mongo_service.db["tender_vectors"]
-        portals_collection = mongo_service.db["tender_portals"]
         
         # Count documents
         total_pages = await pages_collection.count_documents({})
         total_vectors = await vectors_collection.count_documents({})
-        total_portals = await portals_collection.count_documents({})
         
         # Get unique domains from tenders collection
-        pipeline = [
+        domain_pipeline = [
             {"$group": {"_id": "$domain"}},
             {"$count": "total"}
         ]
-        domain_cursor = pages_collection.aggregate(pipeline)
+        domain_cursor = pages_collection.aggregate(domain_pipeline)
         domain_result = await domain_cursor.to_list(length=None)
         unique_domains = domain_result[0]["total"] if domain_result else 0
+        
+        # Get unique crawl sessions (thread_id)
+        session_pipeline = [
+            {"$group": {"_id": "$thread_id"}},
+            {"$count": "total"}
+        ]
+        session_cursor = pages_collection.aggregate(session_pipeline)
+        session_result = await session_cursor.to_list(length=None)
+        total_sessions = session_result[0]["total"] if session_result else 0
         
         # Get recent crawls (last 20)
         recent_pages_cursor = pages_collection.find(
             {},
-            {"url": 1, "domain": 1, "stored_at": 1, "tender_id": 1, "title": 1, "organization": 1}
+            {"url": 1, "domain": 1, "stored_at": 1, "tender_id": 1, "title": 1, "organization": 1, "thread_id": 1}
         ).sort("stored_at", -1).limit(20)
         recent_pages = await recent_pages_cursor.to_list(length=20)
         
@@ -2845,7 +2890,7 @@ async def get_crawler_stats():
             "stats": {
                 "total_pages": total_pages,
                 "total_embeddings": total_vectors,
-                "total_sessions": total_portals,
+                "total_sessions": total_sessions,
                 "unique_domains": unique_domains
             },
             "recent_crawls": [
@@ -2951,6 +2996,101 @@ async def search_crawled_urls(
     
     except Exception as e:
         print(f"Error searching crawled URLs: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@app.get("/api/cognitive_crawler/page")
+async def get_page_details(url: str):
+    """
+    Get full page content and details by URL
+    
+    Query params:
+    - url: The URL of the page to fetch
+    
+    Returns:
+    - Full page content
+    - Metadata (title, domain, crawled_at, etc.)
+    - Chunks (optional - for debugging RAG)
+    """
+    try:
+        if not url:
+            return {
+                "success": False,
+                "error": "URL parameter required"
+            }
+        
+        # Use the global mongo_service instance
+        if mongo_service is None or mongo_service.db is None:
+            return {
+                "success": False,
+                "error": "Database not connected"
+            }
+        
+        pages_collection = mongo_service.db["tenders"]
+        vectors_collection = mongo_service.db["tender_vectors"]
+        
+        # Find the page
+        page = await pages_collection.find_one({"url": url})
+        
+        if not page:
+            return {
+                "success": False,
+                "error": "Page not found"
+            }
+        
+        # Get chunks for this page (optional - for debugging)
+        # Chunks are stored with doc_id pattern: doc_TIMESTAMP_N_chunk_M
+        # We need to match the base doc_id
+        doc_id = page.get("doc_id", "")
+        chunks = []
+        
+        if doc_id:
+            # Find all chunks that start with this doc_id
+            chunks_cursor = vectors_collection.find(
+                {"doc_id": {"$regex": f"^{doc_id}"}}
+            ).limit(50)  # Limit to avoid huge responses
+            chunks_data = await chunks_cursor.to_list(length=50)
+            
+            chunks = [
+                {
+                    "chunk_id": chunk.get("doc_id", ""),
+                    "content": chunk.get("content", ""),
+                    "index": int(chunk.get("doc_id", "").split("_chunk_")[-1]) if "_chunk_" in chunk.get("doc_id", "") else 0
+                }
+                for chunk in chunks_data
+            ]
+            # Sort by chunk index
+            chunks.sort(key=lambda x: x["index"])
+        
+        return {
+            "success": True,
+            "page": {
+                "url": page.get("url", ""),
+                "domain": page.get("domain", "Unknown"),
+                "title": page.get("title", page.get("organization", "Untitled")),
+                "content": page.get("content", ""),
+                "crawled_at": page.get("stored_at").isoformat() if page.get("stored_at") else None,
+                "content_length": len(page.get("content", "")),
+                "doc_id": doc_id,
+                "metadata": {
+                    "tender_id": page.get("tender_id", ""),
+                    "organization": page.get("organization", ""),
+                    "status": page.get("status", ""),
+                    "query_keywords": page.get("query_keywords", []),
+                    "relevance_score": page.get("relevance_score", 0)
+                }
+            },
+            "chunks": chunks,
+            "total_chunks": len(chunks)
+        }
+    
+    except Exception as e:
+        print(f"Error fetching page details: {e}")
         import traceback
         traceback.print_exc()
         return {

@@ -44,15 +44,19 @@ export function InfoPage() {
               <div className="info-content">
                 <h3>What We Built</h3>
                 <p>
-                  A sophisticated AI-powered political analysis platform that combines 
+                  A sophisticated AI-powered political intelligence platform that combines 
                   <strong> LangGraph's multi-agent architecture</strong> with <strong>Tavily's real-time web search</strong> 
-                  to deliver comprehensive political insights with automatic visualization generation.
+                  to deliver comprehensive analysis with automatic visualization generation, deep investigative reporting, 
+                  and intelligent web crawling capabilities.
                 </p>
                 <ul className="info-list">
                   <li>7-Node Master Agent orchestrating complex workflows</li>
-                  <li>9+ Specialized Sub-Agents for diverse analysis types</li>
-                  <li>Real-time web data integration via Tavily API</li>
-                  <li>Automatic chart and graph generation</li>
+                  <li>10+ Specialized Sub-Agents for diverse analysis types</li>
+                  <li>Real-time web data integration via Tavily & RSS feeds</li>
+                  <li>Intelligent web crawling with domain classification</li>
+                  <li>Deep investigative journalism with evidence tracking</li>
+                  <li>Knowledge base with RAG (Retrieval Augmented Generation)</li>
+                  <li>Automatic chart, graph, and infographic generation</li>
                   <li>WebSocket streaming for live updates</li>
                 </ul>
               </div>
@@ -62,15 +66,15 @@ export function InfoPage() {
                   <div className="info-stat-label">Master Agent Nodes</div>
                 </div>
                 <div className="info-stat-card">
-                  <div className="info-stat-value">9+</div>
+                  <div className="info-stat-value">8</div>
                   <div className="info-stat-label">Specialized Sub-Agents</div>
                 </div>
                 <div className="info-stat-card">
-                  <div className="info-stat-value">35+</div>
+                  <div className="info-stat-value">50+</div>
                   <div className="info-stat-label">Artifact Types</div>
                 </div>
                 <div className="info-stat-card">
-                  <div className="info-stat-value">15+</div>
+                  <div className="info-stat-value">20+</div>
                   <div className="info-stat-label">Integrated Tools</div>
                 </div>
               </div>
@@ -126,34 +130,36 @@ export function InfoPage() {
               <div className="arch-arrow">↓</div>
               
               <div className="arch-layer">
-                <h4>Sub-Agents (9 Specialized Agents)</h4>
+                <h4>Sub-Agents (8 Specialized Agents) - All Operational ✓</h4>
                 <div className="arch-grid">
+                  <div className="arch-subagent arch-live">Cognitive Crawler ✓</div>
+                  <div className="arch-subagent arch-live">Investigative Journalist ✓</div>
+                  <div className="arch-subagent arch-live">Media Bias Detector ✓</div>
                   <div className="arch-subagent arch-live">Sentiment Analyzer ✓</div>
-                  <div className="arch-subagent arch-pending">Media Bias Detector</div>
-                  <div className="arch-subagent arch-pending">Fact Checker</div>
-                  <div className="arch-subagent arch-pending">Entity Extractor</div>
-                  <div className="arch-subagent arch-pending">Crisis Tracker</div>
-                  <div className="arch-subagent arch-live">Live Monitor ✓</div>
+                  <div className="arch-subagent arch-live">Live Political Monitor ✓</div>
+                  <div className="arch-subagent arch-live">RSS Realtime Monitor ✓</div>
                   <div className="arch-subagent arch-live">SitRep Generator ✓</div>
-                  <div className="arch-subagent arch-pending">Policy Brief</div>
-                  <div className="arch-subagent arch-pending">Comparative Analysis</div>
+                  <div className="arch-subagent arch-live">Deep Investigative Reporter ✓</div>
                 </div>
               </div>
               
               <div className="arch-arrow">↓</div>
               
               <div className="arch-layer">
-                <h4>Integrated Tools (15+)</h4>
+                <h4>Integrated Tools & Data Sources</h4>
                 <div className="arch-grid">
-                  <div className="arch-subagent arch-live">Tavily Search ✓</div>
-                  <div className="arch-subagent arch-live">Tavily Extract ✓</div>
-                  <div className="arch-subagent arch-live">Tavily Crawl ✓</div>
+                  <div className="arch-subagent arch-live">Tavily Search API ✓</div>
+                  <div className="arch-subagent arch-live">Tavily Extract API ✓</div>
+                  <div className="arch-subagent arch-live">RSS Feed Collector ✓</div>
+                  <div className="arch-subagent arch-live">Jina AI Reader ✓</div>
+                  <div className="arch-subagent arch-live">Aleph Data ✓</div>
+                  <div className="arch-subagent arch-live">Wayback Machine ✓</div>
                   <div className="arch-subagent arch-live">Chart Generator ✓</div>
-                  <div className="arch-subagent arch-live">Map Visualizer ✓</div>
                   <div className="arch-subagent arch-live">Infographic Maker ✓</div>
-                  <div className="arch-subagent arch-live">Reel Generator ✓</div>
-                  <div className="arch-subagent arch-live">Deck Creator ✓</div>
-                  <div className="arch-subagent arch-live">Mind Map Builder ✓</div>
+                  <div className="arch-subagent arch-live">Timeline Builder ✓</div>
+                  <div className="arch-subagent arch-live">Network Graphs ✓</div>
+                  <div className="arch-subagent arch-live">Evidence Repository ✓</div>
+                  <div className="arch-subagent arch-live">Knowledge Base (RAG) ✓</div>
                 </div>
               </div>
               
@@ -327,6 +333,323 @@ export function InfoPage() {
 
         {/* Sentiment Analyzer Deep Dive */}
         <section className="info-section">
+          <h2 className="info-section-title">All Operational Sub-Agents Showcase</h2>
+          
+          {/* Cognitive Crawler */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>🧠 Cognitive Crawler: Intelligent Web Crawling</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Three-layer intelligence system for smart, efficient web crawling with domain classification and URL prioritization.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Core Capabilities</h4>
+                <ul className="info-list">
+                  <li>Intent detection (crawl entire site vs. specific pages)</li>
+                  <li>Domain classification (Authority, News, Research, Unknown)</li>
+                  <li>Smart URL prioritization (100-point scoring system)</li>
+                  <li>Portal discovery via Tavily integration</li>
+                  <li>Knowledge base storage with MongoDB + embeddings</li>
+                  <li>RAG query support for stored content</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Technical Highlights</h4>
+                <div className="info-grid-3">
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">3</div>
+                    <div className="info-stat-label">Intelligence Layers</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">100</div>
+                    <div className="info-stat-label">Max Priority Score</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">4</div>
+                    <div className="info-stat-label">Domain Types</div>
+                  </div>
+                </div>
+                <p style={{ marginTop: 'var(--space-md)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Use Case:</strong> "Find and crawl all drug regulation portals in India" 
+                  → Discovers government sites → Maps entire domains → Stores with embeddings → Enables semantic search
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Investigative Journalist */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>📰 Investigative Journalist: Deep Research & Reporting</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Cost-optimized investigative agent (91% cheaper) with evidence tracking, hypothesis testing, and publication-ready outputs.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Key Features</h4>
+                <ul className="info-list">
+                  <li>Hypothesis-driven investigation methodology</li>
+                  <li>Free extraction (Jina AI + Trafilatura: 83% success)</li>
+                  <li>Evidence repository with full source attribution</li>
+                  <li>Resume capability across multiple sessions</li>
+                  <li>Query diversity validation (prevents repetition)</li>
+                  <li>Publication-ready article generation</li>
+                  <li>Timeline, network graph, and evidence chain artifacts</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Performance Metrics</h4>
+                <div className="info-grid-3">
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">91%</div>
+                    <div className="info-stat-label">Cost Reduction</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">83%</div>
+                    <div className="info-stat-label">Free Extraction Success</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">$0.036</div>
+                    <div className="info-stat-label">Per Iteration</div>
+                  </div>
+                </div>
+                <p style={{ marginTop: 'var(--space-md)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Outputs:</strong> Professional investigative articles with executive summary, key findings, 
+                  evidence chains, timeline visualizations, and entity network graphs
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Media Bias Detector */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>📊 Media Bias Detector: Multi-Source Analysis</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Compares how different media outlets cover the same event, detecting framing bias, political lean, and loaded language.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Analysis Capabilities</h4>
+                <ul className="info-list">
+                  <li>Multi-source comparison (left-center-right spectrum)</li>
+                  <li>Political lean classification with confidence scores</li>
+                  <li>Loaded language detection and word cloud generation</li>
+                  <li>Framing analysis (how stories are presented)</li>
+                  <li>Consensus vs. divergence point identification</li>
+                  <li>Omission analysis (what each source leaves out)</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Artifact Types</h4>
+                <ul className="info-list">
+                  <li>Bias spectrum chart (political positioning)</li>
+                  <li>Source comparison matrix</li>
+                  <li>Loaded language word clouds</li>
+                  <li>Framing analysis reports</li>
+                </ul>
+                <p style={{ marginTop: 'var(--space-lg)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Example Query:</strong> "Compare how CNN, Fox News, and BBC covered the climate summit"
+                  → Analyzes bias, framing, language → Visual comparison report
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Sentiment Analyzer */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>😊 Sentiment Analyzer: Multi-Country Analysis</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Advanced sentiment analysis with iterative quality-checking loop to combat language bias and ensure geopolitical accuracy.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Sophisticated Features</h4>
+                <ul className="info-list">
+                  <li>7-node LangGraph workflow with iteration loop</li>
+                  <li>Language bias detection (English vs. local content)</li>
+                  <li>Country-specific domain filtering (e.g., .ir for Iran)</li>
+                  <li>Source diversity scoring and validation</li>
+                  <li>Sentiment scoring (-1.0 to +1.0) with justification</li>
+                  <li>Bias analysis (7 types: selection, framing, language, etc.)</li>
+                  <li>Max 3 iterations for quality improvement</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Technical Specs</h4>
+                <div className="info-grid-3">
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">7</div>
+                    <div className="info-stat-label">Workflow Nodes</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">3</div>
+                    <div className="info-stat-label">Max Iterations</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">8-20</div>
+                    <div className="info-stat-label">Articles/Country</div>
+                  </div>
+                </div>
+                <p style={{ marginTop: 'var(--space-md)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Innovation:</strong> Quality checker detects language bias (&gt;70% English for non-English countries) 
+                  → Triggers iteration with domain filtering → Ensures balanced analysis
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Political Monitor */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>🔴 Live Political Monitor: Real-Time Event Tracking</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Hybrid RSS + Tavily real-time monitoring with "explosiveness" scoring to identify breaking stories and trending topics. 
+              Defaults to cost-efficient RSS, with Tavily backup available for broader coverage.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Monitoring Capabilities</h4>
+                <ul className="info-list">
+                  <li>Primary: RSS feed collection from major news sources</li>
+                  <li>Fallback: Tavily search for comprehensive coverage</li>
+                  <li>Explosiveness scoring (0-100 scale)</li>
+                  <li>Weighted algorithm (LLM rating, frequency, diversity, urgency)</li>
+                  <li>Topic clustering and identification</li>
+                  <li>Breaking story detection</li>
+                  <li>3-hour caching for cost efficiency</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Cost Optimization</h4>
+                <div className="info-grid-3">
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">99.4%</div>
+                    <div className="info-stat-label">Cheaper (RSS mode)</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">2-5s</div>
+                    <div className="info-stat-label">Response Time</div>
+                  </div>
+                  <div className="info-stat-card">
+                    <div className="info-stat-value">$0.00003</div>
+                    <div className="info-stat-label">Per Query (RSS)</div>
+                  </div>
+                </div>
+                <p style={{ marginTop: 'var(--space-md)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Dual Mode:</strong> RSS-based endpoint (default, 99.4% cheaper) + Tavily-based endpoint (fallback, comprehensive). 
+                  Explosiveness Formula: LLM Rating (30pts) + Frequency (25pts) + Source Diversity (20pts) + Urgency Keywords (15pts) + Recency (10pts)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* SitRep Generator */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>📋 SitRep Generator: Professional Situation Reports</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Generates comprehensive situation reports (daily/weekly) with professional formatting and multiple export options.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Report Features</h4>
+                <ul className="info-list">
+                  <li>Scope definition (daily, weekly, custom time ranges)</li>
+                  <li>Data aggregation from multiple sources</li>
+                  <li>Priority ranking of events and topics</li>
+                  <li>Professional report composition</li>
+                  <li>Multi-format export (PDF, HTML, TXT, JSON)</li>
+                  <li>Uses Live Monitor's explosive topics data</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Output Formats</h4>
+                <ul className="info-list">
+                  <li>📄 PDF reports (professional formatting)</li>
+                  <li>🌐 HTML dashboards (interactive)</li>
+                  <li>📧 Email-ready text (plain text)</li>
+                  <li>💾 JSON data (programmatic access)</li>
+                </ul>
+                <p style={{ marginTop: 'var(--space-lg)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Execution Time:</strong> 35-45 seconds for comprehensive reports with 
+                  executive summary, key developments, priority events, and source citations
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* RSS Realtime Monitor */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>📡 RSS Realtime Monitor: Continuous Feed Monitoring</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Background RSS feed monitoring with automatic article collection, parsing, and knowledge base storage.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Monitoring System</h4>
+                <ul className="info-list">
+                  <li>Continuous background polling (configurable interval)</li>
+                  <li>Multiple RSS source management</li>
+                  <li>Automatic article extraction and parsing</li>
+                  <li>Duplicate detection and filtering</li>
+                  <li>MongoDB storage with metadata</li>
+                  <li>Integration with Live Political Monitor</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Data Processing</h4>
+                <ul className="info-list">
+                  <li>Title, description, link extraction</li>
+                  <li>Publication date parsing</li>
+                  <li>Source tracking and attribution</li>
+                  <li>Category and topic tagging</li>
+                  <li>Automatic embedding generation (optional)</li>
+                </ul>
+                <p style={{ marginTop: 'var(--space-lg)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Use Case:</strong> Powers Live Political Monitor with real-time data, 
+                  enables fast query responses without repeated API calls
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Deep Investigative Reporter */}
+          <div className="info-card" style={{ marginBottom: 'var(--space-2xl)' }}>
+            <h3>🔍 Deep Investigative Reporter: Strategic Intelligence Analysis</h3>
+            <p style={{ marginBottom: 'var(--space-lg)', fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+              Advanced investigative capabilities with specialized strategies for entity investigation, funding tracing, and pattern detection.
+            </p>
+            <div className="info-grid-2">
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Investigation Strategies</h4>
+                <ul className="info-list">
+                  <li>Entity investigation (track individuals, organizations)</li>
+                  <li>Event mapping (timeline reconstruction)</li>
+                  <li>Funding tracer (follow the money)</li>
+                  <li>Strategic intelligence analysis</li>
+                  <li>Causal extraction (cause-effect relationships)</li>
+                  <li>Network building (relationship mapping)</li>
+                  <li>Pattern detection (anomalies and trends)</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>Advanced Features</h4>
+                <ul className="info-list">
+                  <li>Multiple investigation strategies</li>
+                  <li>Cross-reference validation</li>
+                  <li>Source credibility assessment</li>
+                  <li>Hypothesis generation and testing</li>
+                  <li>Interactive network visualizations</li>
+                  <li>Comprehensive reporting</li>
+                </ul>
+                <p style={{ marginTop: 'var(--space-lg)', fontSize: '0.9rem', color: 'var(--text-tertiary)' }}>
+                  <strong>Example:</strong> "Investigate funding sources for political campaign X" 
+                  → Traces donations → Maps relationships → Identifies patterns → Generates network graph
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sentiment Analyzer Deep Dive */}
+        <section className="info-section" style={{ display: 'none' }}>
           <h2 className="info-section-title">Sentiment Analyzer: Advanced Multi-Node Architecture</h2>
           <div className="info-card">
             <p style={{ marginBottom: 'var(--space-xl)', fontSize: '1.1rem', color: 'var(--text-secondary)' }}>
@@ -626,7 +949,7 @@ export function InfoPage() {
               <div className="feature-number">01</div>
               <h3>Multi-Agent Collaboration</h3>
               <p>
-                7-node master agent coordinates 9+ specialized sub-agents, each with distinct 
+                7-node master agent coordinates 8 specialized sub-agents, each with distinct 
                 responsibilities. Agents communicate through a shared state graph, ensuring 
                 seamless information flow and intelligent decision-making.
               </p>
@@ -634,28 +957,31 @@ export function InfoPage() {
             
             <div className="info-feature-showcase">
               <div className="feature-number">02</div>
-              <h3>Real-Time Web Intelligence</h3>
+              <h3>Intelligent Web Crawling</h3>
               <p>
-                Tavily API integration provides access to current, accurate web data. Every analysis 
-                is backed by live sources with automatic citation extraction and credibility scoring.
+                Cognitive Crawler with 3-layer intelligence system: intent detection, domain 
+                classification, and URL prioritization. Smart crawling with knowledge base storage 
+                and RAG query support for semantic search.
               </p>
             </div>
             
             <div className="info-feature-showcase">
               <div className="feature-number">03</div>
-              <h3>Auto-Visualization</h3>
+              <h3>Investigative Journalism</h3>
               <p>
-                Intelligent artifact generation system automatically creates charts, graphs, maps, 
-                and infographics when data supports visualization. 35+ artifact types available.
+                Cost-optimized (91% cheaper) deep research agent with hypothesis testing, evidence 
+                tracking, and publication-ready outputs. Generates timelines, network graphs, and 
+                comprehensive investigative reports.
               </p>
             </div>
             
             <div className="info-feature-showcase">
               <div className="feature-number">04</div>
-              <h3>Dual API Architecture</h3>
+              <h3>Media Bias Analysis</h3>
               <p>
-                REST APIs for standard operations (health checks, metadata) and WebSocket streaming 
-                for real-time updates. See agent decisions, tool calls, and intermediate results as they happen.
+                Multi-source comparison detecting political lean, framing bias, and loaded language. 
+                Identifies consensus points, divergences, and omissions across different media outlets 
+                with visual spectrum charts.
               </p>
             </div>
             
@@ -663,17 +989,38 @@ export function InfoPage() {
               <div className="feature-number">05</div>
               <h3>Sentiment Analysis</h3>
               <p>
-                Deep sentiment analysis across multiple sources and regions. Generates sentiment 
-                maps, radar charts, trend lines, and bias reports automatically.
+                Advanced multi-country sentiment analysis with iterative quality-checking loop to 
+                combat language bias. Includes domain filtering, source diversity validation, and 
+                automatic artifact generation.
               </p>
             </div>
             
             <div className="info-feature-showcase">
               <div className="feature-number">06</div>
-              <h3>Live Political Monitor</h3>
+              <h3>Real-Time Monitoring</h3>
               <p>
-                Continuous monitoring of political events with "explosiveness" scoring. Identifies 
-                breaking stories, tracks trending topics, and generates situation reports.
+                Hybrid RSS + Tavily monitoring with explosiveness scoring (0-100). Identifies breaking 
+                stories, trending topics, and generates situation reports. 99.4% cost reduction in RSS mode.
+              </p>
+            </div>
+            
+            <div className="info-feature-showcase">
+              <div className="feature-number">07</div>
+              <h3>Strategic Intelligence</h3>
+              <p>
+                Deep Investigative Reporter with specialized strategies for entity investigation, 
+                funding tracing, event mapping, and pattern detection. Comprehensive network 
+                visualizations and cross-reference validation.
+              </p>
+            </div>
+            
+            <div className="info-feature-showcase">
+              <div className="feature-number">08</div>
+              <h3>Knowledge Base & RAG</h3>
+              <p>
+                Retrieval Augmented Generation with MongoDB vector search and embeddings. Query stored 
+                content semantically, integrate with Aleph data, Wayback Machine, and multiple extraction 
+                methods (Jina AI, Trafilatura).
               </p>
             </div>
           </div>

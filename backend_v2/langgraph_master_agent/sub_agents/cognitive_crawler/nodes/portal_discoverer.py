@@ -47,9 +47,19 @@ async def portal_discoverer(state: CognitiveCrawlerState) -> Dict[str, Any]:
         state["portals_discovered"] = portals
         print(f"   ✅ Discovered {len(portals)} relevant pages")
         
-        for i, portal in enumerate(portals[:5], 1):
-            print(f"   {i}. {portal.get('title', 'Unknown')}")
-            print(f"      URL: {portal.get('url', 'N/A')}")
+        # Log each discovered URL
+        for i, portal in enumerate(portals, 1):
+            title = portal.get('title', 'Unknown')
+            url = portal.get('url', 'N/A')
+            print(f"   {i}. {title}")
+            print(f"      URL: {url}")
+            
+            # Add to execution log for frontend display
+            state["execution_log"].append({
+                "step": "portal_discoverer",
+                "action": f"Found: {title}",
+                "url": url
+            })
         
     except Exception as e:
         error_msg = f"portal_discoverer error: {str(e)}"

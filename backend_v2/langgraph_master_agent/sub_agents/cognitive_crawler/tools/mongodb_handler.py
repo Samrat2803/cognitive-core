@@ -16,14 +16,16 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_core.documents import Document
 from datetime import datetime
 
-# Import from environment variables (works from any sub-agent)
-MONGODB_URI = os.getenv("MONGODB_CONNECTION_STRING")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "political_analyst")
-PORTALS_COLLECTION = "tender_portals"
-TENDERS_COLLECTION = "tenders"
-VECTORS_COLLECTION = "vectors"
-EMBEDDING_MODEL = "text-embedding-3-small"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Import from config.py to ensure consistency
+from config import (
+    MONGODB_URI,
+    DATABASE_NAME,
+    PORTALS_COLLECTION,
+    TENDERS_COLLECTION,
+    VECTORS_COLLECTION,
+    EMBEDDING_MODEL,
+    OPENAI_API_KEY
+)
 
 
 class TenderMongoDBHandler:

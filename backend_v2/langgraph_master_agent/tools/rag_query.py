@@ -41,7 +41,8 @@ async def query_rag(
     thread_id: Optional[str] = None,
     top_k: int = 10,
     min_score: float = 0.3,
-    generate_answer: bool = True
+    generate_answer: bool = True,
+    stream_callback: Optional[callable] = None  # NEW: For streaming responses
 ) -> Dict[str, Any]:
     """
     Universal RAG query tool for all sub-agents
@@ -163,13 +164,32 @@ Instructions:
 
 Answer:"""
             
-            response = await llm.ainvoke([
-                {"role": "system", "content": "You are a helpful research assistant."},
-                {"role": "user", "content": rag_prompt}
-            ])
-            
-            answer = response.content
-            print(f"   ✅ Answer generated ({len(answer)} chars)")
+            # STREAMING support
+            if stream_callback:
+                # Stream the response token by token
+                print(f"   🌊 Streaming answer generation...")
+                accumulated_content = ""
+                
+                async for chunk in llm.astream([
+                    {"role": "system", "content": "You are a helpful research assistant."},
+                    {"role": "user", "content": rag_prompt}
+                ]):
+                    if hasattr(chunk, 'content') and chunk.content:
+                        accumulated_content += chunk.content
+                        # Call the callback with each chunk
+                        await stream_callback(chunk.content)
+                
+                answer = accumulated_content
+                print(f"   ✅ Streaming complete ({len(answer)} chars)")
+            else:
+                # Non-streaming: original behavior
+                response = await llm.ainvoke([
+                    {"role": "system", "content": "You are a helpful research assistant."},
+                    {"role": "user", "content": rag_prompt}
+                ])
+                
+                answer = response.content
+                print(f"   ✅ Answer generated ({len(answer)} chars)")
         
         return {
             "answer": answer,

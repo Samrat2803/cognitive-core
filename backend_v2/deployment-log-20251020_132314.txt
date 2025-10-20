@@ -1,0 +1,34 @@
+ERROR: MaxRetriesError - Max retries exceeded for service error (5XX)
+Received 5XX error during attempt #1
+   
+
+Received 5XX error during attempt #2
+   
+
+Received 5XX error during attempt #3
+   
+
+Received 5XX error during attempt #4
+   
+
+Received 5XX error during attempt #5
+   
+
+Received 5XX error during attempt #6
+   
+
+Received 5XX error during attempt #7
+   
+
+Received 5XX error during attempt #8
+   
+
+Received 5XX error during attempt #9
+   
+
+Received 5XX error during attempt #10
+   
+
+Received 5XX error during attempt #11
+   
+

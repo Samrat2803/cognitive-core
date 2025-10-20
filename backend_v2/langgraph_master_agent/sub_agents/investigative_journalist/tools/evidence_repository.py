@@ -47,7 +47,7 @@ async def save_investigation(state: Dict[str, Any], session_id: Optional[str] = 
         "completed_at": datetime.utcnow() if state.get("investigation_complete") else None,
         
         # Progress tracking (using Investigation model fields)
-        "current_iteration": state["iteration"] - 1,  # Subtract 1 since we increment before work
+        "current_iteration": state["iteration"],  # Current iteration (already correct)
         "max_iterations": state["max_iterations"],
         "phase": state.get("phase", "synthesis"),
         

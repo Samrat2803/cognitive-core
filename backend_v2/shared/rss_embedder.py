@@ -1,27 +1,30 @@
 """
 On-Demand Embedding Creator for RSS Articles
 
-Creates and caches embeddings in MongoDB only when needed (lazy loading).
-Prevents duplicate embedding creation.
+NOW USES UNIFIED VECTOR STORE (tender_vectors) with OpenAI embeddings
+for compatibility with Cognitive Crawler and Investigative Journalist.
 
 Usage:
     from shared.rss_embedder import RSSEmbedder
     
     embedder = RSSEmbedder()
     
-    # Get or create embeddings for articles
-    embeddings = await embedder.get_or_create_embeddings(article_urls)
+    # Store RSS articles in unified vector store
+    await embedder.store_articles(article_urls)
     
-    # Semantic search
+    # Semantic search across ALL sources (RSS + Crawler + Journalist)
     results = await embedder.semantic_search(query, top_k=10)
 """
 
-from pymongo import MongoClient, ASCENDING
-from sentence_transformers import SentenceTransformer
-from typing import List, Dict, Optional, Tuple
-from datetime import datetime, timezone
-import numpy as np
+import sys
 import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../langgraph_master_agent/sub_agents/cognitive_crawler/tools'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../langgraph_master_agent/sub_agents/cognitive_crawler'))
+
+from pymongo import MongoClient
+from typing import List, Dict, Optional
+from datetime import datetime, timezone
+import hashlib
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -30,365 +33,159 @@ load_dotenv()
 
 class RSSEmbedder:
     """
-    Creates and caches embeddings for RSS articles
+    Creates and stores RSS article embeddings in UNIFIED vector store
     
-    Strategy:
-    - Create embeddings on-demand (not for all articles upfront)
-    - Cache in MongoDB to avoid re-computation
-    - Support semantic search using cosine similarity
+    Philosophy: All sources (RSS, Crawler, Journalist) → ONE vector store
+    
+    Benefits:
+    - Cross-source RAG (chat with all data)
+    - Consistent embedding model (OpenAI)
+    - Single source of truth
     """
     
-    def __init__(self, mongo_uri: str = None, model_name: str = "all-MiniLM-L6-v2"):
-        """
-        Initialize embedder with MongoDB and sentence transformer
+    def __init__(self):
+        """Initialize with unified vector store (TenderMongoDBHandler)"""
+        try:
+            from mongodb_handler import TenderMongoDBHandler
+            self.db_handler = TenderMongoDBHandler()
+            print(f"✓ RSS Embedder initialized with UNIFIED vector store")
+            print(f"   Database: {self.db_handler.db.name}")
+            print(f"   Collection: tender_vectors (shared with Crawler + Journalist)")
+        except ImportError as e:
+            print(f"⚠️  Could not import TenderMongoDBHandler: {e}")
+            print(f"   RSS embeddings will not work")
+            raise
         
-        Args:
-            mongo_uri: MongoDB connection string
-            model_name: SentenceTransformer model name
-        """
-        if mongo_uri is None:
-            mongo_uri = os.getenv("MONGODB_URI") or os.getenv("MONGODB_CONNECTION_STRING")
-            if not mongo_uri:
-                raise ValueError("MONGODB_URI or MONGODB_CONNECTION_STRING environment variable not set")
+        # Also connect to rss_articles for fetching content
+        mongo_uri = os.getenv("MONGODB_URI") or os.getenv("MONGODB_CONNECTION_STRING")
+        database_name = os.getenv("DATABASE_NAME", "political_analyst_db")
         
         self.client = MongoClient(mongo_uri)
-        self.db = self.client["political_analyst"]
-        self.embeddings_collection = self.db["rss_article_embeddings"]
+        self.db = self.client[database_name]
         self.articles_collection = self.db["rss_articles"]
-        
-        # Load embedding model
-        print(f"Loading embedding model: {model_name}...")
-        self.model = SentenceTransformer(model_name)
-        self.model_name = model_name
-        self.embedding_dim = self.model.get_sentence_embedding_dimension()
-        
-        # Create indexes
-        self._create_indexes()
-        
-        print(f"✓ RSS Embedder initialized ({model_name}, {self.embedding_dim}D)")
     
-    def _create_indexes(self):
-        """Create indexes for efficient querying"""
-        # Unique index on article_url (prevents duplicate embeddings)
-        self.embeddings_collection.create_index([("article_url", ASCENDING)], unique=True)
-        self.embeddings_collection.create_index([("embedding_model", ASCENDING)])
-        
-        print(f"✓ Created indexes on rss_article_embeddings collection")
-    
-    async def get_or_create_embeddings(
-        self,
-        article_urls: List[str],
-        show_progress: bool = False
-    ) -> Dict[str, np.ndarray]:
+    async def store_articles(self, article_urls: List[str]) -> Dict[str, any]:
         """
-        Get embeddings for articles (create if not exists)
+        Store RSS articles in unified vector store
         
         Args:
-            article_urls: List of article URLs
-            show_progress: Show progress during creation
-        
+            article_urls: List of article URLs to embed and store
+            
         Returns:
-            {article_url: embedding_vector, ...}
+            {
+                "stored": int,
+                "skipped": int (already existed),
+                "failed": int
+            }
         """
+        print(f"\n{'─'*80}")
+        print(f"📰 RSS → UNIFIED VECTOR STORE")
+        print(f"{'─'*80}")
+        print(f"   Processing {len(article_urls)} articles...")
         
-        result = {}
-        to_embed = []
-        
-        # OPTIMIZED: Bulk query instead of N individual queries
-        # Single query fetches all embeddings at once (100x faster for Atlas)
-        cached_embeddings = list(self.embeddings_collection.find({
-            "article_url": {"$in": article_urls},
-            "embedding_model": self.model_name
-        }))
-        
-        # Create lookup dict
-        cached_lookup = {doc["article_url"]: np.array(doc["embedding"]) for doc in cached_embeddings}
-        
-        # Check which ones we have vs need
-        for url in article_urls:
-            if url in cached_lookup:
-                result[url] = cached_lookup[url]
-            else:
-                to_embed.append(url)
-        
-        if show_progress:
-            print(f"  Cached: {len(result)}, To embed: {len(to_embed)}")
-        
-        # Create missing embeddings
-        if to_embed:
-            new_embeddings = await self._create_embeddings(to_embed, show_progress)
-            result.update(new_embeddings)
-        
-        return result
-    
-    async def _create_embeddings(
-        self,
-        article_urls: List[str],
-        show_progress: bool = False
-    ) -> Dict[str, np.ndarray]:
-        """
-        Create embeddings for articles
-        
-        Args:
-            article_urls: List of article URLs
-            show_progress: Show progress bar
-        
-        Returns:
-            {article_url: embedding_vector, ...}
-        """
-        
-        result = {}
-        
-        # Fetch articles from MongoDB
+        # Fetch articles from rss_articles collection
         articles = list(self.articles_collection.find({"url": {"$in": article_urls}}))
         
         if not articles:
-            return result
+            print(f"   ⚠️  No articles found in rss_articles collection")
+            return {"stored": 0, "skipped": 0, "failed": 0}
         
-        # Create text for embedding (title + summary)
-        texts = []
-        url_map = {}
+        print(f"   ✅ Found {len(articles)} articles in rss_articles")
         
+        # Prepare documents for unified vector store
+        documents = []
         for article in articles:
-            title = article.get("title", "")
-            summary = article.get("summary", "")
-            text = f"{title} {summary[:200]}"
-            texts.append(text)
-            url_map[text] = article['url']
-        
-        # Create embeddings (batch processing)
-        if show_progress:
-            print(f"  Creating {len(texts)} embeddings...")
-        
-        embeddings = self.model.encode(
-            texts,
-            convert_to_numpy=True,
-            show_progress_bar=show_progress
-        )
-        
-        # Store in MongoDB and result dict
-        for text, embedding in zip(texts, embeddings):
-            url = url_map[text]
+            url = article.get("url", "")
+            title = article.get("title", "Untitled")
+            content = article.get("content") or article.get("description", "")
             
-            embedding_doc = {
-                "article_url": url,
-                "embedding": embedding.tolist(),
-                "embedding_model": self.model_name,
-                "embedding_dim": len(embedding),
-                "created_at": datetime.now(timezone.utc),
-                "text_used": text[:500]  # Store first 500 chars for debugging
-            }
-            
-            # Store in MongoDB (upsert to handle race conditions)
-            try:
-                self.embeddings_collection.update_one(
-                    {"article_url": url, "embedding_model": self.model_name},
-                    {"$set": embedding_doc},
-                    upsert=True
-                )
-            except Exception as e:
-                if "duplicate" not in str(e).lower():
-                    print(f"  ✗ Error storing embedding for {url}: {e}")
-            
-            # Mark article as having embedding
-            self.articles_collection.update_one(
-                {"url": url},
-                {"$set": {"has_embedding": True}}
-            )
-            
-            result[url] = embedding
-        
-        return result
-    
-    async def semantic_search(
-        self,
-        query: str,
-        article_urls: List[str],
-        top_k: int = 50,
-        min_similarity: float = 0.3
-    ) -> List[Tuple[str, float]]:
-        """
-        Semantic search using cosine similarity
-        
-        Args:
-            query: Search query text
-            article_urls: List of article URLs to search within
-            top_k: Number of top results to return
-            min_similarity: Minimum cosine similarity threshold
-        
-        Returns:
-            List of (article_url, similarity_score) tuples, sorted by score
-        """
-        
-        # Create query embedding
-        query_embedding = self.model.encode([query], convert_to_numpy=True)[0]
-        
-        # Get or create article embeddings
-        article_embeddings = await self.get_or_create_embeddings(article_urls)
-        
-        # Calculate cosine similarities
-        similarities = []
-        
-        for url, embedding in article_embeddings.items():
-            # Cosine similarity
-            similarity = np.dot(query_embedding, embedding) / (
-                np.linalg.norm(query_embedding) * np.linalg.norm(embedding)
-            )
-            
-            if similarity >= min_similarity:
-                similarities.append((url, float(similarity)))
-        
-        # Sort by similarity (descending)
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        
-        return similarities[:top_k]
-    
-    async def find_similar_articles(
-        self,
-        article_url: str,
-        candidate_urls: List[str],
-        top_k: int = 10,
-        min_similarity: float = 0.5
-    ) -> List[Tuple[str, float]]:
-        """
-        Find articles similar to a given article
-        
-        Args:
-            article_url: Reference article URL
-            candidate_urls: List of candidate article URLs
-            top_k: Number of results
-            min_similarity: Minimum similarity threshold
-        
-        Returns:
-            List of (article_url, similarity_score) tuples
-        """
-        
-        # Get embeddings
-        all_urls = [article_url] + candidate_urls
-        embeddings = await self.get_or_create_embeddings(all_urls)
-        
-        if article_url not in embeddings:
-            return []
-        
-        reference_embedding = embeddings[article_url]
-        similarities = []
-        
-        for url in candidate_urls:
-            if url == article_url or url not in embeddings:
+            if not content or len(content) < 100:
+                print(f"   ⚠️  Skipping {url[:50]}... (no content)")
                 continue
             
-            embedding = embeddings[url]
-            similarity = np.dot(reference_embedding, embedding) / (
-                np.linalg.norm(reference_embedding) * np.linalg.norm(embedding)
+            # Generate unique doc_id
+            doc_id = hashlib.md5(f"rss_{url}".encode()).hexdigest()
+            
+            doc = {
+                "doc_id": doc_id,
+                "content": f"{title}\n\n{content}",  # Include title for better context
+                "metadata": {
+                    "url": url,
+                    "source": "rss",  # Tag as RSS source
+                    "source_name": article.get("source", "Unknown"),
+                    "category": article.get("source_category", "general"),
+                    "region": article.get("source_region", "global"),
+                    "published_dt": article.get("published_dt", datetime.now(timezone.utc)).isoformat() if isinstance(article.get("published_dt"), datetime) else str(article.get("published_dt")),
+                    "stored_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+            documents.append(doc)
+        
+        if not documents:
+            print(f"   ⚠️  No valid documents to store")
+            return {"stored": 0, "skipped": 0, "failed": 0}
+        
+        print(f"   📦 Storing {len(documents)} COMPLETE articles (NO CHUNKING)...")
+        print(f"   💡 RSS strategy: 1 article = 1 embedding (cost-efficient)")
+        
+        # Store using TenderMongoDBHandler (same as Crawler + Journalist)
+        try:
+            await self.db_handler.store_vectors(
+                documents=documents,
+                thread_id="rss_global"  # Use consistent thread_id for RSS
             )
             
-            if similarity >= min_similarity:
-                similarities.append((url, float(similarity)))
-        
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        return similarities[:top_k]
-    
-    def get_stats(self) -> Dict:
-        """Get embedding collection statistics"""
-        total = self.embeddings_collection.count_documents({})
-        by_model = {}
-        
-        pipeline = [
-            {"$group": {"_id": "$embedding_model", "count": {"$sum": 1}}}
-        ]
-        results = list(self.embeddings_collection.aggregate(pipeline))
-        by_model = {r["_id"]: r["count"] for r in results}
-        
-        return {
-            "total_embeddings": total,
-            "by_model": by_model,
-            "current_model": self.model_name,
-            "embedding_dim": self.embedding_dim
-        }
-
-
-# Standalone test
-if __name__ == "__main__":
-    import asyncio
-    from rss_collector import RSSCollector
-    
-    async def test():
-        print("=" * 80)
-        print("RSS EMBEDDER - Standalone Test")
-        print("=" * 80)
-        
-        # Initialize
-        collector = RSSCollector()
-        embedder = RSSEmbedder()
-        
-        # Get some articles
-        print("\n[TEST 1] Getting articles from MongoDB...")
-        articles = await collector.get_articles(max_age_hours=24, limit=20)
-        print(f"  Retrieved {len(articles)} articles")
-        
-        if not articles:
-            print("  ⚠️  No articles found. Run rss_collector.py first!")
-            return
-        
-        article_urls = [a["url"] for a in articles]
-        
-        # Create embeddings
-        print("\n[TEST 2] Creating embeddings (on-demand)...")
-        embeddings = await embedder.get_or_create_embeddings(article_urls[:10], show_progress=True)
-        print(f"  ✓ Created/retrieved {len(embeddings)} embeddings")
-        print(f"  Embedding shape: {list(embeddings.values())[0].shape}")
-        
-        # Test semantic search
-        print("\n[TEST 3] Semantic search...")
-        queries = [
-            "artificial intelligence regulation",
-            "climate change policy",
-            "technology companies"
-        ]
-        
-        for query in queries:
-            print(f"\n  Query: '{query}'")
-            results = await embedder.semantic_search(query, article_urls, top_k=3)
-            print(f"  Found {len(results)} results")
+            print(f"   ✅ Stored {len(documents)} RSS articles in tender_vectors")
+            print(f"   🔍 Now queryable via Chat with Data + Knowledge Base!")
+            print(f"{'─'*80}\n")
             
-            for i, (url, score) in enumerate(results, 1):
-                # Get article title
-                article = next((a for a in articles if a["url"] == url), None)
-                if article:
-                    print(f"    {i}. {article['title'][:60]}...")
-                    print(f"       Similarity: {score:.3f}")
-        
-        # Test similar articles
-        print("\n[TEST 4] Finding similar articles...")
-        if len(article_urls) >= 5:
-            reference_url = article_urls[0]
-            reference_article = articles[0]
-            print(f"  Reference: {reference_article['title'][:60]}...")
+            return {"stored": len(documents), "skipped": 0, "failed": 0}
             
-            similar = await embedder.find_similar_articles(
-                reference_url,
-                article_urls[1:],
-                top_k=3
-            )
-            
-            print(f"  Found {len(similar)} similar articles:")
-            for i, (url, score) in enumerate(similar, 1):
-                article = next((a for a in articles if a["url"] == url), None)
-                if article:
-                    print(f"    {i}. {article['title'][:60]}...")
-                    print(f"       Similarity: {score:.3f}")
-        
-        # Stats
-        print("\n[TEST 5] Embedding statistics...")
-        stats = embedder.get_stats()
-        print(f"  Total embeddings: {stats['total_embeddings']}")
-        print(f"  Current model: {stats['current_model']}")
-        print(f"  Embedding dimension: {stats['embedding_dim']}")
-        print(f"  By model: {stats['by_model']}")
-        
-        print("\n" + "=" * 80)
-        print("✅ All tests completed!")
-        print("=" * 80)
+        except Exception as e:
+            print(f"   ❌ Storage failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"stored": 0, "skipped": 0, "failed": len(documents)}
     
-    asyncio.run(test())
-
+    async def semantic_search(self, query: str, top_k: int = 10, rss_only: bool = False) -> List[Dict]:
+        """
+        Search unified vector store (includes RSS + Crawler + Journalist)
+        
+        Args:
+            query: Search query
+            top_k: Number of results
+            rss_only: If True, only return RSS articles
+            
+        Returns:
+            List of matching articles with scores
+        """
+        print(f"\n🔍 Semantic Search: {query}")
+        print(f"   Target: {'RSS only' if rss_only else 'ALL sources (RSS + Crawler + Journalist)'}")
+        
+        # Use TenderMongoDBHandler's search (Atlas Vector Search)
+        results = await self.db_handler.search_vectors(
+            query=query,
+            thread_id=None,  # Search globally (all sources)
+            top_k=top_k
+        )
+        
+        # Filter to RSS only if requested
+        if rss_only:
+            results = [r for r in results if r.get('metadata', {}).get('source') == 'rss']
+            print(f"   ✅ Found {len(results)} RSS results")
+        else:
+            print(f"   ✅ Found {len(results)} results across ALL sources")
+            
+            # Show source breakdown
+            sources = {}
+            for r in results:
+                src = r.get('metadata', {}).get('source', 'unknown')
+                sources[src] = sources.get(src, 0) + 1
+            print(f"   📊 Sources: {sources}")
+        
+        return results
+    
+    def close(self):
+        """Close connections"""
+        self.db_handler.close()
+        self.client.close()

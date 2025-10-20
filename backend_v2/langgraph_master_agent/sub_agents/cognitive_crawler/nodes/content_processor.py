@@ -66,6 +66,12 @@ async def content_processor(state: CognitiveCrawlerState) -> Dict[str, Any]:
             }
             
             processed_documents.append(document)
+            
+            # Log each processed document
+            state["execution_log"].append({
+                "step": "content_processor",
+                "action": f"Processed: {extract_domain(url)} ({len(content):,} chars)"
+            })
         
         print(f"   ✅ Processed {len(processed_documents)} documents")
         

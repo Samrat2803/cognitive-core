@@ -53,8 +53,11 @@ class RSSCollector:
             if not mongo_uri:
                 raise ValueError("MONGODB_URI or MONGODB_CONNECTION_STRING environment variable not set")
         
+        # Use the same database as the rest of the system
+        database_name = os.getenv("DATABASE_NAME", "political_analyst_db")
+        
         self.client = MongoClient(mongo_uri)
-        self.db = self.client["political_analyst"]
+        self.db = self.client[database_name]
         self.articles_collection = self.db["rss_articles"]
         self.sources_collection = self.db["rss_sources"]
         
