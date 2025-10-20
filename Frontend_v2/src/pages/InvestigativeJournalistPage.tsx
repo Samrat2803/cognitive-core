@@ -4,6 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Markdown } from '../components/ui/Markdown';
 import { Header } from '../components/layout/Header';
 import { InvestigativeJournalistStateViewer } from '../components/InvestigativeJournalistStateViewer';
+import { config } from '../config';
 import './InvestigativeJournalistPage.css';
 
 // Message types
@@ -76,7 +77,7 @@ export function InvestigativeJournalistPage() {
   const connectWebSocket = () => {
     setConnectionState('connecting');
     
-    const ws = new WebSocket('ws://localhost:8000/ws/chat');
+    const ws = new WebSocket(config.ws.chat);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -622,6 +623,18 @@ export function InvestigativeJournalistPage() {
                 </div>
               ) : (
                 <div className="artifact-iframe-container">
+                  <div className="artifact-header-actions">
+                    <button
+                      onClick={() => {
+                        const artifact = artifacts.find(a => a.name === 'Entity Network Graph');
+                        if (artifact) window.open(artifact.url, '_blank');
+                      }}
+                      className="open-external-button"
+                    >
+                      <ExternalLink size={16} />
+                      Open in New Tab
+                    </button>
+                  </div>
                   {iframeLoading.network && (
                     <div className="iframe-loading">
                       <Loader2 className="spinner" size={48} />
@@ -637,7 +650,8 @@ export function InvestigativeJournalistPage() {
                       style={{ display: iframeLoading.network ? 'none' : 'block' }}
                       onLoad={() => setIframeLoading(prev => ({ ...prev, network: false }))}
                       onLoadStart={() => setIframeLoading(prev => ({ ...prev, network: true }))}
-                      sandbox="allow-scripts allow-same-origin allow-downloads"
+                      sandbox="allow-scripts allow-same-origin allow-downloads allow-forms"
+                      allow="accelerometer; camera; encrypted-media; geolocation; gyroscope; microphone; midi; payment; usb"
                     />
                   ))}
                 </div>

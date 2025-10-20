@@ -21,12 +21,14 @@ kaleido
 pydot
 graphviz
 networkx
+pyvis
 
 # Optional: Database (MongoDB)
 motor
 pymongo
 dnspython
 certifi
+langchain-mongodb
 
 # AWS S3 Integration
 boto3
@@ -60,3 +62,5 @@ Pillow
 moviepy
 imageio-ffmpeg
 python-pptx
+requests
+feedparser

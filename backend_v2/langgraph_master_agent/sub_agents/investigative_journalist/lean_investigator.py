@@ -712,8 +712,12 @@ IMPORTANT: Based on your "decision" value, you MUST include the corresponding qu
 - Testing company background → {{"decision": "aleph_search", "aleph_query": "Maiden Pharmaceuticals", "hypothesis_id": "h1", "question": "Who owns Maiden Pharma?", ...}}
 - Checking government response → {{"decision": "wayback_machine", "target_url": "https://cdsco.gov.in", "hypothesis_id": "h2", "question": "Did CDSCO delete alerts?", ...}}
 - Finding recent news → {{"decision": "tavily_search", "search_query": "India cough syrup deaths latest", "hypothesis_id": "h1", "question": "What's the latest?", ...}}
-{"- Synthesizing knowledge → {{\"decision\": \"query_local_rag\", \"rag_query\": \"What companies have we identified?\", \"hypothesis_id\": \"general\", \"question\": \"What do we know?\", ...}}" if has_local_rag else ""}
-
+"""
+        # Add RAG example if available
+        if has_local_rag:
+            strategy_prompt += '- Synthesizing knowledge → {{"decision": "query_local_rag", "rag_query": "What companies have we identified?", "hypothesis_id": "general", "question": "What do we know?", ...}}\n'
+        
+        strategy_prompt += """
 ⚠️  NOTICE: Each example includes BOTH the tool-specific field (target_url/aleph_query/search_query) AND the common fields!
 
 Be specific. Be surgical. Use the RIGHT TOOL for the job. Find what others missed.

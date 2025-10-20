@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { config } from '../../config';
 import './Navigation.css';
 
 export function Navigation() {
@@ -14,7 +15,7 @@ export function Navigation() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch('http://localhost:8000/health', {
+        const response = await fetch(`${config.apiUrl}/health`, {
           method: 'GET',
           signal: AbortSignal.timeout(3000)
         });

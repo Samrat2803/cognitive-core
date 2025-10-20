@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { config } from '../config';
 import './InvestigationsPage.css';
 
 // Investigation type definition
@@ -54,7 +55,7 @@ export function InvestigationsPage() {
   useEffect(() => {
     const fetchInvestigations = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/investigations');
+        const response = await fetch(`${config.apiUrl}/api/investigations`);
         
         if (!response.ok) {
           console.error('Failed to fetch investigations:', response.status);
@@ -115,7 +116,7 @@ export function InvestigationsPage() {
     
     try {
       // Call the backend API
-      const response = await fetch('http://localhost:8000/api/investigations', {
+      const response = await fetch(`${config.apiUrl}/api/investigations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

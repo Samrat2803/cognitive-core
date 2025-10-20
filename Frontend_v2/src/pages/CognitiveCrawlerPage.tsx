@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Loader2, AlertCircle, Plus, X, Link as LinkIcon, MessageSquare, Search } from 'lucide-react';
 import { Markdown } from '../components/ui/Markdown';
 import { Header } from '../components/layout/Header';
+import { config } from '../config';
 import './CognitiveCrawlerPage.css';
 
 // Types
@@ -98,7 +99,7 @@ export function CognitiveCrawlerPage() {
   const loadDatabaseStats = async () => {
     setIsLoadingStats(true);
     try {
-      const response = await fetch('http://localhost:8000/api/cognitive_crawler/stats');
+      const response = await fetch(`${config.apiUrl}/api/cognitive_crawler/stats`);
       const data = await response.json();
       if (data.success) {
         setDbStats(data.stats);
@@ -119,7 +120,7 @@ export function CognitiveCrawlerPage() {
     
     try {
       const response = await fetch(
-        `http://localhost:8000/api/cognitive_crawler/search?q=${encodeURIComponent(searchTerm)}&limit=50`
+        `${config.apiUrl}/api/cognitive_crawler/search?q=${encodeURIComponent(searchTerm)}&limit=50`
       );
       const data = await response.json();
       if (data.success) {
@@ -131,7 +132,7 @@ export function CognitiveCrawlerPage() {
   };
 
   const connectWebSocket = () => {
-    const wsUrl = `ws://localhost:8000/ws/cognitive_crawler/${sessionId}`;
+    const wsUrl = config.ws.cognitiveCrawler(sessionId);
     console.log('Connecting to:', wsUrl);
     
     setConnectionState('connecting');

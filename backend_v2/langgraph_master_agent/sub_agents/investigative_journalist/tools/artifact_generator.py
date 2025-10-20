@@ -41,14 +41,15 @@ def generate_entity_network_graph(
     """
     log(f"   📊 Generating entity network graph...")
     
-    # Initialize network with dark theme
+    # Initialize network with LIGHT background (dark was causing visibility issues in iframe)
     net = Network(
         height="750px",
         width="100%",
-        bgcolor="#1a1a1a",
-        font_color="white",
+        bgcolor="#ffffff",  # White background for better visibility
+        font_color="#000000",  # Black text
         select_menu=True,
-        filter_menu=True
+        filter_menu=True,
+        notebook=False  # Disable notebook mode for better iframe compatibility
     )
     
     # Configure physics for better layout
@@ -67,19 +68,29 @@ def generate_entity_network_graph(
             "stabilization": {"iterations": 150}
         },
         "nodes": {
-            "font": {"size": 14}
+            "font": {"size": 16, "color": "#000000"},
+            "borderWidth": 2,
+            "borderWidthSelected": 4
+        },
+        "edges": {
+            "color": {"color": "#666666", "highlight": "#d9f378"},
+            "width": 2
+        },
+        "interaction": {
+            "hover": true,
+            "tooltipDelay": 100
         }
     }
     """)
     
-    # Entity type colors (matching Aistra palette)
+    # Entity type colors (bright colors for white background)
     type_colors = {
-        "person": "#d9f378",      # Bright green for people
-        "organization": "#5d535c", # Gray for organizations
-        "location": "#333333",     # Dark gray for locations
-        "substance": "#FF6B6B",    # Red for substances
-        "event": "#4ECDC4",        # Teal for events
-        "unknown": "#95a5a6"       # Default gray
+        "person": "#4CAF50",       # Green for people
+        "organization": "#2196F3", # Blue for organizations
+        "location": "#FF9800",     # Orange for locations
+        "substance": "#F44336",    # Red for substances
+        "event": "#9C27B0",        # Purple for events
+        "unknown": "#607D8B"       # Gray default
     }
     
     # Add nodes (entities)
@@ -121,8 +132,9 @@ def generate_entity_network_graph(
                 source,
                 target,
                 title=rel_type,
-                color="#666666",
-                width=2
+                color="#424242",  # Dark gray for visibility
+                width=3,
+                arrows="to"  # Add arrows to show direction
             )
     
     log(f"      ✅ Added {len(connections)} connections")
@@ -140,21 +152,17 @@ def generate_timeline_visualization(
     output_path: str = "timeline.html"
 ) -> str:
     """
-    Generate timeline visualization using iteration numbers as X-axis
+    Generate a modern card-based timeline with proper text wrapping and visual hierarchy
     
     Args:
         facts: List of fact strings
-        iteration_count: Total iterations run
+        iteration_count: Total iterations run (not used in new design)
         output_path: Where to save the HTML file
         
     Returns:
         Path to generated HTML file
     """
     log(f"   📊 Generating timeline visualization...")
-    
-    # Convert facts to timeline events (use iteration number as proxy for time)
-    # Distribute facts evenly across iterations
-    timeline_data = []
     
     if not facts:
         log(f"      ⚠️  No facts to visualize")
@@ -164,69 +172,274 @@ def generate_timeline_visualization(
             text="No facts discovered yet",
             xref="paper", yref="paper",
             x=0.5, y=0.5, showarrow=False,
-            font=dict(size=20, color="gray")
+            font=dict(size=20, color="#5d535c")
         )
         fig.update_layout(
             title="Investigation Timeline",
-            paper_bgcolor="#1a1a1a",
-            plot_bgcolor="#1a1a1a",
+            paper_bgcolor="#1c1e20",
+            plot_bgcolor="#1c1e20",
             font=dict(color="white")
         )
         fig.write_html(output_path)
         return output_path
     
-    facts_per_iteration = max(len(facts) // max(iteration_count, 1), 1)
-    
-    for idx, fact in enumerate(facts):
-        # Estimate which iteration this fact was discovered
-        estimated_iteration = min((idx // facts_per_iteration) + 1, iteration_count)
+    # Generate custom HTML with card-based timeline
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigation Timeline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
         
-        # Truncate long facts for display
-        fact_short = fact[:80] + "..." if len(fact) > 80 else fact
+        body {{
+            font-family: 'Roboto Flex', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1c1e20 0%, #2a2c2e 100%);
+            color: #ffffff;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }}
         
-        timeline_data.append({
-            "Fact": fact_short,
-            "Full_Fact": fact,
-            "Iteration": estimated_iteration,
-            "Category": "Discovery"
-        })
+        .timeline-container {{
+            max-width: 900px;
+            margin: 0 auto;
+        }}
+        
+        .timeline-header {{
+            text-align: center;
+            margin-bottom: 50px;
+        }}
+        
+        .branding {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }}
+        
+        .branding-text {{
+            font-size: 14px;
+            color: #5d535c;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }}
+        
+        .branding-logo {{
+            font-size: 18px;
+        }}
+        
+        .timeline-title {{
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }}
+        
+        .timeline-subtitle {{
+            font-size: 16px;
+            color: #d9f378;
+            font-weight: 500;
+        }}
+        
+        .timeline {{
+            position: relative;
+            padding-left: 50px;
+        }}
+        
+        /* Vertical timeline line */
+        .timeline::before {{
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #d9f378 0%, #5d535c 100%);
+            border-radius: 2px;
+        }}
+        
+        .timeline-item {{
+            position: relative;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }}
+        
+        .timeline-item:nth-child(1) {{ animation-delay: 0.1s; }}
+        .timeline-item:nth-child(2) {{ animation-delay: 0.2s; }}
+        .timeline-item:nth-child(3) {{ animation-delay: 0.3s; }}
+        .timeline-item:nth-child(4) {{ animation-delay: 0.4s; }}
+        .timeline-item:nth-child(5) {{ animation-delay: 0.5s; }}
+        .timeline-item:nth-child(n+6) {{ animation-delay: 0.6s; }}
+        
+        @keyframes fadeInUp {{
+            from {{
+                opacity: 0;
+                transform: translateY(20px);
+            }}
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
+        }}
+        
+        /* Timeline marker */
+        .timeline-marker {{
+            position: absolute;
+            left: -38px;
+            top: 8px;
+            width: 20px;
+            height: 20px;
+            background: #d9f378;
+            border: 4px solid #1c1e20;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(217, 243, 120, 0.2);
+            z-index: 2;
+            transition: all 0.3s ease;
+        }}
+        
+        .timeline-item:hover .timeline-marker {{
+            transform: scale(1.3);
+            box-shadow: 0 0 0 8px rgba(217, 243, 120, 0.3);
+        }}
+        
+        /* Timeline number badge */
+        .timeline-number {{
+            position: absolute;
+            left: -48px;
+            top: 45px;
+            width: 40px;
+            height: 24px;
+            background: #5d535c;
+            color: #d9f378;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 1;
+        }}
+        
+        /* Fact card */
+        .fact-card {{
+            background: linear-gradient(135deg, #333333 0%, #2a2c2e 100%);
+            border-left: 4px solid #d9f378;
+            border-radius: 8px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }}
+        
+        .fact-card::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #d9f378 0%, transparent 100%);
+        }}
+        
+        .timeline-item:hover .fact-card {{
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(217, 243, 120, 0.2);
+            border-left-color: #ffffff;
+        }}
+        
+        .fact-text {{
+            font-size: 15px;
+            line-height: 1.7;
+            color: #e8e8e8;
+            font-weight: 400;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }}
+        
+        /* Responsive design */
+        @media (max-width: 768px) {{
+            .timeline {{
+                padding-left: 40px;
+            }}
+            
+            .timeline::before {{
+                left: 15px;
+            }}
+            
+            .timeline-marker {{
+                left: -33px;
+            }}
+            
+            .timeline-number {{
+                left: -43px;
+            }}
+            
+            .fact-card {{
+                padding: 16px 20px;
+            }}
+            
+            .timeline-title {{
+                font-size: 24px;
+            }}
+        }}
+        
+        /* Color accessibility */
+        @media (prefers-contrast: high) {{
+            .fact-card {{
+                border-left-width: 6px;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="timeline-container">
+        <div class="timeline-header">
+            <div class="branding">
+                <span class="branding-logo">🧠</span>
+                <span class="branding-text">COGNITIVE CORE</span>
+            </div>
+            <h1 class="timeline-title">Investigation Timeline</h1>
+            <p class="timeline-subtitle">{len(facts)} facts discovered in chronological order</p>
+        </div>
+        
+        <div class="timeline">
+"""
     
-    df = pd.DataFrame(timeline_data)
+    # Add each fact as a timeline item
+    for idx, fact in enumerate(facts, start=1):
+        html_content += f"""
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-number">#{idx}</div>
+                <div class="fact-card">
+                    <div class="fact-text">{fact}</div>
+                </div>
+            </div>
+"""
     
-    # Create scatter plot (since we don't have start/end times)
-    fig = px.scatter(
-        df,
-        x="Iteration",
-        y="Fact",
-        hover_data=["Full_Fact"],
-        title=f"Investigation Timeline ({len(facts)} facts discovered)",
-        color="Category",
-        color_discrete_map={"Discovery": "#d9f378"}
-    )
+    html_content += """
+        </div>
+    </div>
+</body>
+</html>
+"""
     
-    # Update layout for dark theme
-    fig.update_layout(
-        paper_bgcolor="#1a1a1a",
-        plot_bgcolor="#1a1a1a",
-        font=dict(color="white"),
-        xaxis=dict(
-            gridcolor="#333333",
-            title="Iteration Number"
-        ),
-        yaxis=dict(
-            gridcolor="#333333",
-            title="Discovered Facts",
-            autorange="reversed"  # Top to bottom
-        ),
-        hovermode="closest"
-    )
+    # Write to file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html_content)
     
-    # Update markers
-    fig.update_traces(
-        marker=dict(size=12, line=dict(width=2, color="white"))
-    )
-    
-    fig.write_html(output_path)
     log(f"      ✅ Timeline saved to {output_path} ({len(facts)} facts)")
     
     return output_path

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { ArrowLeft, Play, Download, Archive, ExternalLink, ChevronRight, ChevronDown, Square } from 'lucide-react';
 import { Markdown } from '../components/ui/Markdown';
+import { config } from '../config';
 import type { Investigation } from './InvestigationsPage';
 import './InvestigationDetailPage.css';
 
@@ -485,7 +486,7 @@ export function InvestigationDetailPage() {
       }
       
       try {
-        const response = await fetch(`http://localhost:8000/api/investigations/${id}`);
+        const response = await fetch(`${config.apiUrl}/api/investigations/${id}`);
         
         if (!response.ok) {
           console.error('Failed to fetch investigation:', response.status);
@@ -800,7 +801,7 @@ export function InvestigationDetailPage() {
     setIsRunning(true);
     setLogs([{ timestamp: new Date().toLocaleTimeString(), type: 'info', message: '🚀 Starting investigation...' }]);
     
-    const ws = new WebSocket(`ws://localhost:8000/ws/investigations/${id}`);
+    const ws = new WebSocket(config.ws.investigations(id!));
     wsRef.current = ws;
     
     ws.onopen = () => {
@@ -1067,7 +1068,7 @@ export function InvestigationDetailPage() {
     
     try {
       // Update max_iterations via REST API
-      const response = await fetch(`http://localhost:8000/api/investigations/${id}/continue`, {
+      const response = await fetch(`${config.apiUrl}/api/investigations/${id}/continue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ additional_iterations: continueForm.additionalIterations })
@@ -1083,7 +1084,7 @@ export function InvestigationDetailPage() {
       setIsRunning(true);
       setLogs([{ timestamp: new Date().toLocaleTimeString(), type: 'info', message: '🔄 Continuing investigation...' }]);
       
-      const ws = new WebSocket(`ws://localhost:8000/ws/investigations/${id}`);
+      const ws = new WebSocket(config.ws.investigations(id!));
       wsRef.current = ws;
       
       ws.onopen = () => {
