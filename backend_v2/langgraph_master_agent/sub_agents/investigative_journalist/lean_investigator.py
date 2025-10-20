@@ -379,6 +379,7 @@ Last 3 Q&A:
                         log(f"   ⚠️  WebSocket push failed: {e}")
         
         # Determine current phase
+        active_hypothesis = None  # Initialize to None
         if len(hypotheses) == 0:
             phase = "general_investigation"
             log("   📍 PHASE: General Investigation (no hypotheses yet)")
