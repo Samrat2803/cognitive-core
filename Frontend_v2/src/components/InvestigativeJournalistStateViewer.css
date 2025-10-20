@@ -1,0 +1,411 @@
+/* State Viewer Styles */
+.state-viewer {
+  padding: 1rem;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.state-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #5d535c;
+  text-align: center;
+  padding: 2rem;
+}
+
+.state-empty .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.state-section {
+  background: #1c1e20;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #333333;
+}
+
+.state-section h4 {
+  margin: 0 0 0.75rem 0;
+  color: #d9f378;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.state-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #333333;
+  font-size: 0.85rem;
+}
+
+.state-item:last-child {
+  border-bottom: none;
+}
+
+.state-label {
+  color: #999;
+  font-weight: 500;
+}
+
+.state-value {
+  color: #d9f378;
+  font-weight: 600;
+}
+
+.state-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  background: #333333;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.state-cost {
+  color: #d9f378;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Collapsible sections */
+.state-collapsible {
+  margin-bottom: 0.5rem;
+  background: #333333;
+  border-radius: 6px;
+  border: 1px solid #444;
+}
+
+.state-collapsible[open] {
+  background: #2a2a2a;
+}
+
+.state-summary {
+  padding: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+  list-style: none;
+}
+
+.state-summary:hover {
+  background: #3a3a3a;
+}
+
+.state-summary::-webkit-details-marker {
+  display: none;
+}
+
+.state-text {
+  flex: 1;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.state-detail {
+  padding: 0 0.75rem 0.75rem 0.75rem;
+  border-top: 1px solid #444;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.status-exploring {
+  background: #fbbf24;
+  color: #000;
+}
+
+.status-badge.status-proven {
+  background: #10b981;
+  color: #fff;
+}
+
+.status-badge.status-disproven {
+  background: #ef4444;
+  color: #fff;
+}
+
+.status-badge.status-pending {
+  background: #6b7280;
+  color: #fff;
+}
+
+/* Entity badges */
+.entity-type {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #5d535c;
+  color: #d9f378;
+}
+
+.importance-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #d9f378;
+  color: #1c1e20;
+}
+
+/* Questions */
+.state-questions {
+  margin-top: 0.75rem;
+}
+
+.state-question {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: #1c1e20;
+  border-radius: 4px;
+  border-left: 3px solid #666;
+}
+
+.state-question.answered {
+  border-left-color: #10b981;
+}
+
+.state-question.unanswered {
+  border-left-color: #fbbf24;
+}
+
+.question-text {
+  font-size: 0.85rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.answer-text {
+  font-size: 0.8rem;
+  color: #d9f378;
+  padding: 0.5rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.answer-text strong {
+  color: #10b981;
+  margin-right: 0.5rem;
+}
+
+.source-link {
+  color: #60a5fa;
+  text-decoration: none;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+}
+
+.question-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+}
+
+.question-status {
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  background: #5d535c;
+  color: #d9f378;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.question-iteration {
+  color: #999;
+  font-style: italic;
+}
+
+/* Facts list */
+.facts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fact-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #ddd;
+  padding: 0.5rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+
+.fact-bullet {
+  color: #d9f378;
+  font-weight: bold;
+}
+
+.fact-text {
+  flex: 1;
+}
+
+/* Anomalies list */
+.anomalies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.anomaly-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #fbbf24;
+  padding: 0.75rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border-left: 3px solid #fbbf24;
+}
+
+.anomaly-icon {
+  flex-shrink: 0;
+}
+
+.anomaly-text {
+  flex: 1;
+}
+
+/* Narrative */
+.narrative-content {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #ddd;
+}
+
+.key-findings {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border-left: 3px solid #d9f378;
+}
+
+.key-findings strong {
+  color: #d9f378;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.key-findings ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.key-findings li {
+  margin-bottom: 0.5rem;
+  color: #ddd;
+}
+
+/* Timeline */
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: #2a2a2a;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.timeline-date {
+  color: #d9f378;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.timeline-event {
+  color: #ddd;
+  flex: 1;
+}
+
+/* Empty section */
+.state-empty-section {
+  padding: 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* More indicator */
+.state-more {
+  padding: 0.5rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* Raw JSON viewer */
+.state-raw-json {
+  margin-top: 1rem;
+}
+
+.json-viewer {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 1rem;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #d9f378;
+  font-family: 'Courier New', monospace;
+  margin: 0;
+}
+
+/* Scrollbar styling */
+.state-viewer::-webkit-scrollbar,
+.json-viewer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.state-viewer::-webkit-scrollbar-track,
+.json-viewer::-webkit-scrollbar-track {
+  background: #1c1e20;
+}
+
+.state-viewer::-webkit-scrollbar-thumb,
+.json-viewer::-webkit-scrollbar-thumb {
+  background: #5d535c;
+  border-radius: 4px;
+}
+
+.state-viewer::-webkit-scrollbar-thumb:hover,
+.json-viewer::-webkit-scrollbar-thumb:hover {
+  background: #d9f378;
+}
+

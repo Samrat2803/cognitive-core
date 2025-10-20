@@ -665,6 +665,7 @@ class SubAgentCaller:
                     "connections": len(result.get("connections", [])),
                     "anomalies": len(result.get("anomalies", [])),
                     "hypotheses": len(result.get("hypotheses", [])),
+                    "questions": len(result.get("questions", [])),
                     "cost": investigator.costs.get("total_cost", 0.0)
                 },
                 
@@ -673,6 +674,8 @@ class SubAgentCaller:
                 "facts": result.get("facts", []),
                 "connections": result.get("connections", []),
                 "anomalies": result.get("anomalies", []),
+                "hypotheses": result.get("hypotheses", []),
+                "questions": result.get("questions", []),
                 
                 # Cost breakdown
                 "cost_breakdown": investigator.costs,

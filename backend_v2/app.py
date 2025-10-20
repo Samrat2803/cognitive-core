@@ -12,6 +12,7 @@ from typing import Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -544,6 +545,13 @@ async def root():
         agent_status="ready" if agent else "not_initialized",
         timestamp=datetime.now(timezone.utc).isoformat()
     )
+
+
+# Mount static files for serving artifacts locally
+# This allows artifacts to be accessed via /artifacts/... URLs
+artifacts_dir = os.path.join(os.path.dirname(__file__), "langgraph_master_agent", "sub_agents", "investigative_journalist", "artifacts")
+os.makedirs(artifacts_dir, exist_ok=True)
+app.mount("/artifacts/investigative_journalist", StaticFiles(directory=artifacts_dir), name="artifacts")
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -2052,6 +2060,114 @@ async def get_investigation_logs(investigation_id: str, limit: int = 100):
         raise HTTPException(status_code=500, detail=f"Failed to get logs: {str(e)}")
 
 
+# ============================================
+# State History API Endpoints
+# ============================================
+
+@app.get("/api/investigations/{investigation_id}/state/history")
+async def get_state_history(
+    investigation_id: str,
+    include_full_state: bool = False
+):
+    """
+    Get the complete history of state snapshots for an investigation.
+    
+    Args:
+        investigation_id: Unique investigation identifier
+        include_full_state: If True, include full state; if False, only summaries
+    
+    Returns:
+        List of state snapshots ordered by iteration
+    """
+    try:
+        from langgraph_master_agent.sub_agents.investigative_journalist.state_history import get_history_manager
+        
+        manager = get_history_manager()
+        history = await manager.get_state_history(investigation_id, include_full_state)
+        
+        return {
+            "success": True,
+            "investigation_id": investigation_id,
+            "history": _sanitize_for_json(history)
+        }
+    except Exception as e:
+        print(f"❌ Failed to get state history: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get state history: {str(e)}")
+
+
+@app.get("/api/investigations/{investigation_id}/state/{iteration}")
+async def get_state_at_iteration(
+    investigation_id: str,
+    iteration: int
+):
+    """
+    Get the state snapshot for a specific iteration.
+    
+    Args:
+        investigation_id: Unique investigation identifier
+        iteration: Iteration number to retrieve
+    
+    Returns:
+        State dictionary for the requested iteration
+    """
+    try:
+        from langgraph_master_agent.sub_agents.investigative_journalist.state_history import get_state
+        
+        state = await get_state(investigation_id, iteration)
+        
+        if state is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"State not found for iteration {iteration}"
+            )
+        
+        return {
+            "success": True,
+            "investigation_id": investigation_id,
+            "iteration": iteration,
+            "state": _sanitize_for_json(state)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Failed to get state at iteration: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get state: {str(e)}")
+
+
+@app.get("/api/investigations/{investigation_id}/state/latest")
+async def get_latest_state(investigation_id: str):
+    """
+    Get the most recent state for an investigation.
+    
+    Args:
+        investigation_id: Unique investigation identifier
+    
+    Returns:
+        Latest state dictionary
+    """
+    try:
+        from langgraph_master_agent.sub_agents.investigative_journalist.state_history import get_state
+        
+        state = await get_state(investigation_id, None)  # None means latest
+        
+        if state is None:
+            raise HTTPException(
+                status_code=404,
+                detail="No state found for this investigation"
+            )
+        
+        return {
+            "success": True,
+            "investigation_id": investigation_id,
+            "state": _sanitize_for_json(state)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Failed to get latest state: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get latest state: {str(e)}")
+
+
 @app.post("/api/investigations/{investigation_id}/continue", response_model=InvestigationResponse)
 async def continue_investigation(investigation_id: str, request: ContinueInvestigationRequest):
     """Continue an existing investigation with more iterations (WebSocket will handle the actual execution)"""
@@ -3139,7 +3255,36 @@ async def chat_websocket(websocket: WebSocket):
                 # Determine the actual query to use
                 actual_query = content
                 
-                # If continuing an existing investigation, load the original query
+                # Check if this is a follow-up question to an existing investigation
+                is_followup = False
+                if investigation_id and mongo_service and "continue" not in content_lower:
+                    investigation = await mongo_service.get_investigation(investigation_id)
+                    if investigation and investigation.get("status") in ["active", "completed"]:
+                        # This is a follow-up question
+                        is_followup = True
+                        current_iter = investigation.get("current_iteration", 0)
+                        
+                        # For follow-ups, extend max_iterations by default amount (5 more)
+                        additional_iterations = 5
+                        
+                        # Check if user specified iterations
+                        import re
+                        match = re.search(r'(\d+)\s+(?:more\s+)?iterations?', content_lower)
+                        if match:
+                            additional_iterations = int(match.group(1))
+                        
+                        new_max = current_iter + additional_iterations
+                        
+                        await mongo_service.db.investigations.update_one(
+                            {"investigation_id": investigation_id},
+                            {"$set": {"max_iterations": new_max, "status": "active"}}
+                        )
+                        
+                        print(f"   🔄 Follow-up question detected")
+                        print(f"   📊 Extended max_iterations: {investigation.get('max_iterations')} → {new_max}")
+                        print(f"   💬 New research direction: {content[:60]}...")
+                
+                # If continuing an existing investigation with "continue" keyword
                 if "continue" in content_lower and investigation_id and mongo_service:
                     investigation = await mongo_service.get_investigation(investigation_id)
                     if investigation and investigation.get("query"):
@@ -3226,7 +3371,7 @@ async def chat_websocket(websocket: WebSocket):
                         query=actual_query,  # Use the actual query (original or new)
                         max_iterations=max_iterations,
                         resume_from=investigation_id,
-                        user_instruction=content if "continue" in content_lower else None,  # Pass user message
+                        user_instruction=content if is_followup else None,  # Pass user's follow-up question
                         event_callback=event_callback
                     )
                 

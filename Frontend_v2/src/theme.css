@@ -46,10 +46,38 @@
   --color-border-subtle: rgba(255, 255, 255, 0.1);
   
   /* Semantic colors - Status indicators */
-  --color-success: #5af78e;
-  --color-error: #ff6b6b;
-  --color-warning: #f3f99d;
-  --color-info: #57c7ff;
+  --color-success: #10b981;           /* Green - for success, completed, answered */
+  --color-success-light: #34d399;
+  --color-success-bg: rgba(16, 185, 129, 0.1);
+  --color-error: #ef4444;             /* Red - for errors, failures */
+  --color-error-light: #f87171;
+  --color-error-bg: rgba(239, 68, 68, 0.1);
+  --color-warning: #fbbf24;           /* Amber - for warnings, pending */
+  --color-warning-light: #fcd34d;
+  --color-warning-bg: rgba(251, 191, 36, 0.1);
+  --color-info: #60a5fa;              /* Blue - for informational messages */
+  --color-info-light: #93c5fd;
+  --color-info-bg: rgba(96, 165, 250, 0.1);
+  
+  /* Message Type Colors - Investigative Journalist specific */
+  --color-hypothesis: #a78bfa;        /* Purple - for hypotheses */
+  --color-hypothesis-light: #c4b5fd;
+  --color-hypothesis-bg: rgba(167, 139, 250, 0.1);
+  --color-question: #60a5fa;          /* Blue - for questions */
+  --color-question-light: #93c5fd;
+  --color-question-bg: rgba(96, 165, 250, 0.1);
+  --color-answer: #10b981;            /* Green - for answers */
+  --color-answer-light: #34d399;
+  --color-answer-bg: rgba(16, 185, 129, 0.1);
+  --color-fact: #9ca3af;              /* Gray - for facts */
+  --color-fact-light: #d1d5db;
+  --color-fact-bg: rgba(156, 163, 175, 0.1);
+  --color-entity: #f59e0b;            /* Orange - for entities */
+  --color-entity-light: #fbbf24;
+  --color-entity-bg: rgba(245, 158, 11, 0.1);
+  --color-decision: #ec4899;          /* Pink - for strategist decisions */
+  --color-decision-light: #f472b6;
+  --color-decision-bg: rgba(236, 72, 153, 0.1);
   
   /* ========================================================================
    * TYPOGRAPHY - Font families, sizes, weights
@@ -80,6 +108,7 @@
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.6;
   --line-height-loose: 1.7;
+  --line-height-looser: 1.8;    /* For better readability in messages */
   
   /* ========================================================================
    * SPACING - Consistent spacing scale (8px base)

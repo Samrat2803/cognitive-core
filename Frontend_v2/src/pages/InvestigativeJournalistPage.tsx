@@ -3,6 +3,7 @@ import { Send, Download, ExternalLink, Loader2, AlertCircle, StopCircle, FileTex
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Markdown } from '../components/ui/Markdown';
 import { Header } from '../components/layout/Header';
+import { InvestigativeJournalistStateViewer } from '../components/InvestigativeJournalistStateViewer';
 import './InvestigativeJournalistPage.css';
 
 // Message types
@@ -34,6 +35,15 @@ export function InvestigativeJournalistPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [investigationId, setInvestigationId] = useState<string | null>(null);
+  
+  // State viewer - now includes artifact-specific tabs
+  const [activeTab, setActiveTab] = useState<'report' | 'network' | 'timeline' | 'evidence' | 'state'>('report');
+  const [investigationState, setInvestigationState] = useState<any>(null);
+  const [iframeLoading, setIframeLoading] = useState<{[key: string]: boolean}>({
+    network: false,
+    timeline: false,
+    evidence: false
+  });
   
   // Refs
   const wsRef = useRef<WebSocket | null>(null);
@@ -117,6 +127,9 @@ export function InvestigativeJournalistPage() {
   const handleWebSocketMessage = (msg: any) => {
     const { type, data } = msg;
 
+    // Debug: Log all message types
+    console.log(`📨 WebSocket message: ${type}`, { hasData: !!data });
+
     switch (type) {
       case 'connected':
         addSystemMessage('Ready to investigate! Type a query to begin.', 'success');
@@ -138,7 +151,49 @@ export function InvestigativeJournalistPage() {
         break;
 
       case 'question_discovered':
-        addSystemMessage(`❓ Question: ${data.question}`, 'question');
+        // Display question with better formatting
+        const questionText = data.question || data.q || 'New question';
+        const hypothesisId = data.hypothesis_id || 'general';
+        addSystemMessage(`❓ **Question** (${hypothesisId}): ${questionText}`, 'question');
+        break;
+      
+      case 'question_answered':
+        // Display answer when a question gets answered
+        const answeredQuestion = data.question || data.q || 'Question';
+        const answer = data.answer || data.a || 'Answer found';
+        addSystemMessage(`✅ **Answered**: ${answeredQuestion}\n   💡 ${answer}`, 'success');
+        break;
+      
+      case 'strategist_decision':
+        // Display the LLM's strategic decision
+        const decisionType = data.decision_type || 'N/A';
+        const decisionPhase = data.phase || 'unknown';
+        const iterNum = data.iteration || '?';
+        
+        let decisionMsg = `🤖 **Strategist Decision** (Iteration ${iterNum}, Phase: ${decisionPhase})\n`;
+        decisionMsg += `   📍 Decision: ${decisionType}\n`;
+        
+        if (data.question) {
+          decisionMsg += `   ❓ Question: ${data.question}\n`;
+        }
+        
+        if (data.novel_angle) {
+          decisionMsg += `   💡 Novel Angle: ${data.novel_angle}\n`;
+        }
+        
+        if (decisionType === 'complete' && data.completion_reason) {
+          decisionMsg += `   🛑 Reason: ${data.completion_reason}\n`;
+        }
+        
+        if (decisionType === 'search' && data.search_query) {
+          decisionMsg += `   🔍 Search Query: ${data.search_query}\n`;
+        }
+        
+        if (decisionType === 'query_local_rag' && data.rag_query) {
+          decisionMsg += `   📖 RAG Query: ${data.rag_query}\n`;
+        }
+        
+        addSystemMessage(decisionMsg, 'info');
         break;
 
       case 'entity_discovered':
@@ -189,6 +244,27 @@ export function InvestigativeJournalistPage() {
             timestamp: new Date()
           });
         }
+        break;
+
+      case 'state_update':
+        // Update investigation state for State tab
+        // Backend sends the state directly as data, not nested under data.state
+        setInvestigationState(data);
+        console.log('📊 State update received:', { 
+          iteration: data.meta?.iteration,
+          facts: data.facts?.length,
+          entities: data.entities?.length 
+        });
+        
+        // Show iteration progress in chat
+        const iteration = data.meta?.iteration;
+        const maxIter = data.meta?.max_iterations;
+        const factsCount = data.facts?.length || 0;
+        const entitiesCount = data.entities?.length || 0;
+        addSystemMessage(
+          `📊 Iteration ${iteration}/${maxIter} complete: ${factsCount} facts, ${entitiesCount} entities discovered. Check State tab →`,
+          'info'
+        );
         break;
 
       case 'investigation_complete':
@@ -291,12 +367,53 @@ export function InvestigativeJournalistPage() {
     if (msg.role === 'user') return 'message message-user';
     if (msg.role === 'assistant') return 'message message-assistant';
     
-    // System messages with different variants
+    // System messages with different variants based on content
     const content = msg.content.toLowerCase();
-    if (content.includes('error') || content.includes('❌')) return 'message message-system message-error';
-    if (content.includes('complete') || content.includes('✅')) return 'message message-system message-success';
-    if (content.includes('💡')) return 'message message-system message-hypothesis';
-    if (content.includes('❓')) return 'message message-system message-question';
+    
+    // Error messages
+    if (content.includes('error') || content.includes('❌')) {
+      return 'message message-system message-error';
+    }
+    
+    // Success/completion messages
+    if (content.includes('complete') || content.includes('✅') || content.includes('answered')) {
+      return 'message message-system message-success';
+    }
+    
+    // Hypothesis messages
+    if (content.includes('hypothesis') || content.includes('💡')) {
+      return 'message message-system message-hypothesis';
+    }
+    
+    // Question messages
+    if (content.includes('question') || content.includes('❓')) {
+      return 'message message-system message-question';
+    }
+    
+    // Answer messages (but not "answered" which is success)
+    if ((content.includes('**answer') || content.includes('answer:')) && !content.includes('answered')) {
+      return 'message message-system message-answer';
+    }
+    
+    // Entity discovered messages
+    if (content.includes('entity') || content.includes('👤')) {
+      return 'message message-system message-entity';
+    }
+    
+    // Fact messages
+    if (content.includes('fact') || content.includes('📌')) {
+      return 'message message-system message-fact';
+    }
+    
+    // Strategist decision messages
+    if (content.includes('strategist') || content.includes('decision') || content.includes('🤖')) {
+      return 'message message-system message-decision';
+    }
+    
+    // Iteration progress messages
+    if (content.includes('iteration') && content.includes('complete')) {
+      return 'message message-system message-info';
+    }
     
     return 'message message-system';
   };
@@ -341,7 +458,7 @@ export function InvestigativeJournalistPage() {
             {messages.map((msg) => (
               <div key={msg.id} className={getMessageClassName(msg)}>
                 <div className="message-content">
-                  {msg.role === 'assistant' ? (
+                  {msg.role === 'assistant' || msg.role === 'system' ? (
                     <Markdown>{msg.content}</Markdown>
                   ) : (
                     <div>{msg.content}</div>
@@ -420,100 +537,196 @@ export function InvestigativeJournalistPage() {
           >
         {/* Artifacts Panel (Right) */}
         <div className="artifacts-panel">
+          {/* Tab Header - Separate tab for each artifact */}
           <div className="artifacts-header">
-            <h3>📦 Artifacts</h3>
-            <span className="artifacts-count">{artifacts.length}</span>
+            <div className="tab-buttons">
+              <button 
+                className={`tab-button ${activeTab === 'report' ? 'active' : ''}`}
+                onClick={() => setActiveTab('report')}
+                disabled={!artifacts.find(a => a.type === 'article')}
+              >
+                📄 Report
+                {artifacts.find(a => a.type === 'article') && <span className="tab-badge">✓</span>}
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'network' ? 'active' : ''}`}
+                onClick={() => setActiveTab('network')}
+                disabled={!artifacts.find(a => a.name === 'Entity Network Graph')}
+              >
+                🕸️ Network
+                {artifacts.find(a => a.name === 'Entity Network Graph') && <span className="tab-badge">✓</span>}
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'timeline' ? 'active' : ''}`}
+                onClick={() => setActiveTab('timeline')}
+                disabled={!artifacts.find(a => a.name === 'Investigation Timeline')}
+              >
+                📅 Timeline
+                {artifacts.find(a => a.name === 'Investigation Timeline') && <span className="tab-badge">✓</span>}
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'evidence' ? 'active' : ''}`}
+                onClick={() => setActiveTab('evidence')}
+                disabled={!artifacts.find(a => a.name === 'Evidence Flow Diagram')}
+              >
+                🔗 Evidence
+                {artifacts.find(a => a.name === 'Evidence Flow Diagram') && <span className="tab-badge">✓</span>}
+              </button>
+              <button 
+                className={`tab-button ${activeTab === 'state' ? 'active' : ''}`}
+                onClick={() => setActiveTab('state')}
+              >
+                🔍 State
+                {investigationState && <span className="tab-badge">✓</span>}
+              </button>
+            </div>
           </div>
 
-          <div className="artifacts-content">
-            {artifacts.length === 0 ? (
-              <div className="artifacts-empty">
-                <div className="empty-icon">📄</div>
-                <p>Artifacts will appear here as they are generated</p>
-              </div>
-            ) : (
-              <>
-                {/* Show all article artifacts as list */}
-                {artifacts.filter(a => a.type === 'article' && a.article_text).length > 0 ? (
-                  <div className="artifact-articles-list">
-                    <h4 className="artifact-section-title">Investigation Reports</h4>
-                    {artifacts.filter(a => a.type === 'article' && a.article_text).map((article) => (
-                      <details key={article.id} className="artifact-article-collapsible" open={artifacts.filter(a => a.type === 'article').length === 1}>
-                        <summary className="artifact-article-summary">
-                          <div className="artifact-article-title">
-                            <FileText size={16} />
-                            <span>{article.name}</span>
-                          </div>
-                          <div className="artifact-article-meta">
-                            <span className="artifact-timestamp">
-                              {article.timestamp.toLocaleTimeString()}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (article.url) {
-                                  window.open(article.url, '_blank');
-                                }
-                              }}
-                              className="artifact-button-small"
-                              title="Download"
-                            >
-                              <Download size={14} />
-                            </button>
-                          </div>
-                        </summary>
-                        <div className="artifact-article-content">
-                          <Markdown>
-                            {article.article_text || ''}
-                          </Markdown>
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                ) : null}
-                
-                {/* Show list of non-article artifacts */}
-                {artifacts.filter(a => a.type !== 'article').length > 0 && (
-                  <div className="artifacts-list">
-                    <h4 className="artifact-section-title">Other Artifacts</h4>
-                    {artifacts.filter(a => a.type !== 'article').map((artifact) => (
-                      <div key={artifact.id} className="artifact-card">
-                        <div className="artifact-icon">
-                          {getArtifactIcon(artifact.type)}
-                        </div>
-                        <div className="artifact-info">
-                          <div className="artifact-name">{artifact.name}</div>
-                          <div className="artifact-timestamp">
-                            {artifact.timestamp.toLocaleTimeString()}
-                          </div>
-                        </div>
-                        <div className="artifact-actions">
-                          <a
-                            href={artifact.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="artifact-button"
-                            title="View"
-                          >
-                            <ExternalLink size={16} />
-                          </a>
-                          <a
-                            href={artifact.url}
-                            download={artifact.name}
-                            className="artifact-button"
-                            title="Download"
-                          >
-                            <Download size={16} />
-                          </a>
-                        </div>
+          {/* Report Tab - Article */}
+          {activeTab === 'report' && (
+            <div className="artifacts-content">
+              {artifacts.filter(a => a.type === 'article' && a.article_text).length === 0 ? (
+                <div className="artifacts-empty">
+                  <div className="empty-icon">📄</div>
+                  <p>Investigation report will appear here when complete</p>
+                </div>
+              ) : (
+                <div className="artifact-full-view">
+                  {artifacts.filter(a => a.type === 'article' && a.article_text).map((article) => (
+                    <div key={article.id} className="artifact-article-full">
+                      <div className="artifact-article-header">
+                        <h3>{article.name}</h3>
+                        <span className="artifact-timestamp">
+                          {article.timestamp.toLocaleTimeString()}
+                        </span>
                       </div>
-                    ))}
+                      <div className="artifact-article-content">
+                        <Markdown>
+                          {article.article_text || ''}
+                        </Markdown>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Network Tab - Entity Network Graph */}
+          {activeTab === 'network' && (
+            <div className="artifacts-content">
+              {!artifacts.find(a => a.name === 'Entity Network Graph') ? (
+                <div className="artifacts-empty">
+                  <div className="empty-icon">🕸️</div>
+                  <p>Entity network will appear here when investigation completes</p>
+                </div>
+              ) : (
+                <div className="artifact-iframe-container">
+                  {iframeLoading.network && (
+                    <div className="iframe-loading">
+                      <Loader2 className="spinner" size={48} />
+                      <p>Loading entity network graph...</p>
+                    </div>
+                  )}
+                  {artifacts.filter(a => a.name === 'Entity Network Graph').map((artifact) => (
+                    <iframe
+                      key={artifact.id}
+                      src={artifact.url}
+                      title="Entity Network Graph"
+                      className="artifact-iframe"
+                      style={{ display: iframeLoading.network ? 'none' : 'block' }}
+                      onLoad={() => setIframeLoading(prev => ({ ...prev, network: false }))}
+                      onLoadStart={() => setIframeLoading(prev => ({ ...prev, network: true }))}
+                      sandbox="allow-scripts allow-same-origin allow-downloads"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Timeline Tab - Investigation Timeline */}
+          {activeTab === 'timeline' && (
+            <div className="artifacts-content">
+              {!artifacts.find(a => a.name === 'Investigation Timeline') ? (
+                <div className="artifacts-empty">
+                  <div className="empty-icon">📅</div>
+                  <p>Timeline will appear here when investigation completes</p>
+                </div>
+              ) : (
+                <div className="artifact-iframe-container">
+                  {iframeLoading.timeline && (
+                    <div className="iframe-loading">
+                      <Loader2 className="spinner" size={48} />
+                      <p>Loading investigation timeline...</p>
+                    </div>
+                  )}
+                  {artifacts.filter(a => a.name === 'Investigation Timeline').map((artifact) => (
+                    <iframe
+                      key={artifact.id}
+                      src={artifact.url}
+                      title="Investigation Timeline"
+                      className="artifact-iframe"
+                      style={{ display: iframeLoading.timeline ? 'none' : 'block' }}
+                      onLoad={() => setIframeLoading(prev => ({ ...prev, timeline: false }))}
+                      sandbox="allow-scripts allow-same-origin allow-downloads"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Evidence Tab - Evidence Flow Diagram */}
+          {activeTab === 'evidence' && (
+            <div className="artifacts-content">
+              {!artifacts.find(a => a.name === 'Evidence Flow Diagram') ? (
+                <div className="artifacts-empty">
+                  <div className="empty-icon">🔗</div>
+                  <p>Evidence flow will appear here when investigation completes</p>
+                </div>
+              ) : (
+                <div className="artifact-iframe-container">
+                  <div className="artifact-explanation">
+                    <h4>📖 How to Read This Diagram</h4>
+                    <p>
+                      This Sankey diagram shows how evidence flows through the investigation:
+                    </p>
+                    <ul>
+                      <li><strong>Investigation</strong> (left) → All evidence gathered</li>
+                      <li><strong>Middle section</strong> → Hypotheses being tested</li>
+                      <li><strong>Right side</strong> → Status (Proven ✅, Exploring 🔄, Disproven ❌)</li>
+                      <li><strong>Flow thickness</strong> → Amount of evidence supporting each path</li>
+                    </ul>
                   </div>
-                )}
-              </>
-            )}
-          </div>
+                  {iframeLoading.evidence && (
+                    <div className="iframe-loading">
+                      <Loader2 className="spinner" size={48} />
+                      <p>Loading evidence flow diagram...</p>
+                    </div>
+                  )}
+                  {artifacts.filter(a => a.name === 'Evidence Flow Diagram').map((artifact) => (
+                    <iframe
+                      key={artifact.id}
+                      src={artifact.url}
+                      title="Evidence Flow Diagram"
+                      className="artifact-iframe"
+                      style={{ display: iframeLoading.evidence ? 'none' : 'block' }}
+                      onLoad={() => setIframeLoading(prev => ({ ...prev, evidence: false }))}
+                      sandbox="allow-scripts allow-same-origin allow-downloads"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* State Tab Content */}
+          {activeTab === 'state' && (
+            <div className="state-content">
+              <InvestigativeJournalistStateViewer state={investigationState} />
+            </div>
+          )}
         </div>
           </Panel>
         </PanelGroup>

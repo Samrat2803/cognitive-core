@@ -89,7 +89,10 @@ async def save_investigation(state: Dict[str, Any], session_id: Optional[str] = 
         
         # User info
         "user_session": state.get("user_session"),
-        "thread_id": state.get("thread_id")
+        "thread_id": state.get("thread_id"),
+        
+        # User instruction for follow-up questions
+        "user_instruction": state.get("user_instruction")
     }
     
     # Upsert (update if exists, insert if new)
@@ -146,7 +149,7 @@ async def load_investigation(investigation_id: str) -> Optional[Dict[str, Any]]:
         "investigation_id": doc["investigation_id"],
         "session_id": doc.get("session_id"),
         "initial_query": doc["query"],
-        "user_instruction": None,  # Will be set by caller if continuing
+        "user_instruction": doc.get("user_instruction"),  # Restore user instruction if present
         "iteration": current_iter + 1,  # Start from next iteration
         "max_iterations": doc.get("max_iterations", 20),
         

@@ -39,6 +39,11 @@ pytest
 pytest-asyncio
 httpx
 
+# Performance Optimization
+uvloop  # 2-4x faster event loop than asyncio default
+trafilatura  # For article extraction
+beautifulsoup4  # For HTML parsing
+
 
 # Data manipulation and Excel export
 pandas
