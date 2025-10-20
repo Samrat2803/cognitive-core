@@ -45,3 +45,7 @@ graph_structure.md
 *.log
 nohup.out
 
+
+# Demo artifacts (not needed in production)
+demo_artifacts/
+extraction_cache/

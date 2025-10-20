@@ -23,13 +23,240 @@ def log(message: str):
     sys.stdout.flush()
 
 
-def generate_entity_network_graph(
+def generate_key_facts_infographic(
+    facts: List[str],
+    investigation_title: str = "Investigation",
+    output_path: str = "key_facts_infographic.html"
+) -> str:
+    """
+    Generate beautiful glassmorphism key facts infographic for social media
+    
+    Args:
+        facts: List of key facts (top 4-6 most important)
+        investigation_title: Title of the investigation
+        output_path: Where to save the HTML file
+        
+    Returns:
+        Path to generated HTML file
+    """
+    log(f"   📊 Generating glassmorphism key facts infographic...")
+    
+    # Select top 4 most important facts
+    top_facts = facts[:4] if len(facts) >= 4 else facts
+    
+    # Pad with placeholder if less than 4 facts
+    while len(top_facts) < 4:
+        top_facts.append("Additional investigation ongoing...")
+    
+    # Fact icons (cycling through these)
+    fact_icons = ["📄", "⚖️", "🔐", "📧", "💰", "🎯"]
+    
+    # Generate HTML with glassmorphism design
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Facts - {investigation_title}</title>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+
+        .glass-container {{
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            padding: 40px 20px;
+        }}
+
+        .glass-bg {{
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            pointer-events: none;
+        }}
+
+        .glass-bg.circle1 {{
+            background: #ff6b6b;
+            top: -100px;
+            left: -100px;
+        }}
+
+        .glass-bg.circle2 {{
+            background: #4ecdc4;
+            bottom: -100px;
+            right: -100px;
+        }}
+
+        .glass-content {{
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }}
+
+        .glass-header {{
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+        }}
+
+        .glass-header h1 {{
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+        }}
+
+        .glass-header p {{
+            font-size: 1.2em;
+            font-weight: 300;
+            opacity: 0.95;
+        }}
+
+        .glass-cards {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }}
+
+        .glass-card {{
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 25px;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }}
+
+        .glass-card:hover {{
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        }}
+
+        .glass-card-header {{
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }}
+
+        .glass-icon {{
+            font-size: 2.5em;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+        }}
+
+        .glass-number {{
+            font-size: 0.75em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            opacity: 0.9;
+        }}
+
+        .glass-text {{
+            font-size: 1.05em;
+            line-height: 1.6;
+            font-weight: 400;
+        }}
+
+        .glass-footer {{
+            text-align: center;
+            color: white;
+            font-size: 0.95em;
+            opacity: 0.9;
+            margin-top: 20px;
+        }}
+
+        @media (max-width: 768px) {{
+            .glass-header h1 {{
+                font-size: 1.8em;
+            }}
+            
+            .glass-cards {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="glass-container">
+        <div class="glass-bg circle1"></div>
+        <div class="glass-bg circle2"></div>
+        
+        <div class="glass-content">
+            <div class="glass-header">
+                <h1>🔍 {investigation_title}</h1>
+                <p>Key Facts Uncovered</p>
+            </div>
+
+            <div class="glass-cards">"""
+    
+    # Add fact cards
+    for i, fact in enumerate(top_facts, 1):
+        icon = fact_icons[(i-1) % len(fact_icons)]
+        html_content += f"""
+                <div class="glass-card">
+                    <div class="glass-card-header">
+                        <div class="glass-icon">{icon}</div>
+                        <div class="glass-number">FACT {i:02d}</div>
+                    </div>
+                    <div class="glass-text">
+                        {fact}
+                    </div>
+                </div>"""
+    
+    html_content += """
+            </div>
+
+            <div class="glass-footer">
+                Political Analyst Workbench • AI-Powered Investigation
+            </div>
+        </div>
+    </div>
+</body>
+</html>"""
+    
+    # Write to file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    
+    log(f"      ✅ Glassmorphism infographic saved to {output_path}")
+    
+    return output_path
+
+
+def generate_entity_network_graph_OLD(
     entities: Dict[str, Any],
     connections: List[Dict[str, Any]],
     output_path: str = "entity_network.html"
 ) -> str:
     """
-    Generate interactive entity network graph using pyvis
+    OLD: Generate interactive entity network graph using pyvis
+    REPLACED BY: generate_key_facts_infographic
     
     Args:
         entities: Dict of {name: {type, role, importance, investigated}}
@@ -636,23 +863,26 @@ async def generate_all_artifacts(
     
     artifacts = []
     
-    # 1. Entity Network Graph
+    # 1. Key Facts Infographic (Glassmorphism)
     try:
-        entities = state.get("entities", {})
-        connections = state.get("connections", [])
+        facts = state.get("facts", [])
+        initial_query = state.get("initial_query", "Investigation")
         
-        if entities:
-            network_path = os.path.join(output_dir, f"entity_network_{investigation_id}_{timestamp}.html")
-            generate_entity_network_graph(entities, connections, network_path)
+        if facts and len(facts) > 0:
+            # Extract top 4-6 most important facts
+            top_facts = facts[:6] if len(facts) >= 6 else facts
+            
+            infographic_path = os.path.join(output_dir, f"key_facts_{investigation_id}_{timestamp}.html")
+            generate_key_facts_infographic(top_facts, initial_query, infographic_path)
             artifacts.append({
                 "type": "html",
-                "name": "Entity Network Graph",
-                "path": network_path
+                "name": "Key Facts Infographic",
+                "path": infographic_path
             })
         else:
-            log(f"   ⚠️  Skipping entity network (no entities)")
+            log(f"   ⚠️  Skipping key facts infographic (no facts)")
     except Exception as e:
-        log(f"   ❌ Error generating entity network: {e}")
+        log(f"   ❌ Error generating key facts infographic: {e}")
     
     # 2. Timeline Visualization
     try:

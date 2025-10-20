@@ -1147,3 +1147,40 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* ============================================
+   Open External Button (for artifacts that don't render in iframe)
+   ============================================ */
+
+.artifact-header-actions {
+  padding: var(--space-md);
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background-color: var(--color-background-dark);
+}
+
+.open-external-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-primary);
+  color: var(--color-background-darkest);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.open-external-button:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 243, 120, 0.3);
+}
+
+.open-external-button:active {
+  transform: translateY(0);
+}
+

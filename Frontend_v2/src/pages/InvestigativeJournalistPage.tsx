@@ -133,7 +133,7 @@ export function InvestigativeJournalistPage() {
 
     switch (type) {
       case 'connected':
-        addSystemMessage('Ready to investigate! Type a query to begin.', 'success');
+        // Connection established - no need to show a message as the UI already has proper empty state
         break;
 
       case 'investigation_started':
@@ -552,10 +552,10 @@ export function InvestigativeJournalistPage() {
               <button 
                 className={`tab-button ${activeTab === 'network' ? 'active' : ''}`}
                 onClick={() => setActiveTab('network')}
-                disabled={!artifacts.find(a => a.name === 'Entity Network Graph')}
+                disabled={!artifacts.find(a => a.name === 'Key Facts Infographic')}
               >
-                🕸️ Network
-                {artifacts.find(a => a.name === 'Entity Network Graph') && <span className="tab-badge">✓</span>}
+                ✨ Key Facts
+                {artifacts.find(a => a.name === 'Key Facts Infographic') && <span className="tab-badge">✓</span>}
               </button>
               <button 
                 className={`tab-button ${activeTab === 'timeline' ? 'active' : ''}`}
@@ -616,17 +616,17 @@ export function InvestigativeJournalistPage() {
           {/* Network Tab - Entity Network Graph */}
           {activeTab === 'network' && (
             <div className="artifacts-content">
-              {!artifacts.find(a => a.name === 'Entity Network Graph') ? (
+              {!artifacts.find(a => a.name === 'Key Facts Infographic') ? (
                 <div className="artifacts-empty">
-                  <div className="empty-icon">🕸️</div>
-                  <p>Entity network will appear here when investigation completes</p>
+                  <div className="empty-icon">✨</div>
+                  <p>Key facts infographic will appear here when investigation completes</p>
                 </div>
               ) : (
                 <div className="artifact-iframe-container">
                   <div className="artifact-header-actions">
                     <button
                       onClick={() => {
-                        const artifact = artifacts.find(a => a.name === 'Entity Network Graph');
+                        const artifact = artifacts.find(a => a.name === 'Key Facts Infographic');
                         if (artifact) window.open(artifact.url, '_blank');
                       }}
                       className="open-external-button"
@@ -638,14 +638,14 @@ export function InvestigativeJournalistPage() {
                   {iframeLoading.network && (
                     <div className="iframe-loading">
                       <Loader2 className="spinner" size={48} />
-                      <p>Loading entity network graph...</p>
+                      <p>Loading key facts infographic...</p>
                     </div>
                   )}
-                  {artifacts.filter(a => a.name === 'Entity Network Graph').map((artifact) => (
+                  {artifacts.filter(a => a.name === 'Key Facts Infographic').map((artifact) => (
                     <iframe
                       key={artifact.id}
                       src={artifact.url}
-                      title="Entity Network Graph"
+                      title="Key Facts Infographic"
                       className="artifact-iframe"
                       style={{ display: iframeLoading.network ? 'none' : 'block' }}
                       onLoad={() => setIframeLoading(prev => ({ ...prev, network: false }))}
